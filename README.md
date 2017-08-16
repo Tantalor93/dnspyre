@@ -42,7 +42,7 @@ Args:
 
 ### Bash/ZSH Shell Completion
 
-`./dnstrace --completion-script-bash` and `./dnstrace --completion-script-zsh` will completion scripts.
+`./dnstrace --completion-script-bash` and `./dnstrace --completion-script-zsh` will create shell completion scripts.
 
 ## Example
 
