@@ -4,7 +4,7 @@ Commandline DNS benchmark tool.
 
 ## Usage
 
-```bash
+```
 $ dnstrace --help
 
 usage: dnstrace [<flags>] <queries>...
@@ -46,7 +46,7 @@ Args:
 
 ## Example
 
-```bash
+```
 $ dnstrace -n 10 -c 10 --server 8.8.8.8 --recurse redsift.io
 
 Total requests:		100
