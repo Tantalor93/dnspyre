@@ -57,11 +57,14 @@ jobs:
       - run:
           name: Build Docker image
           command: |
-             export CONTAINER_NAME=redsift/dnstrace
-             cp /tmp/ws/.bin/dnstrace .
-             docker build -t $CONTAINER_NAME -f Dockerfile.scratch .
-             docker tag -f $CONTAINER_NAME:latest $CONTAINER_NAME:$CIRCLE_TAG-$CIRCLE_BUILD_NUM
              docker login -u $DOCKER_USER -p $DOCKER_PASS
+             export CONTAINER_NAME=redsift/dnstrace
+             export TAG=$CIRCLE_TAG-$CIRCLE_BUILD_NUM
+             echo "Building $TAG"
+             cp /tmp/ws/.bin/dnstrace .
+             ls -la
+             docker build -t $CONTAINER_NAME -f Dockerfile.scratch .
+             docker tag -f $CONTAINER_NAME:latest $CONTAINER_NAME:$TAG
              docker push $CONTAINER_NAME
 
 workflows:
