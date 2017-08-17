@@ -1,8 +1,9 @@
 # DNStrace
 
-[![CircleCI](https://circleci.com/gh/redsift/dnstrace.svg?style=shield)](https://circleci.com/gh/redsift/dnstrace)
-
 [![Go Report Card](https://goreportcard.com/badge/github.com/redsift/dnstrace)](https://goreportcard.com/report/github.com/redsift/dnstrace)
+[![Release](https://img.shields.io/github/release/redsift/dnstrace/all.svg)](https://github.com/redsift/dnstrace/releases)
+[![CircleCI](https://circleci.com/gh/redsift/dnstrace.svg?style=shield)](https://circleci.com/gh/redsift/dnstrace)
+[![Docker Image](https://images.microbadger.com/badges/image/redsift/dnstrace.svg)](https://microbadger.com/images/redsift/dnstrace)
 
 Command-line DNS benchmark tool built to stress test and measure the performance of DNS servers with commodity hardware. This tool typically consumers ~30kB per concurrent connection and can do ~3000 QPS per Xeon E5 core.
 
@@ -51,7 +52,9 @@ Args:
 
 ### Option 1 - Docker
 
-This tool is available in a prebuilt image that comes in at ~8MB
+[![Latest](https://images.microbadger.com/badges/version/redsift/dnstrace.svg)](https://microbadger.com/images/redsift/dnstrace)
+
+This tool is available in a prebuilt image.
 
 `docker run redsift/dnstrace --help`
 
@@ -69,6 +72,10 @@ Note that using `sudo ulimit` will create a root shell, adjusts its limits, and 
 $ sudo launchctl limit maxfiles 1000000 1000000
 $ ulimit -n 12288
 ```
+
+## Progress
+
+For long runs, the user can send a SIGHUP via `kill -1 pid` to get the current progress counts.
 
 ## Example
 

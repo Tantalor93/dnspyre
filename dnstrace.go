@@ -15,6 +15,9 @@ import (
 
 	"syscall"
 
+	"context"
+	"os/signal"
+
 	"github.com/alecthomas/kingpin"
 	"github.com/codahale/hdrhistogram"
 	"github.com/fatih/color"
@@ -91,7 +94,7 @@ func isExpected(a string) bool {
 	return false
 }
 
-func do() []*rstats {
+func do(ctx context.Context) []*rstats {
 	questions := make([]string, len(*pQueries))
 	for i, q := range *pQueries {
 		questions[i] = dns.Fqdn(q)
@@ -167,8 +170,10 @@ func do() []*rstats {
 
 			var i int64
 			for i = 1; i <= *pCount; i++ {
-
 				for _, q := range questions {
+					if ctx.Err() != nil {
+						return
+					}
 					atomic.AddInt64(&count, 1)
 
 					// instead of setting the question, do this manually for lower overhead and lock free access to id
@@ -279,16 +284,53 @@ func do() []*rstats {
 	return stats
 }
 
+func printProgress() {
+
+	if *pSilent {
+		return
+	}
+
+	fmt.Println()
+
+
+	errorFprint := color.New(color.FgRed).Fprint
+	successFprint := color.New(color.FgGreen).Fprint
+
+	var total uint64
+	total = uint64(*pCount) * uint64(len(*pQueries)) * uint64(*pConcurrency)
+
+	acount := atomic.LoadInt64(&count)
+	acerror := atomic.LoadInt64(&cerror)
+	aecount := atomic.LoadInt64(&ecount)
+	amismatch := atomic.LoadInt64(&mismatch)
+	asuccess := atomic.LoadInt64(&success)
+	amatched := atomic.LoadInt64(&matched)
+
+	fmt.Printf("Total requests:\t %d of %d (%0.1f%%)\n", acount, total, 100.0*float64(acount)/float64(total))
+
+	if acerror > 0 || aecount > 0 {
+		errorFprint(os.Stdout, "Connection errors:\t", acerror, "\n")
+		errorFprint(os.Stdout, "Read/Write errors:\t", aecount, "\n")
+	}
+
+	if amismatch > 0 {
+		errorFprint(os.Stdout, "ID mismatch errors:\t", amismatch, "\n")
+	}
+
+	successFprint(os.Stdout, "DNS success codes:\t", asuccess, "\n")
+
+	if len(*pExpect) > 0 {
+		successFprint(os.Stdout, "Expected results:\t", amatched, "\n")
+	}
+
+}
+
 func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 	defer func() {
 		if csv != nil {
 			csv.Close()
 		}
 	}()
-
-	if *pSilent {
-		return
-	}
 
 	// merge all the stats here
 	timings := hdrhistogram.New(pHistMin.Nanoseconds(), pHistMax.Nanoseconds(), *pHistPre)
@@ -302,27 +344,23 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 		}
 	}
 
-	errorFprint := color.New(color.FgRed).Fprint
-	successFprint := color.New(color.FgGreen).Fprint
-	infoFprint := color.New().Fprint
+	if csv != nil {
 
-	infoFprint(os.Stdout, "Total requests:\t\t", count, "\n")
-	if cerror > 0 || ecount > 0 {
-		errorFprint(os.Stdout, "Connection errors:\t", cerror, "\n")
-		errorFprint(os.Stdout, "Read/Write errors:\t", ecount, "\n")
+		writeBars(csv, timings.Distribution())
+
+		fmt.Println()
+		fmt.Println("DNS distribution written to", csv.Name())
 	}
 
-	if mismatch > 0 {
-		errorFprint(os.Stdout, "ID mismatch errors:\t", mismatch, "\n")
+	if *pSilent {
+		return
 	}
 
-	successFprint(os.Stdout, "DNS success codes:\t", success, "\n")
-
-	if len(*pExpect) > 0 {
-		successFprint(os.Stdout, "Expected results:\t", matched, "\n")
-	}
+	printProgress()
 
 	if len(codeTotals) > 0 {
+		errorFprint := color.New(color.FgRed).Fprint
+		successFprint := color.New(color.FgGreen).Fprint
 
 		fmt.Println()
 		fmt.Println("DNS response codes")
@@ -364,13 +402,6 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 			printBars(dist)
 		}
 
-		if csv != nil {
-
-			writeBars(csv, dist)
-
-			fmt.Println()
-			fmt.Println("DNS distribution written to", csv.Name())
-		}
 	}
 
 }
@@ -469,12 +500,36 @@ func main() {
 		csv = f
 	}
 
-	// get going
+	sigsInt := make(chan os.Signal, 8)
+	signal.Notify(sigsInt, syscall.SIGINT)
 
+	sigsHup := make(chan os.Signal, 8)
+	signal.Notify(sigsHup, syscall.SIGHUP)
+
+	defer close(sigsInt)
+	defer close(sigsHup)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go func() {
+		<-sigsInt
+		printProgress()
+		fmt.Fprintln(os.Stderr, "Cancelling benchmark ^C, again to termiate now.")
+		cancel()
+		<-sigsInt
+		os.Exit(130)
+	}()
+	go func() {
+		for _ = range sigsHup {
+			printProgress()
+		}
+	}()
+
+	// get going
 	rand.Seed(time.Now().UnixNano())
 
 	start := time.Now()
-	res := do()
+	res := do(ctx)
 	end := time.Now()
 
 	printReport(end.Sub(start), res, csv)

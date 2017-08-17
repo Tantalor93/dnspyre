@@ -78,7 +78,10 @@ jobs:
              export TAG=$CIRCLE_TAG-$CIRCLE_BUILD_NUM
              echo "Building $TAG"
              cp /tmp/ws/.bin/dnstrace .
-             docker build -t $CONTAINER_NAME -f Dockerfile.scratch .
+             docker build -t $CONTAINER_NAME -f Dockerfile.scratch \
+                              --build-arg BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+                              --build-arg VCS_REF=$CIRCLE_SHA1 \
+                              --build-arg VERSION=$CIRCLE_TAG .
              docker tag $CONTAINER_NAME:latest $CONTAINER_NAME:$CIRCLE_TAG
              docker tag $CONTAINER_NAME:latest $CONTAINER_NAME:$TAG
              docker push $CONTAINER_NAME
