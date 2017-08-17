@@ -64,6 +64,7 @@ jobs:
              echo "Building $TAG"
              cp /tmp/ws/.bin/dnstrace .
              docker build -t $CONTAINER_NAME -f Dockerfile.scratch .
+             docker tag $CONTAINER_NAME:latest $CONTAINER_NAME:$CIRCLE_TAG
              docker tag $CONTAINER_NAME:latest $CONTAINER_NAME:$TAG
              docker push $CONTAINER_NAME
              echo "Total sizes"
