@@ -63,9 +63,8 @@ jobs:
              export TAG=$CIRCLE_TAG-$CIRCLE_BUILD_NUM
              echo "Building $TAG"
              cp /tmp/ws/.bin/dnstrace .
-             ls -la
              docker build -t $CONTAINER_NAME -f Dockerfile.scratch .
-             docker tag -f $CONTAINER_NAME:latest $CONTAINER_NAME:$TAG
+             docker tag $CONTAINER_NAME:latest $CONTAINER_NAME:$TAG
              docker push $CONTAINER_NAME
              echo "Total sizes"
              ls -lah dnstrace
