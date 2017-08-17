@@ -478,4 +478,9 @@ func main() {
 	end := time.Now()
 
 	printReport(end.Sub(start), res, csv)
+
+	if cerror > 0 || ecount > 0 || mismatch > 0 {
+		// something was wrong
+		os.Exit(1)
+	}
 }

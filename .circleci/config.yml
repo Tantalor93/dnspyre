@@ -2,6 +2,13 @@ defaults: &defaults
   docker:
     - image: circleci/golang:1.8.1
 
+tests: &tests
+  requires:
+    - build
+  filters:
+    tags:
+      only: /.*/
+
 version: 2
 jobs:
   # Build binary
@@ -46,6 +53,14 @@ jobs:
           at: /tmp/ws
       - run: .bin/dnstrace -s 8.8.8.8 -r redsift.io
 
+  test_google_vol:
+    <<: *defaults
+    working_directory: /tmp/ws
+    steps:
+      - attach_workspace:
+          at: /tmp/ws
+      - run: .bin/dnstrace -s 8.8.4.4 -r -n 10 -n 10 redsift.io
+
   # Pop binary into minimal container and push
   deploy:
     <<: *defaults
@@ -80,22 +95,17 @@ workflows:
             tags:
               only: /.*/
       - test_help:
-          requires:
-            - build
-          filters:
-            tags:
-              only: /.*/
+          <<: *tests
       - test_google:
-          requires:
-            - build
-          filters:
-            tags:
-              only: /.*/
+          <<: *tests
+      - test_google_vol:
+          <<: *tests
       - deploy:
           context: org-global
           requires:
             - test_help
             - test_google
+            - test_google_vol
           filters:
             tags:
               only: /^v.*/
