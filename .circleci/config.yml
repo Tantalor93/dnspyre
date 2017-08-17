@@ -59,7 +59,7 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp/ws
-      - run: .bin/dnstrace -s 8.8.4.4 -r -n 10 -c 10 redsift.io
+      - run: .bin/dnstrace -s 8.8.4.4 -r -n 10 -c 5 redsift.io
 
   # Pop binary into minimal container and push
   deploy:
