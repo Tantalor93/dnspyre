@@ -13,65 +13,65 @@ import (
 
 	"strconv"
 
+	"syscall"
+
 	"github.com/alecthomas/kingpin"
 	"github.com/codahale/hdrhistogram"
 	"github.com/fatih/color"
 	"github.com/miekg/dns"
 	"github.com/olekukonko/tablewriter"
-	"syscall"
 	"go.uber.org/ratelimit"
 )
 
 var (
 	// Tag is set by build at compile time to Git Tag
-	Tag    = ""
+	Tag = ""
 	// Commit is set by build at compile time to Git SHA1
 	Commit = ""
 	author = "Rahul Powar <rahul@redsift.io>"
 )
 
 var (
-	pApp = kingpin.New("dnstrace", "A DNS benchmark.").Author(author)
+	pApp = kingpin.New("dnstrace", "A high QPS DNS benchmark.").Author(author)
 
-	pServer  = pApp.Flag("server", "DNS server IP:port to test.").Short('s').Default("127.0.0.1").String()
-	pType    = pApp.Flag("type", "Query type.").Short('t').Default("A").Enum("TXT", "A", "AAAA") //TODO: Rest of them pt 1
+	pServer = pApp.Flag("server", "DNS server IP:port to test.").Short('s').Default("127.0.0.1").String()
+	pType   = pApp.Flag("type", "Query type.").Short('t').Default("A").Enum("TXT", "A", "AAAA") //TODO: Rest of them pt 1
 
 	pCount       = pApp.Flag("number", "Number of queries to issue. Note that the total number of queries issued = number*concurrency*len(queries).").Short('n').Default("1").Int64()
 	pConcurrency = pApp.Flag("concurrency", "Number of concurrent queries to issue.").Short('c').Default("1").Uint32()
-	pRate = pApp.Flag("rate-limit", "Apply a global questions / second rate limit.").Short('l').Default("0").Int()
+	pRate        = pApp.Flag("rate-limit", "Apply a global questions / second rate limit.").Short('l').Default("0").Int()
 
-	pExpect  = pApp.Flag("expect", "Expect a specific response.").Short('e').Strings()
-
+	pExpect = pApp.Flag("expect", "Expect a specific response.").Short('e').Strings()
 
 	pRecurse = pApp.Flag("recurse", "Allow DNS recursion.").Short('r').Default("false").Bool()
-	pUdpSize     = pApp.Flag("edns0", "Enable EDNS0 with specified size.").Default("0").Uint16()
-	pTCP = pApp.Flag("tcp", "Use TCP fot DNS requests.").Default("false").Bool()
+	pUdpSize = pApp.Flag("edns0", "Enable EDNS0 with specified size.").Default("0").Uint16()
+	pTCP     = pApp.Flag("tcp", "Use TCP fot DNS requests.").Default("false").Bool()
 
 	pWriteTimeout = pApp.Flag("write", "DNS write timeout.").Default("1s").Duration()
 	pReadTimeout  = pApp.Flag("read", "DNS read timeout.").Default(dnsTimeout.String()).Duration()
 
 	pRCodes = pApp.Flag("codes", "Enable counting DNS return codes.").Default("true").Bool()
 
-	pHistMin     = pApp.Flag("min", "Minimum value for timing histogram.").Default((time.Microsecond*400).String()).Duration()
+	pHistMin     = pApp.Flag("min", "Minimum value for timing histogram.").Default((time.Microsecond * 400).String()).Duration()
 	pHistMax     = pApp.Flag("max", "Maximum value for histogram.").Default(dnsTimeout.String()).Duration()
 	pHistPre     = pApp.Flag("precision", "Significant figure for histogram precision.").Default("1").PlaceHolder("[1-5]").Int()
 	pHistDisplay = pApp.Flag("distribution", "Display distribution histogram of timings to stdout.").Default("true").Bool()
-	pCsv = pApp.Flag("csv", "Export distribution to CSV.").Default("").PlaceHolder("/path/to/file.csv").String()
+	pCsv         = pApp.Flag("csv", "Export distribution to CSV.").Default("").PlaceHolder("/path/to/file.csv").String()
 
 	pIOErrors = pApp.Flag("io-errors", "Log I/O errors to stderr.").Default("false").Bool()
 
-	pSilent  = pApp.Flag("silent", "Disable stdout.").Default("false").Bool()
-	pColor = pApp.Flag("color", "ANSI Color output.").Default("true").Bool()
+	pSilent = pApp.Flag("silent", "Disable stdout.").Default("false").Bool()
+	pColor  = pApp.Flag("color", "ANSI Color output.").Default("true").Bool()
 
-	pQueries     = pApp.Arg("queries", "Queries to issue.").Required().Strings()
+	pQueries = pApp.Arg("queries", "Queries to issue.").Required().Strings()
 )
 
 var (
-	count   int64
-	cerror  int64
-	ecount  int64
-	success int64
-	matched int64
+	count    int64
+	cerror   int64
+	ecount   int64
+	success  int64
+	matched  int64
 	mismatch int64
 )
 
@@ -134,8 +134,6 @@ func do() []*rstats {
 
 	}
 
-
-
 	stats := make([]*rstats, conncurrent)
 
 	var wg sync.WaitGroup
@@ -178,14 +176,13 @@ func do() []*rstats {
 					m.Id = uint16(rando.Uint32())
 					m.Question[0] = question
 
-
 					if co == nil {
 						co, err = dns.DialTimeout(network, srv, dnsTimeout)
 						if err != nil {
 							atomic.AddInt64(&cerror, 1)
 
 							if *pIOErrors {
-								fmt.Fprintln(os.Stderr,"i/o error dialing: ", err.Error())
+								fmt.Fprintln(os.Stderr, "i/o error dialing: ", err.Error())
 							}
 							continue
 						}
@@ -205,7 +202,7 @@ func do() []*rstats {
 						// error writing
 						atomic.AddInt64(&ecount, 1)
 						if *pIOErrors {
-							fmt.Fprintln(os.Stderr,"i/o error writing: ", err.Error())
+							fmt.Fprintln(os.Stderr, "i/o error writing: ", err.Error())
 						}
 						co.Close()
 						co = nil
@@ -219,7 +216,7 @@ func do() []*rstats {
 						// error reading
 						atomic.AddInt64(&ecount, 1)
 						if *pIOErrors {
-							fmt.Fprintln(os.Stderr,"i/o error reading: ", err.Error())
+							fmt.Fprintln(os.Stderr, "i/o error reading: ", err.Error())
 						}
 						co.Close()
 						co = nil
