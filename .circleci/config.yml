@@ -1,0 +1,14 @@
+version: 2
+jobs:
+  build:
+    docker:
+      # CircleCI Go images available at: https://hub.docker.com/r/circleci/golang/
+      - image: circleci/golang:1.8
+
+    working_directory: /go/src/github.com/redsift/dnstrace
+
+    steps:
+      - checkout
+      - run: go get github.com/Masterminds/glide
+      - run: glide install
+      - run: CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo --ldflags "-X main.Tag=$CIRCLE_TAG -X main.Commit=$CIRCLE_SHA1" -o dnstrace dnstrace.go
