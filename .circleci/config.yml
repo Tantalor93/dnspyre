@@ -27,12 +27,12 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp/ws
-      - run: |
-          ls -la
-          ls -la /tmp
-          ls -la /tmp/.bin
-          /tmp/ws/.bin/dnstrace --version
-          /tmp/ws/.bin/dnstrace --help
+      - run:
+          name: Dump version
+          command: .bin/dnstrace --version
+      - run:
+          name: Display help
+          command: .bin/dnstrace --help
 
   test_google:
     docker:
