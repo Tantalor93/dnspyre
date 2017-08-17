@@ -18,6 +18,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/miekg/dns"
 	"github.com/olekukonko/tablewriter"
+	"syscall"
 )
 
 var (
@@ -27,33 +28,38 @@ var (
 )
 
 var (
-	pApp = kingpin.New("dnstrace", "A DTrace enabled DNS benchmark.").Author(Author)
+	pApp = kingpin.New("dnstrace", "A DNS benchmark.").Author(Author)
 
-	pDTrace  = pApp.Flag("dtrace", "Enable DTrace probes").Default("false").Bool()
-	pSilent  = pApp.Flag("silent", "Disable stdout").Default("false").Bool()
-	pRecurse = pApp.Flag("recurse", "Allow DNS recursion").Default("false").Bool()
-	pServer  = pApp.Flag("server", "Server IP and port to query").HintOptions("8.8.8.8:53").Default("127.0.0.1").String()
-	pType    = pApp.Flag("type", "Query type").Default("TXT").Enum("TXT", "A")
-	pExpect  = pApp.Flag("expect", "Expect a specific response").String()
+	pServer  = pApp.Flag("server", "DNS server IP:port to test.").Short('s').Default("127.0.0.1").String()
+	pType    = pApp.Flag("type", "Query type.").Short('t').Default("A").Enum("TXT", "A", "AAAA") //TODO: Rest of them pt 1
 
-	pCount       = pApp.Flag("number", "Number of queries to issue. Note that the total number of queries issued = number*concurrency*len(queries)").Short('n').Default("1").Int64()
-	pConcurrency = pApp.Flag("concurrency", "Number of concurrent queries to issue").Short('c').Default("1").Int()
-	pUdpSize     = pApp.Flag("edns0", "Enable EDNS0 with specified size").Default("0").Uint16()
+	pCount       = pApp.Flag("number", "Number of queries to issue. Note that the total number of queries issued = number*concurrency*len(queries).").Short('n').Default("1").Int64()
+	pConcurrency = pApp.Flag("concurrency", "Number of concurrent queries to issue.").Short('c').Default("1").Uint32()
+
+	pExpect  = pApp.Flag("expect", "Expect a specific response.").Short('e').Strings()
+
+
+	pRecurse = pApp.Flag("recurse", "Allow DNS recursion.").Short('r').Default("false").Bool()
+	pUdpSize     = pApp.Flag("edns0", "Enable EDNS0 with specified size.").Default("0").Uint16()
+	pTCP = pApp.Flag("tcp", "Use TCP fot DNS requests.").Default("false").Bool()
+
+	pWriteTimeout = pApp.Flag("write", "DNS write timeout.").Default("1s").Duration()
+	pReadTimeout  = pApp.Flag("read", "DNS read timeout.").Default(dnsTimeout.String()).Duration()
+
+	pRCodes = pApp.Flag("codes", "Enable counting DNS return codes.").Default("true").Bool()
+
+	pHistMin     = pApp.Flag("min", "Minimum value for timing histogram.").Default((time.Microsecond*400).String()).Duration()
+	pHistMax     = pApp.Flag("max", "Maximum value for histogram.").Default(dnsTimeout.String()).Duration()
+	pHistPre     = pApp.Flag("precision", "Significant figure for histogram precision.").Default("1").PlaceHolder("[1-5]").Int()
+	pHistDisplay = pApp.Flag("distribution", "Display distribution histogram of timings to stdout.").Default("true").Bool()
+	pCsv = pApp.Flag("csv", "Export distribution to CSV.").Default("").PlaceHolder("/path/to/file.csv").String()
+
+	pIOErrors = pApp.Flag("io-errors", "Log I/O errors to stderr.").Default("false").Bool()
+
+	pSilent  = pApp.Flag("silent", "Disable stdout.").Default("false").Bool()
+	pColor = pApp.Flag("color", "ANSI Color output.").Default("true").Bool()
+
 	pQueries     = pApp.Arg("queries", "Queries to issue.").Required().Strings()
-
-	pWriteTimeout = pApp.Flag("write", "DNS write timeout").Default("1s").Duration()
-	pReadTimeout  = pApp.Flag("read", "DNS read timeout").Default("4s").Duration()
-
-	pHistMin     = pApp.Flag("min", "Minimum value for timing histogram in nanoseconds").Default(strconv.FormatInt(int64(time.Microsecond*100), 10)).Int64()
-	pHistMax     = pApp.Flag("max", "Maximum value for histogram in nanoseconds").Default(strconv.FormatInt(int64(dnsConnectTimeout), 10)).Int64()
-	pHistPre     = pApp.Flag("precision", "Significant figure for histogram precision").Default("1").Int()
-	pHistDisplay = pApp.Flag("distribution", "Display distribution histogram of timings").Default("true").Bool()
-
-	pRCodes = pApp.Flag("codes", "Enable counting DNS return codes").Default("true").Bool()
-
-	pIOErrors = pApp.Flag("io-errors", "Log I/O errors to stderr").Default("false").Bool()
-
-	pColor = pApp.Flag("color", "Color output").Default("true").Bool()
 )
 
 var (
@@ -62,13 +68,23 @@ var (
 	ecount  int64
 	success int64
 	matched int64
+	mismatch int64
 )
 
-const dnsConnectTimeout = time.Second * 4
+const dnsTimeout = time.Second * 4
 
 type rstats struct {
 	codes map[int]int64
 	hist  *hdrhistogram.Histogram
+}
+
+func isExpected(a string) bool {
+	for _, b := range *pExpect {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }
 
 func do() []*rstats {
@@ -79,9 +95,13 @@ func do() []*rstats {
 
 	qType := dns.TypeNone
 	switch *pType {
-	//TODO: Rest of them
+	//TODO: Rest of them pt 2
 	case "TXT":
 		qType = dns.TypeTXT
+	case "A":
+		qType = dns.TypeA
+	case "AAAA":
+		qType = dns.TypeAAAA
 	default:
 		panic(fmt.Errorf("Unknown type %q", *pType))
 	}
@@ -91,12 +111,22 @@ func do() []*rstats {
 		srv += ":53"
 	}
 
-	stats := make([]*rstats, *pConcurrency)
+	network := "udp"
+	if *pTCP {
+		network = "tcp"
+	}
+	conncurrent := *pConcurrency
+	if !*pSilent {
+		fmt.Printf("Benchmarking %s via %s with %d conncurrent requests\n\n", srv, network, conncurrent)
+
+	}
+
+	stats := make([]*rstats, conncurrent)
 
 	var wg sync.WaitGroup
-
-	for w := 0; w < *pConcurrency; w++ {
-		st := &rstats{hist: hdrhistogram.New(*pHistMin, *pHistMax, *pHistPre)}
+	var w uint32
+	for w = 0; w < conncurrent; w++ {
+		st := &rstats{hist: hdrhistogram.New(pHistMin.Nanoseconds(), pHistMax.Nanoseconds(), *pHistPre)}
 		stats[w] = st
 		if *pRCodes {
 			st.codes = make(map[int]int64)
@@ -115,6 +145,12 @@ func do() []*rstats {
 
 			var r *dns.Msg
 			m := new(dns.Msg)
+			m.RecursionDesired = *pRecurse
+			m.Question = make([]dns.Question, 1)
+			question := dns.Question{"", qType, dns.ClassINET}
+
+			// create a new lock free rand source for this goroutine
+			rando := rand.New(rand.NewSource(time.Now().Unix()))
 
 			var i int64
 			for i = 1; i <= *pCount; i++ {
@@ -122,13 +158,20 @@ func do() []*rstats {
 				for _, q := range questions {
 					atomic.AddInt64(&count, 1)
 
-					m.SetQuestion(q, qType)
-					m.RecursionDesired = *pRecurse
+					// instead of setting the question, do this manually for lower overhead and lock free access to id
+					question.Name = q
+					m.Id = uint16(rando.Uint32())
+					m.Question[0] = question
+
 
 					if co == nil {
-						co, err = dns.DialTimeout("udp", srv, dnsConnectTimeout)
+						co, err = dns.DialTimeout(network, srv, dnsTimeout)
 						if err != nil {
 							atomic.AddInt64(&cerror, 1)
+
+							if *pIOErrors {
+								fmt.Fprintln(os.Stderr,"i/o error dialing: ", err.Error())
+							}
 							continue
 						}
 						if udpSize := *pUdpSize; udpSize > 0 {
@@ -167,16 +210,33 @@ func do() []*rstats {
 					st.hist.RecordValue(timing.Nanoseconds())
 
 					if r.Rcode == dns.RcodeSuccess {
+						if r.Id != m.Id {
+							atomic.AddInt64(&mismatch, 1)
+							continue
+						}
 						atomic.AddInt64(&success, 1)
 
-						if expect := *pExpect; expect != "" {
+						if expect := *pExpect; len(expect) > 0 {
 							for _, s := range r.Answer {
+								ok := false
 								switch s.Header().Rrtype {
+								//TODO: Rest of them pt 3
+								case dns.TypeA:
+									a := s.(*dns.A)
+									ok = isExpected(a.A.To4().String())
+
+								case dns.TypeAAAA:
+									a := s.(*dns.A)
+									ok = isExpected(a.A.String())
+
 								case dns.TypeTXT:
 									t := s.(*dns.TXT)
-									if strings.Join(t.Txt, "") == expect {
-										atomic.AddInt64(&matched, 1)
-									}
+									ok = isExpected(strings.Join(t.Txt, ""))
+								}
+
+								if ok {
+									atomic.AddInt64(&matched, 1)
+									break
 								}
 							}
 						}
@@ -202,13 +262,19 @@ func do() []*rstats {
 	return stats
 }
 
-func printReport(t time.Duration, stats []*rstats) {
+func printReport(t time.Duration, stats []*rstats, csv *os.File) {
+	defer func() {
+		if csv != nil {
+			csv.Close()
+		}
+	}()
+
 	if *pSilent {
 		return
 	}
 
 	// merge all the stats here
-	timings := hdrhistogram.New(*pHistMin, *pHistMax, *pHistPre)
+	timings := hdrhistogram.New(pHistMin.Nanoseconds(), pHistMax.Nanoseconds(), *pHistPre)
 	codeTotals := make(map[int]int64)
 	for _, s := range stats {
 		timings.Merge(s.hist)
@@ -228,16 +294,21 @@ func printReport(t time.Duration, stats []*rstats) {
 		errorFprint(os.Stdout, "Connection errors:\t", cerror, "\n")
 		errorFprint(os.Stdout, "Read/Write errors:\t", ecount, "\n")
 	}
+
+	if mismatch > 0 {
+		errorFprint(os.Stdout, "ID mismatch errors:\t", mismatch, "\n")
+	}
+
 	successFprint(os.Stdout, "DNS success codes:\t", success, "\n")
 
-	if *pExpect != "" {
+	if len(*pExpect) > 0 {
 		successFprint(os.Stdout, "Expected results:\t", matched, "\n")
 	}
 
 	if len(codeTotals) > 0 {
 
 		fmt.Println()
-		fmt.Println("DNS Codes")
+		fmt.Println("DNS response codes")
 		for i := dns.RcodeSuccess; i <= dns.RcodeBadCookie; i++ {
 			printFn := errorFprint
 			if i == dns.RcodeSuccess {
@@ -252,6 +323,7 @@ func printReport(t time.Duration, stats []*rstats) {
 	fmt.Println()
 
 	fmt.Println("Time taken for tests:\t", t.String())
+	fmt.Printf("Questions per second:\t %0.1f\n", float64(count)/t.Seconds())
 
 	min := time.Duration(timings.Min())
 	mean := time.Duration(timings.Mean())
@@ -266,15 +338,32 @@ func printReport(t time.Duration, stats []*rstats) {
 		fmt.Println("\t [+/-sd]:\t", sd)
 		fmt.Println("\t max:\t\t", max)
 
-		if *pHistDisplay {
+		dist := timings.Distribution()
+		if *pHistDisplay && tc > 1 {
 
 			fmt.Println()
-			fmt.Println("Distribution")
+			fmt.Println("DNS distribution,", tc, "datapoints")
 
-			printBars(timings.Distribution())
+			printBars(dist)
+		}
+
+		if csv != nil {
+
+			writeBars(csv, dist)
+
+			fmt.Println()
+			fmt.Println("DNS distribution written to", csv.Name())
 		}
 	}
 
+}
+
+func writeBars(f *os.File, bars []hdrhistogram.Bar) {
+	f.WriteString("From (ns), To (ns), Count\n")
+
+	for _, b := range bars {
+		f.WriteString(b.String())
+	}
 }
 
 func printBars(bars []hdrhistogram.Bar) {
@@ -323,6 +412,8 @@ func makeBar(c int64, max int64) string {
 	return strings.Repeat("▄", t)
 }
 
+const fileNoBuffer = 9 // app itself needs about 9 for libs
+
 func main() {
 	version := "unknown"
 	if Tag == "" {
@@ -336,7 +427,32 @@ func main() {
 	pApp.Version(version)
 	kingpin.MustParse(pApp.Parse(os.Args[1:]))
 
+	// process args
 	color.NoColor = !*pColor
+
+	var rLimit syscall.Rlimit
+
+	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit); err == nil {
+		var needed uint64
+		needed = uint64(*pConcurrency) + uint64(fileNoBuffer)
+		if rLimit.Cur < needed {
+			fmt.Fprintf(os.Stderr, "current process limit for number of files is %d and insufficient for level of requested concurrency.\n", rLimit.Cur)
+			os.Exit(2)
+		}
+	}
+
+	var csv *os.File
+	if *pCsv != "" {
+		f, err := os.Create(*pCsv)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(2)
+		}
+
+		csv = f
+	}
+
+	// get going
 
 	rand.Seed(time.Now().UnixNano())
 
@@ -344,5 +460,5 @@ func main() {
 	res := do()
 	end := time.Now()
 
-	printReport(end.Sub(start), res)
+	printReport(end.Sub(start), res, csv)
 }

@@ -1,6 +1,6 @@
 # DNStrace
 
-Commandline DNS benchmark tool.
+Command-line DNS benchmark tool built to stress test and measure the performance of DNS servers with commodity hardware. This tool typically consumers ~30kb per concurrent connection and can do ~3000 QPS per Xeon E5 core.
 
 ## Usage
 
@@ -9,32 +9,34 @@ $ dnstrace --help
 
 usage: dnstrace [<flags>] <queries>...
 
-A DTrace enabled DNS benchmark.
+A DNS benchmark.
 
 Flags:
-      --help                Show context-sensitive help (also try --help-long
-                            and --help-man).
-      --dtrace              Enable DTrace probes
-      --silent              Disable stdout
-      --recurse             Allow DNS recursion
-      --server="127.0.0.1"  Server IP and port to query
-      --type=TXT            Query type
-      --expect=EXPECT       Expect a specific response
-  -n, --number=1            Number of queries to issue. Note that the total
-                            number of queries issued =
-                            number*concurrency*len(queries)
-  -c, --concurrency=1       Number of concurrent queries to issue
-      --edns0=0             Enable EDNS0 with specified size
-      --write=1s            DNS write timeout
-      --read=4s             DNS read timeout
-      --min=100000          Minimum value for timing histogram in nanoseconds
-      --max=4000000000      Maximum value for histogram in nanoseconds
-      --precision=1         Significant figure for histogram precision
-      --distribution        Display distribution histogram of timings
-      --codes               Enable counting DNS return codes
-      --io-errors           Log I/O errors to stderr
-      --color               Color output
-      --version             Show application version.
+      --help                   Show context-sensitive help (also try --help-long
+                               and --help-man).
+  -s, --server="127.0.0.1"     DNS server IP:port to test.
+  -t, --type=A                 Query type.
+  -n, --number=1               Number of queries to issue. Note that the total
+                               number of queries issued =
+                               number*concurrency*len(queries).
+  -c, --concurrency=1          Number of concurrent queries to issue.
+  -e, --expect=EXPECT ...      Expect a specific response.
+  -r, --recurse                Allow DNS recursion.
+      --edns0=0                Enable EDNS0 with specified size.
+      --tcp                    Use TCP fot DNS requests.
+      --write=1s               DNS write timeout.
+      --read=4s                DNS read timeout.
+      --codes                  Enable counting DNS return codes.
+      --min=400µs              Minimum value for timing histogram.
+      --max=4s                 Maximum value for histogram.
+      --precision=[1-5]        Significant figure for histogram precision.
+      --distribution           Display distribution histogram of timings to
+                               stdout.
+      --csv=/path/to/file.csv  Export distribution to CSV.
+      --io-errors              Log I/O errors to stderr.
+      --silent                 Disable stdout.
+      --color                  ANSI Color output.
+      --version                Show application version.
 
 Args:
   <queries>  Queries to issue.
@@ -43,6 +45,17 @@ Args:
 ### Bash/ZSH Shell Completion
 
 `./dnstrace --completion-script-bash` and `./dnstrace --completion-script-zsh` will create shell completion scripts.
+
+## C10K and the like
+
+As you approach thousands of concurrent connections on OS-X, you may quickly run into connection errors due to insufficient file handles. This is likely due to process limits so remember to adjust these limits if you intent to increase concurrency levels beyond 1000.
+
+Note that using `sudo ulimit` will create a root shell, adjusts its limits, and then exit causing no real effect. Instead use `launchctl` first on OS-X.
+
+```
+$ sudo launchctl limit maxfiles 1000000 1000000
+$ ulimit -n 12288
+```
 
 ## Example
 

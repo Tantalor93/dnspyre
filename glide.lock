@@ -1,5 +1,5 @@
-hash: a3b6be1ee0d9099ba33d3bce839d91e6039680a7942891706f60b86bbff952fa
-updated: 2017-08-16T19:43:43.627635621+01:00
+hash: 3c3308ec73cf0239220aab53afd1c2bca690e34c5b87fc60d266ee3609036039
+updated: 2017-08-17T00:04:08.546731814+01:00
 imports:
 - name: github.com/alecthomas/kingpin
   version: 1087e65c9441605df944fb12c33f0fe7072d18ca
@@ -11,8 +11,6 @@ imports:
   version: 2efee857e7cfd4f3d0138cc3cbb1b4966962b93a
 - name: github.com/codahale/hdrhistogram
   version: 3a0bb77429bd3a61596f5e8a3172445844342120
-- name: github.com/ecin/go-dtrace
-  version: fadcc178fc1856e1f2a0eb0954b08782098df178
 - name: github.com/fatih/color
   version: 570b54cabe6b8eb0bc2dfce68d964677d63b5260
 - name: github.com/mattn/go-colorable

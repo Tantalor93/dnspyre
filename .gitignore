@@ -29,3 +29,5 @@ _testmain.go
 # External packages folder
 vendor/
 .idea/
+dnstrace
+*.log

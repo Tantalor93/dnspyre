@@ -1,6 +1,5 @@
 package: github.com/redsift/dnstrace
 import:
-- package: github.com/ecin/go-dtrace
 - package: github.com/alecthomas/kingpin
   version: ^2.2.5
 - package: github.com/miekg/dns
