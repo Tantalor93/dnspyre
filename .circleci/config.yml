@@ -1,9 +1,12 @@
+defaults: &defaults
+  docker:
+    - image: circleci/golang:1.8.1
+
 version: 2
 jobs:
   # Build binary
   build:
-    docker:
-      - image: circleci/golang:1.8
+    <<: *defaults
     working_directory: /go/src/github.com/redsift/dnstrace
     steps:
       - checkout
@@ -18,11 +21,12 @@ jobs:
           root: ./
           paths:
             - .bin
+      - store_artifacts:
+          path: ./.bin
 
   # Test binary
   test_help:
-    docker:
-      - image: circleci/golang:1.8
+    <<: *defaults
     working_directory: /tmp/ws
     steps:
       - attach_workspace:
@@ -35,20 +39,16 @@ jobs:
           command: .bin/dnstrace --help
 
   test_google:
-    docker:
-      - image: circleci/golang:1.8
-    working_directory: /go/src/github.com/redsift/dnstrace
+    <<: *defaults
+    working_directory: /tmp/ws
     steps:
       - attach_workspace:
           at: /tmp/ws
-      - run: /tmp/ws/.bin/dnstrace -s 8.8.8.8 -r redsift.io
+      - run: .bin/dnstrace -s 8.8.8.8 -r redsift.io
 
   # Pop binary into minimal container and push
   deploy:
-    docker:
-      - image: circleci/golang:1.8
-        environment:
-          CONTAINER_NAME: redsift/dnstrace
+    <<: *defaults
     working_directory: /go/src/github.com/redsift/dnstrace
     steps:
       - attach_workspace:
@@ -57,7 +57,8 @@ jobs:
       - run:
           name: Build Docker image
           command: |
-             cp /tmp/.bin/dnstrace .
+             export CONTAINER_NAME=redsift/dnstrace
+             cp /tmp/ws/.bin/dnstrace .
              docker build -t $CONTAINER_NAME -f Dockerfile.scratch .
              docker tag -f $CONTAINER_NAME:latest $CONTAINER_NAME:$CIRCLE_TAG-$CIRCLE_BUILD_NUM
              docker login -u $DOCKER_USER -p $DOCKER_PASS
