@@ -23,13 +23,15 @@ import (
 )
 
 var (
+	// Tag is set by build at compile time to Git Tag
 	Tag    = ""
+	// Commit is set by build at compile time to Git SHA1
 	Commit = ""
-	Author = "Rahul Powar <rahul@redsift.io>"
+	author = "Rahul Powar <rahul@redsift.io>"
 )
 
 var (
-	pApp = kingpin.New("dnstrace", "A DNS benchmark.").Author(Author)
+	pApp = kingpin.New("dnstrace", "A DNS benchmark.").Author(author)
 
 	pServer  = pApp.Flag("server", "DNS server IP:port to test.").Short('s').Default("127.0.0.1").String()
 	pType    = pApp.Flag("type", "Query type.").Short('t').Default("A").Enum("TXT", "A", "AAAA") //TODO: Rest of them pt 1

@@ -2,7 +2,9 @@
 
 [![CircleCI](https://circleci.com/gh/redsift/dnstrace.svg?style=shield)](https://circleci.com/gh/redsift/dnstrace)
 
-Command-line DNS benchmark tool built to stress test and measure the performance of DNS servers with commodity hardware. This tool typically consumers ~30kb per concurrent connection and can do ~3000 QPS per Xeon E5 core.
+[![Go Report Card](https://goreportcard.com/badge/github.com/redsift/dnstrace)](https://goreportcard.com/report/github.com/redsift/dnstrace)
+
+Command-line DNS benchmark tool built to stress test and measure the performance of DNS servers with commodity hardware. This tool typically consumers ~30kB per concurrent connection and can do ~3000 QPS per Xeon E5 core.
 
 ## Usage
 
@@ -49,9 +51,11 @@ Args:
 
 ### Option 1 - Docker
 
+This tool is available in a prebuilt image that comes in at ~8MB
+
 `docker run redsift/dnstrace --help`
 
-### Bash/ZSH Shell Completion
+## Bash/ZSH Shell Completion
 
 `./dnstrace --completion-script-bash` and `./dnstrace --completion-script-zsh` will create shell completion scripts.
 
