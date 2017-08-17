@@ -57,16 +57,16 @@ jobs:
 
 workflows:
   version: 2
-  build_and_test:
+  build_test_deploy:
     jobs:
       - build
-      - test_help
+      - test_help:
           requires:
             - build
-      - test_google
+      - test_google:
           requires:
             - build
-      - deploy
+      - deploy:
           requires:
             - test_help
             - test_google
