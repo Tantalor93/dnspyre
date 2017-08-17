@@ -1,5 +1,7 @@
 # DNStrace
 
+[![CircleCI](https://circleci.com/gh/redsift/dnstrace.svg?style=shield)](https://circleci.com/gh/redsift/dnstrace)
+
 Command-line DNS benchmark tool built to stress test and measure the performance of DNS servers with commodity hardware. This tool typically consumers ~30kb per concurrent connection and can do ~3000 QPS per Xeon E5 core.
 
 ## Usage
@@ -42,6 +44,12 @@ Flags:
 Args:
   <queries>  Queries to issue.
 ```
+
+## Installation
+
+### Option 1 - Docker
+
+`docker run redsift/dnstrace --help`
 
 ### Bash/ZSH Shell Completion
 
