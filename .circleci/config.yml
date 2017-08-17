@@ -28,6 +28,8 @@ jobs:
       - attach_workspace:
           at: /tmp/.bin
       - run: |
+          ls -la /tmp
+          ls -la /tmp/.bin
           /tmp/.bin/dnstrace --version
           /tmp/.bin/dnstrace --help
 
