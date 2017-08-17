@@ -9,6 +9,13 @@ jobs:
 
     steps:
       - checkout
+      - setup_remote_docker
       - run: go get github.com/Masterminds/glide
       - run: glide install
       - run: CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo --ldflags "-X main.Tag=$CIRCLE_TAG -X main.Commit=$CIRCLE_SHA1" -o dnstrace dnstrace.go
+      - run:
+          name: Build Docker image
+          command: |
+             docker build -t redsift/dnstrace:latest -f Dockerfile.scratch .
+             docker login -u $DOCKER_USER -p $DOCKER_PASS
+             docker push redsift/dnstrace:latest
