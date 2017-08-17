@@ -23,15 +23,16 @@ jobs:
   test_help:
     docker:
       - image: circleci/golang:1.8
-    working_directory: /go/src/github.com/redsift/dnstrace
+    working_directory: /tmp/ws
     steps:
       - attach_workspace:
-          at: /tmp/.bin
+          at: /tmp/ws
       - run: |
+          ls -la
           ls -la /tmp
           ls -la /tmp/.bin
-          /tmp/.bin/dnstrace --version
-          /tmp/.bin/dnstrace --help
+          /tmp/ws/.bin/dnstrace --version
+          /tmp/ws/.bin/dnstrace --help
 
   test_google:
     docker:
@@ -39,8 +40,8 @@ jobs:
     working_directory: /go/src/github.com/redsift/dnstrace
     steps:
       - attach_workspace:
-          at: /tmp/.bin
-      - run: /tmp/.bin/dnstrace -s 8.8.8.8 -r redsift.io
+          at: /tmp/ws
+      - run: /tmp/ws/.bin/dnstrace -s 8.8.8.8 -r redsift.io
 
   # Pop binary into minimal container and push
   deploy:
@@ -51,7 +52,7 @@ jobs:
     working_directory: /go/src/github.com/redsift/dnstrace
     steps:
       - attach_workspace:
-          at: /tmp/.bin
+          at: /tmp/ws
       - setup_remote_docker
       - run:
           name: Build Docker image
