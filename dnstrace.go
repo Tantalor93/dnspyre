@@ -248,8 +248,8 @@ func do(ctx context.Context) []*rstats {
 									ok = isExpected(a.A.To4().String())
 
 								case dns.TypeAAAA:
-									a := s.(*dns.A)
-									ok = isExpected(a.A.String())
+									a := s.(*dns.AAAA)
+									ok = isExpected(a.AAAA.String())
 
 								case dns.TypeTXT:
 									t := s.(*dns.TXT)
@@ -320,7 +320,11 @@ func printProgress() {
 	successFprint(os.Stdout, "DNS success codes:\t", asuccess, "\n")
 
 	if len(*pExpect) > 0 {
-		successFprint(os.Stdout, "Expected results:\t", amatched, "\n")
+		expect := successFprint
+		if amatched != asuccess {
+			expect = errorFprint
+		}
+		expect(os.Stdout, "Expected results:\t", amatched, "\n")
 	}
 
 }
