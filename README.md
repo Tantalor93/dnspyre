@@ -5,7 +5,12 @@
 [![CircleCI](https://circleci.com/gh/redsift/dnstrace.svg?style=shield)](https://circleci.com/gh/redsift/dnstrace)
 [![Docker Image](https://images.microbadger.com/badges/image/redsift/dnstrace.svg)](https://microbadger.com/images/redsift/dnstrace)
 
-Command-line DNS benchmark tool built to stress test and measure the performance of DNS servers with commodity hardware. This tool typically consumers ~30kB per concurrent connection and can do ~3000 QPS per Xeon E5 core.
+Command-line DNS benchmark tool built to stress test and measure the performance of DNS servers with commodity hardware.
+This tool typically consumes ~30kB per concurrent connection and can maintain ~30,000 QPS per modern core if your server, OS and network allows you to reach suitable levels of concurrency.
+
+DNStrace bypasses OS resolvers and is provided as a Docker packaged prebuilt static binary.
+Basic latency measurement, result checking and histograms are supported.
+Currently, only `A`, `AAAA` and `TXT` questions are supported.
 
 ## Usage
 
@@ -50,13 +55,16 @@ Args:
 
 ## Installation
 
-### Option 1 - Docker
+### Docker
 
 [![Latest](https://images.microbadger.com/badges/version/redsift/dnstrace.svg)](https://microbadger.com/images/redsift/dnstrace)
 
 This tool is available in a prebuilt image.
 
 `docker run redsift/dnstrace --help`
+
+If your local test setup lets you reach 50k QPS and above, you can expect the docker networking to add ~2% overhead to throughput and ~8% to mean latency (tested on Linux Docker 1.12.3).
+If this is significant for your purposes you may wish to run with `--net=host`
 
 ## Bash/ZSH Shell Completion
 
@@ -80,74 +88,73 @@ For long runs, the user can send a SIGHUP via `kill -1 pid` to get the current p
 ## Example
 
 ```
-$ dnstrace -n 10 -c 10 --server 8.8.8.8 --recurse redsift.io
+$ docker run redsift/dnstrace -n 10 -c 10 --server 8.8.8.8 --recurse redsift.io
 
-Total requests:		100
-DNS success codes:	100
+Benchmarking 8.8.8.8:53 via udp with 10 conncurrent requests
 
-DNS Codes
-	NOERROR:	100
 
-Time taken for tests:	 87.184678ms
+Total requests:	 100 of 100 (100.0%)
+DNS success codes:     	100
+
+DNS response codes
+       	NOERROR:       	100
+
+Time taken for tests:  	 107.091332ms
+Questions per second:  	 933.8
 
 DNS timings, 100 datapoints
-	 min:		 3.014656ms
-	 mean:		 7.5196ms
-	 [+/-sd]:	 3.284911ms
-	 max:		 26.214399ms
+       	 min:  		 3.145728ms
+       	 mean: 		 9.484369ms
+       	 [+/-sd]:    5.527339ms
+       	 max:  		 27.262975ms
 
-Distribution
+DNS distribution, 100 datapoints
     LATENCY   |                                             | COUNT
 +-------------+---------------------------------------------+-------+
-  3.080191ms  | ▄▄▄▄▄                                       |     1
-  3.211263ms  |                                             |     0
-  3.342335ms  | ▄▄▄▄▄                                       |     1
-  3.473407ms  | ▄▄▄▄▄                                       |     1
-  3.604479ms  | ▄▄▄▄▄▄▄▄▄▄                                  |     2
-  3.735551ms  | ▄▄▄▄▄                                       |     1
-  3.866623ms  | ▄▄▄▄▄▄▄▄▄▄                                  |     2
-  3.997695ms  | ▄▄▄▄▄                                       |     1
-  4.128767ms  | ▄▄▄▄▄                                       |     1
-  4.325375ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                              |     3
-  4.587519ms  | ▄▄▄▄▄▄▄▄▄▄                                  |     2
-  4.849663ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                         |     4
-  5.111807ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄           |     7
-  5.373951ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                         |     4
-  5.636095ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                              |     3
-  5.898239ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                         |     4
-  6.160383ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                    |     5
-  6.422527ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                    |     5
-  6.684671ms  | ▄▄▄▄▄▄▄▄▄▄                                  |     2
-  6.946815ms  | ▄▄▄▄▄▄▄▄▄▄                                  |     2
-  7.208959ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                         |     4
-  7.471103ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                         |     4
-  7.733247ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                              |     3
-  7.995391ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                              |     3
-  8.257535ms  | ▄▄▄▄▄▄▄▄▄▄                                  |     2
-  8.650751ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |     9
-  9.175039ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                    |     5
-  9.699327ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                              |     3
-  10.223615ms | ▄▄▄▄▄▄▄▄▄▄                                  |     2
-  10.747903ms | ▄▄▄▄▄▄▄▄▄▄                                  |     2
-  11.272191ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                              |     3
-  11.796479ms | ▄▄▄▄▄                                       |     1
-  12.320767ms | ▄▄▄▄▄                                       |     1
+  3.276799ms  | ▄▄▄▄▄▄▄▄                                    |     2
+  3.538943ms  | ▄▄▄▄▄▄▄▄▄▄▄▄                                |     3
+  3.801087ms  | ▄▄▄▄▄▄▄▄▄▄▄▄                                |     3
+  4.063231ms  | ▄▄▄▄▄▄▄▄▄▄▄▄                                |     3
+  4.325375ms  | ▄▄▄▄▄▄▄▄                                    |     2
+  4.587519ms  |                                             |     0
+  4.849663ms  |                                             |     0
+  5.111807ms  | ▄▄▄▄                                        |     1
+  5.373951ms  | ▄▄▄▄                                        |     1
+  5.636095ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                            |     4
+  5.898239ms  | ▄▄▄▄▄▄▄▄▄▄▄▄                                |     3
+  6.160383ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                        |     5
+  6.422527ms  | ▄▄▄▄▄▄▄▄▄▄▄▄                                |     3
+  6.684671ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                        |     5
+  6.946815ms  | ▄▄▄▄▄▄▄▄                                    |     2
+  7.208959ms  | ▄▄▄▄                                        |     1
+  7.471103ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄         |     9
+  7.733247ms  | ▄▄▄▄▄▄▄▄                                    |     2
+  7.995391ms  | ▄▄▄▄▄▄▄▄                                    |     2
+  8.257535ms  | ▄▄▄▄▄▄▄▄▄▄▄▄                                |     3
+  8.650751ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                        |     5
+  9.175039ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |    11
+  9.699327ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                     |     6
+  10.223615ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                            |     4
+  10.747903ms | ▄▄▄▄                                        |     1
+  11.272191ms | ▄▄▄▄                                        |     1
+  11.796479ms |                                             |     0
+  12.320767ms |                                             |     0
   12.845055ms |                                             |     0
-  13.369343ms | ▄▄▄▄▄                                       |     1
-  13.893631ms | ▄▄▄▄▄                                       |     1
-  14.417919ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                         |     4
-  14.942207ms |                                             |     0
+  13.369343ms |                                             |     0
+  13.893631ms | ▄▄▄▄                                        |     1
+  14.417919ms | ▄▄▄▄                                        |     1
+  14.942207ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                        |     5
   15.466495ms |                                             |     0
-  15.990783ms |                                             |     0
+  15.990783ms | ▄▄▄▄                                        |     1
   16.515071ms |                                             |     0
   17.301503ms |                                             |     0
   18.350079ms |                                             |     0
-  19.398655ms |                                             |     0
-  20.447231ms |                                             |     0
-  21.495807ms |                                             |     0
+  19.398655ms | ▄▄▄▄                                        |     1
+  20.447231ms | ▄▄▄▄▄▄▄▄                                    |     2
+  21.495807ms | ▄▄▄▄                                        |     1
   22.544383ms |                                             |     0
   23.592959ms |                                             |     0
-  24.641535ms |                                             |     0
-  25.690111ms | ▄▄▄▄▄                                       |     1
-
+  24.641535ms | ▄▄▄▄                                        |     1
+  25.690111ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                            |     4
+  26.738687ms | ▄▄▄▄                                        |     1
 ```
