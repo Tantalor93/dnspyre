@@ -54,6 +54,7 @@ jobs:
       - attach_workspace:
           at: /tmp/ws
       - setup_remote_docker
+      - checkout
       - run:
           name: Build Docker image
           command: |
@@ -66,6 +67,9 @@ jobs:
              docker build -t $CONTAINER_NAME -f Dockerfile.scratch .
              docker tag -f $CONTAINER_NAME:latest $CONTAINER_NAME:$TAG
              docker push $CONTAINER_NAME
+             echo "Total sizes"
+             ls -lah dnstrace
+             docker images $CONTAINER_NAME
 
 workflows:
   version: 2
