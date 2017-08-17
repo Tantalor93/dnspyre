@@ -26,8 +26,10 @@ jobs:
     working_directory: /go/src/github.com/redsift/dnstrace
     steps:
       - attach_workspace:
-          at: .bin
-      - run: .bin/dnstrace --help
+          at: /tmp/.bin
+      - run: |
+          /tmp/.bin/dnstrace --version
+          /tmp/.bin/dnstrace --help
 
   test_google:
     docker:
@@ -35,8 +37,8 @@ jobs:
     working_directory: /go/src/github.com/redsift/dnstrace
     steps:
       - attach_workspace:
-          at: .bin
-      - run: .bin/dnstrace -s 8.8.8.8 -r redsift.io
+          at: /tmp/.bin
+      - run: /tmp/.bin/dnstrace -s 8.8.8.8 -r redsift.io
 
   # Pop binary into minimal container and push
   deploy:
@@ -47,11 +49,12 @@ jobs:
     working_directory: /go/src/github.com/redsift/dnstrace
     steps:
       - attach_workspace:
-          at: .bin
+          at: /tmp/.bin
       - setup_remote_docker
       - run:
           name: Build Docker image
           command: |
+             cp /tmp/.bin/dnstrace .
              docker build -t $CONTAINER_NAME -f Dockerfile.scratch .
              docker tag -f $CONTAINER_NAME:latest $CONTAINER_NAME:$CIRCLE_TAG-$CIRCLE_BUILD_NUM
              docker login -u $DOCKER_USER -p $DOCKER_PASS
