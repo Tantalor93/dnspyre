@@ -15,9 +15,9 @@ jobs:
             mkdir -p .bin
             CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo --ldflags "-X main.Tag=$CIRCLE_TAG -X main.Commit=$CIRCLE_SHA1" -o .bin/dnstrace dnstrace.go
       - persist_to_workspace:
-          root: .bin
+          root: ./
           paths:
-            - dnstrace
+            - .bin
 
   # Test binary
   test_help:
@@ -25,7 +25,7 @@ jobs:
       - image: circleci/golang:1.8
     steps:
       - attach_workspace:
-          at: .bin/dnstrace
+          at: .bin
       - run: .bin/dnstrace --help
 
   test_google:
@@ -33,7 +33,7 @@ jobs:
       - image: circleci/golang:1.8
     steps:
       - attach_workspace:
-          at: .bin/dnstrace
+          at: .bin
       - run: .bin/dnstrace -s 8.8.8.8 -r redsift.io
 
   # Pop binary into minimal container and push
@@ -45,7 +45,7 @@ jobs:
 
     steps:
       - attach_workspace:
-          at: .bin/dnstrace
+          at: .bin
       - setup_remote_docker
       - run:
           name: Build Docker image
@@ -67,6 +67,7 @@ workflows:
           requires:
             - build
       - deploy:
+          context: org-global
           requires:
             - test_help
             - test_google
