@@ -23,6 +23,7 @@ jobs:
   test_help:
     docker:
       - image: circleci/golang:1.8
+    working_directory: /go/src/github.com/redsift/dnstrace
     steps:
       - attach_workspace:
           at: .bin
@@ -31,6 +32,7 @@ jobs:
   test_google:
     docker:
       - image: circleci/golang:1.8
+    working_directory: /go/src/github.com/redsift/dnstrace
     steps:
       - attach_workspace:
           at: .bin
@@ -42,7 +44,7 @@ jobs:
       - image: circleci/golang:1.8
         environment:
           CONTAINER_NAME: redsift/dnstrace
-
+    working_directory: /go/src/github.com/redsift/dnstrace
     steps:
       - attach_workspace:
           at: .bin
