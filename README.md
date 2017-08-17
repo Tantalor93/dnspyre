@@ -20,6 +20,7 @@ Flags:
                                number of queries issued =
                                number*concurrency*len(queries).
   -c, --concurrency=1          Number of concurrent queries to issue.
+  -l, --rate-limit=0           Apply a global questions / second rate limit.
   -e, --expect=EXPECT ...      Expect a specific response.
   -r, --recurse                Allow DNS recursion.
       --edns0=0                Enable EDNS0 with specified size.
@@ -48,7 +49,7 @@ Args:
 
 ## C10K and the like
 
-As you approach thousands of concurrent connections on OS-X, you may quickly run into connection errors due to insufficient file handles. This is likely due to process limits so remember to adjust these limits if you intent to increase concurrency levels beyond 1000.
+As you approach thousands of concurrent connections on OS-X, you may run into connection errors due to insufficient file handles or threads. This is likely due to process limits so remember to adjust these limits if you intent to increase concurrency levels beyond 1000.
 
 Note that using `sudo ulimit` will create a root shell, adjusts its limits, and then exit causing no real effect. Instead use `launchctl` first on OS-X.
 

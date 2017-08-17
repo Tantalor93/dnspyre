@@ -1,5 +1,5 @@
-hash: 3c3308ec73cf0239220aab53afd1c2bca690e34c5b87fc60d266ee3609036039
-updated: 2017-08-17T00:04:08.546731814+01:00
+hash: 320434197581c7480933c77dc80cd2eaf9e54362d99dcab4b05f9f0a6e7f83c4
+updated: 2017-08-17T01:28:22.181526514+01:00
 imports:
 - name: github.com/alecthomas/kingpin
   version: 1087e65c9441605df944fb12c33f0fe7072d18ca
@@ -25,6 +25,8 @@ imports:
   version: 0598bd43cf51d0375c5bcd3a42e807cc19b3b7d9
 - name: github.com/olekukonko/tablewriter
   version: be5337e7b39e64e5f91445ce7e721888dbab7387
+- name: go.uber.org/ratelimit
+  version: d15fa2e2a63dd52104bc96d8ea7dc47ce8027de8
 - name: golang.org/x/sys
   version: e24f485414aeafb646f6fca458b0bf869c0880a1
   repo: https://go.googlesource.com/sys

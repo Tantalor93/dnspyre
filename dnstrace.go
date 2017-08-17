@@ -19,6 +19,7 @@ import (
 	"github.com/miekg/dns"
 	"github.com/olekukonko/tablewriter"
 	"syscall"
+	"go.uber.org/ratelimit"
 )
 
 var (
@@ -35,6 +36,7 @@ var (
 
 	pCount       = pApp.Flag("number", "Number of queries to issue. Note that the total number of queries issued = number*concurrency*len(queries).").Short('n').Default("1").Int64()
 	pConcurrency = pApp.Flag("concurrency", "Number of concurrent queries to issue.").Short('c').Default("1").Uint32()
+	pRate = pApp.Flag("rate-limit", "Apply a global questions / second rate limit.").Short('l').Default("0").Int()
 
 	pExpect  = pApp.Flag("expect", "Expect a specific response.").Short('e').Strings()
 
@@ -115,11 +117,22 @@ func do() []*rstats {
 	if *pTCP {
 		network = "tcp"
 	}
+
 	conncurrent := *pConcurrency
+
+	limits := ""
+	var limit ratelimit.Limiter
+	if *pRate > 0 {
+		limit = ratelimit.New(*pRate)
+		limits = fmt.Sprintf("(limited to %d QPS)", *pRate)
+	}
+
 	if !*pSilent {
-		fmt.Printf("Benchmarking %s via %s with %d conncurrent requests\n\n", srv, network, conncurrent)
+		fmt.Printf("Benchmarking %s via %s with %d conncurrent requests %s\n\n", srv, network, conncurrent, limits)
 
 	}
+
+
 
 	stats := make([]*rstats, conncurrent)
 
@@ -179,6 +192,11 @@ func do() []*rstats {
 							co.UDPSize = udpSize
 						}
 					}
+
+					if limit != nil {
+						limit.Take()
+					}
+
 					start := time.Now()
 					co.SetWriteDeadline(start.Add(*pWriteTimeout))
 					if err = co.WriteMsg(m); err != nil {
