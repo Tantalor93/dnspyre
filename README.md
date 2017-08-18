@@ -53,7 +53,21 @@ Args:
   <queries>  Queries to issue.
 ```
 
+## Warning
+
+While `dnstrace` is helpful for testing round trip latency via public networks,
+the code was primarily created to provide an [apachebench](https://en.wikipedia.org/wiki/ApacheBench)
+style tool for testing your own infrastructure.
+
+It is thus very easy to create significant DNS load with non default settings.
+**Do not do this to public DNS services**. You will most likely flag your IP.
+
 ## Installation
+
+### go get
+
+`go get github.com/redsift/dnstrace` will install the binary in your `$GOPATH/bin`.
+On OS-X, the native binary will outperform the Docker container below running under HyperKit significantly e.g. 30% more throughput, 30% lower latency and a 4x decrease in timing spread
 
 ### Docker
 
@@ -69,6 +83,18 @@ If this is significant for your purposes you may wish to run with `--net=host`
 ## Bash/ZSH Shell Completion
 
 `./dnstrace --completion-script-bash` and `./dnstrace --completion-script-zsh` will create shell completion scripts.
+
+e.g.
+```
+$ eval "$(./dnstrace --completion-script-zsh)"
+
+$ ./dnstrace --concurrency
+  --codes         --distribution  --io-errors     --precision     --server        --version
+  --color         --edns0         --max           --rate-limit    --silent        --write
+  --concurrency   --expect        --min           --read          --tcp
+  --csv           --help          --number        --recurse       --type
+
+```
 
 ## C10K and the like
 
