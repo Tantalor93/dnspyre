@@ -43,6 +43,7 @@ var (
 	pCount       = pApp.Flag("number", "Number of queries to issue. Note that the total number of queries issued = number*concurrency*len(queries).").Short('n').Default("1").Int64()
 	pConcurrency = pApp.Flag("concurrency", "Number of concurrent queries to issue.").Short('c').Default("1").Uint32()
 	pRate        = pApp.Flag("rate-limit", "Apply a global questions / second rate limit.").Short('l').Default("0").Int()
+	pQperConn     = pApp.Flag("query-per-conn", "Queries on a connection before creating a new one. 0: unlimited").Default("0").Int64()
 
 	pExpect = pApp.Flag("expect", "Expect a specific response.").Short('e').Strings()
 
@@ -169,10 +170,14 @@ func do(ctx context.Context) []*rstats {
 			rando := rand.New(rand.NewSource(time.Now().Unix()))
 
 			var i int64
-			for i = 1; i <= *pCount; i++ {
+			for i = 0; i < *pCount; i++ {
 				for _, q := range questions {
 					if ctx.Err() != nil {
 						return
+					}
+					if co!=nil && *pQperConn>0 && i%*pQperConn==0 {
+						co.Close()
+						co = nil
 					}
 					atomic.AddInt64(&count, 1)
 
