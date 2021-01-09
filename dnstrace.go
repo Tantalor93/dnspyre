@@ -134,7 +134,7 @@ func do(ctx context.Context) []*rstats {
 	}
 
 	if !*pSilent {
-		fmt.Printf("Benchmarking %s via %s with %d conncurrent requests %s\n\n", srv, network, conncurrent, limits)
+		fmt.Printf("Benchmarking %s via %s with %d concurrent requests %s\n\n", srv, network, conncurrent, limits)
 
 	}
 
@@ -523,7 +523,7 @@ func main() {
 	go func() {
 		<-sigsInt
 		printProgress()
-		fmt.Fprintln(os.Stderr, "Cancelling benchmark ^C, again to termiate now.")
+		fmt.Fprintln(os.Stderr, "Cancelling benchmark ^C, again to terminate now.")
 		cancel()
 		<-sigsInt
 		os.Exit(130)
