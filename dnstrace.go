@@ -124,7 +124,7 @@ func do(ctx context.Context) []*rstats {
 		network = "tcp"
 	}
 
-	conncurrent := *pConcurrency
+	concurrent := *pConcurrency
 
 	limits := ""
 	var limit ratelimit.Limiter
@@ -134,15 +134,15 @@ func do(ctx context.Context) []*rstats {
 	}
 
 	if !*pSilent {
-		fmt.Printf("Benchmarking %s via %s with %d conncurrent requests %s\n\n", srv, network, conncurrent, limits)
+		fmt.Printf("Benchmarking %s via %s with %d concurrent requests %s\n\n", srv, network, concurrent, limits)
 
 	}
 
-	stats := make([]*rstats, conncurrent)
+	stats := make([]*rstats, concurrent)
 
 	var wg sync.WaitGroup
 	var w uint32
-	for w = 0; w < conncurrent; w++ {
+	for w = 0; w < concurrent; w++ {
 		st := &rstats{hist: hdrhistogram.New(pHistMin.Nanoseconds(), pHistMax.Nanoseconds(), *pHistPre)}
 		stats[w] = st
 		if *pRCodes {
@@ -523,7 +523,7 @@ func main() {
 	go func() {
 		<-sigsInt
 		printProgress()
-		fmt.Fprintln(os.Stderr, "Cancelling benchmark ^C, again to termiate now.")
+		fmt.Fprintln(os.Stderr, "Cancelling benchmark ^C, again to terminate now.")
 		cancel()
 		<-sigsInt
 		os.Exit(130)
