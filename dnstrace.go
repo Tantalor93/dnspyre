@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"log"
 	"math/rand"
 	"time"
 
@@ -48,6 +50,7 @@ var (
 	pExpect = pApp.Flag("expect", "Expect a specific response.").Short('e').Strings()
 
 	pRecurse = pApp.Flag("recurse", "Allow DNS recursion.").Short('r').Default("false").Bool()
+	pProbability = pApp.Flag("probability", "Each hostname from file will be used with 50% probability").Default("false").Bool()
 	pUdpSize = pApp.Flag("edns0", "Enable EDNS0 with specified size.").Default("0").Uint16()
 	pTCP     = pApp.Flag("tcp", "Use TCP fot DNS requests.").Default("false").Bool()
 
@@ -67,7 +70,7 @@ var (
 	pSilent = pApp.Flag("silent", "Disable stdout.").Default("false").Bool()
 	pColor  = pApp.Flag("color", "ANSI Color output.").Default("true").Bool()
 
-	pQueries = pApp.Arg("queries", "Queries to issue.").Required().Strings()
+	pQueryFile = pApp.Arg("query file", "Path to file with queries.").Required().String()
 )
 
 var (
@@ -96,10 +99,19 @@ func isExpected(a string) bool {
 }
 
 func do(ctx context.Context) []*rstats {
-	questions := make([]string, len(*pQueries))
-	for i, q := range *pQueries {
-		questions[i] = dns.Fqdn(q)
+	var questions []string
+	file, err := os.Open(*pQueryFile)
+	if err != nil {
+		log.Fatal(err)
 	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		questions = append(questions, dns.Fqdn(scanner.Text()))
+	}
+
+	fmt.Println("Using these hostnames:", questions)
 
 	qType := dns.TypeNone
 	switch *pType {
@@ -172,6 +184,9 @@ func do(ctx context.Context) []*rstats {
 			var i int64
 			for i = 0; i < *pCount; i++ {
 				for _, q := range questions {
+					if *pProbability && rand.Intn(10) > 5 {
+						continue
+					}
 					if ctx.Err() != nil {
 						return
 					}
@@ -301,17 +316,13 @@ func printProgress() {
 	errorFprint := color.New(color.FgRed).Fprint
 	successFprint := color.New(color.FgGreen).Fprint
 
-	var total uint64
-	total = uint64(*pCount) * uint64(len(*pQueries)) * uint64(*pConcurrency)
 
-	acount := atomic.LoadInt64(&count)
 	acerror := atomic.LoadInt64(&cerror)
 	aecount := atomic.LoadInt64(&ecount)
 	amismatch := atomic.LoadInt64(&mismatch)
 	asuccess := atomic.LoadInt64(&success)
 	amatched := atomic.LoadInt64(&matched)
 
-	fmt.Printf("Total requests:\t %d of %d (%0.1f%%)\n", acount, total, 100.0*float64(acount)/float64(total))
 
 	if acerror > 0 || aecount > 0 {
 		errorFprint(os.Stdout, "Connection errors:\t", acerror, "\n")

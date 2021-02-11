@@ -31,3 +31,6 @@ vendor/
 .idea/
 dnstrace
 *.log
+
+*.iml
+dnstrace

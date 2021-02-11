@@ -1,16 +1,10 @@
-# DNStrace
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/redsift/dnstrace)](https://goreportcard.com/report/github.com/redsift/dnstrace)
-[![Release](https://img.shields.io/github/release/redsift/dnstrace/all.svg)](https://github.com/redsift/dnstrace/releases)
-[![CircleCI](https://circleci.com/gh/redsift/dnstrace.svg?style=shield)](https://circleci.com/gh/redsift/dnstrace)
-[![Docker Image](https://images.microbadger.com/badges/image/redsift/dnstrace.svg)](https://microbadger.com/images/redsift/dnstrace)
+# DNStrace
+forked and modified https://github.com/redsift/dnstrace, 
 
 Command-line DNS benchmark tool built to stress test and measure the performance of DNS servers with commodity hardware.
 This tool typically consumes ~30kB per concurrent connection and can maintain ~30,000 QPS per modern core if your server, OS and network allows you to reach suitable levels of concurrency.
 
-DNStrace bypasses OS resolvers and is provided as a Docker packaged prebuilt static binary.
-Basic latency measurement, result checking and histograms are supported.
-Currently, only `A`, `AAAA` and `TXT` questions are supported.
 
 ## Usage
 
@@ -48,9 +42,10 @@ Flags:
       --silent                 Disable stdout.
       --color                  ANSI Color output.
       --version                Show application version.
+      --probability            Each hostname from file will be used with 50% probability
 
 Args:
-  <queries>  Queries to issue.
+  <file>  file containing queries to issue.
 ```
 
 ## Warning
@@ -62,59 +57,10 @@ style tool for testing your own infrastructure.
 It is thus very easy to create significant DNS load with non default settings.
 **Do not do this to public DNS services**. You will most likely flag your IP.
 
-## Installation
-
-### go get
-
-`go get github.com/redsift/dnstrace` will install the binary in your `$GOPATH/bin`.
-On OS-X, the native binary will outperform the Docker container below running under HyperKit significantly e.g. 30% more throughput, 30% lower latency and a 4x decrease in timing spread
-
-### Docker
-
-[![Latest](https://images.microbadger.com/badges/version/redsift/dnstrace.svg)](https://microbadger.com/images/redsift/dnstrace)
-
-This tool is available in a prebuilt image.
-
-`docker run redsift/dnstrace --help`
-
-If your local test setup lets you reach 50k QPS and above, you can expect the docker networking to add ~2% overhead to throughput and ~8% to mean latency (tested on Linux Docker 1.12.3).
-If this is significant for your purposes you may wish to run with `--net=host`
-
-## Bash/ZSH Shell Completion
-
-`./dnstrace --completion-script-bash` and `./dnstrace --completion-script-zsh` will create shell completion scripts.
-
-e.g.
-```
-$ eval "$(./dnstrace --completion-script-zsh)"
-
-$ ./dnstrace --concurrency
-  --codes         --distribution  --io-errors     --precision     --server        --version
-  --color         --edns0         --max           --rate-limit    --silent        --write
-  --concurrency   --expect        --min           --read          --tcp
-  --csv           --help          --number        --recurse       --type
-
-```
-
-## C10K and the like
-
-As you approach thousands of concurrent connections on OS-X, you may run into connection errors due to insufficient file handles or threads. This is likely due to process limits so remember to adjust these limits if you intent to increase concurrency levels beyond 1000.
-
-Note that using `sudo ulimit` will create a root shell, adjusts its limits, and then exit causing no real effect. Instead use `launchctl` first on OS-X.
-
-```
-$ sudo launchctl limit maxfiles 1000000 1000000
-$ ulimit -n 12288
-```
-
-## Progress
-
-For long runs, the user can send a SIGHUP via `kill -1 pid` to get the current progress counts.
-
 ## Example
 
 ```
-$ docker run redsift/dnstrace -n 10 -c 10 --server 8.8.8.8 --recurse redsift.io
+$ dnstrace -n 10 -c 10 --server 8.8.8.8 --recurse data/2-domains
 
 Benchmarking 8.8.8.8:53 via udp with 10 conncurrent requests
 
