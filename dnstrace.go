@@ -50,7 +50,7 @@ var (
 	pExpect = pApp.Flag("expect", "Expect a specific response.").Short('e').Strings()
 
 	pRecurse = pApp.Flag("recurse", "Allow DNS recursion.").Short('r').Default("false").Bool()
-	pProbability = pApp.Flag("probability", "Each hostname from file will be used with 50% probability").Default("false").Bool()
+	pProbability = pApp.Flag("probability", "Each hostname from file will be used with probability n %").Default("100").Int()
 	pUdpSize = pApp.Flag("edns0", "Enable EDNS0 with specified size.").Default("0").Uint16()
 	pTCP     = pApp.Flag("tcp", "Use TCP fot DNS requests.").Default("false").Bool()
 
@@ -184,7 +184,8 @@ func do(ctx context.Context) []*rstats {
 			var i int64
 			for i = 0; i < *pCount; i++ {
 				for _, q := range questions {
-					if *pProbability && rand.Intn(10) > 5 {
+					intn := rand.Intn(100)
+					if intn > *pProbability {
 						continue
 					}
 					if ctx.Err() != nil {
@@ -305,24 +306,23 @@ func do(ctx context.Context) []*rstats {
 }
 
 func printProgress() {
-
 	if *pSilent {
 		return
 	}
 
 	fmt.Println()
 
-
 	errorFprint := color.New(color.FgRed).Fprint
 	successFprint := color.New(color.FgGreen).Fprint
 
-
+	acount := atomic.LoadInt64(&count)
 	acerror := atomic.LoadInt64(&cerror)
 	aecount := atomic.LoadInt64(&ecount)
 	amismatch := atomic.LoadInt64(&mismatch)
 	asuccess := atomic.LoadInt64(&success)
 	amatched := atomic.LoadInt64(&matched)
 
+	fmt.Printf("Total requests:\t %d\t\n", acount)
 
 	if acerror > 0 || aecount > 0 {
 		errorFprint(os.Stdout, "Connection errors:\t", acerror, "\n")

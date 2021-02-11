@@ -20,4 +20,5 @@ github.com/olekukonko/tablewriter v0.0.0-20170719101040-be5337e7b39e h1:TXm3cxcA
 github.com/olekukonko/tablewriter v0.0.0-20170719101040-be5337e7b39e/go.mod h1:vsDQFd/mU46D+Z4whnwzcISnGGzXWMclvtLoiIKAKIo=
 go.uber.org/ratelimit v0.0.0-20161026005643-d15fa2e2a63d h1:BwRNZZ6rMD+tp/wOB2R9E4Qr/eiaVcfK9Lc18qNx2aA=
 go.uber.org/ratelimit v0.0.0-20161026005643-d15fa2e2a63d/go.mod h1:2X8KaoNd1J0lZV+PxJk/5+DGbO/tpwLR1m++a7FnB/Y=
+golang.org/x/sys v0.0.0-20170213225739-e24f485414ae h1:GTtEQDSA+M757ZEFcmC1Z5tEQXeyj0/vKmKeGqKRbP4=
 golang.org/x/sys v0.0.0-20170213225739-e24f485414ae/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=

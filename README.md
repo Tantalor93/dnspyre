@@ -5,6 +5,12 @@ forked https://github.com/redsift/dnstrace
 Command-line DNS benchmark tool built to stress test and measure the performance of DNS servers with commodity hardware.
 This tool typically consumes ~30kB per concurrent connection and can maintain ~30,000 QPS per modern core if your server, OS and network allows you to reach suitable levels of concurrency.
 
+## Installation 
+```
+go get github.com/tantalor93/dnstrace
+```
+will install the binary in your $GOPATH/bin
+
 ## Build
 ### for linux
 ```
@@ -20,7 +26,7 @@ env GOOS=darwin go build
 ```
 $ dnstrace --help
 
-usage: dnstrace [<flags>] <queries>...
+usage: dnstrace [<flags>] <file with hostnames to query>
 
 A DNS benchmark.
 
@@ -51,7 +57,10 @@ Flags:
       --silent                 Disable stdout.
       --color                  ANSI Color output.
       --version                Show application version.
-      --probability            Each hostname from file will be used with 50% probability
+      --probability=100        Each hostname from file will be used with provided probability in %. 
+                               Value 100 and above means that each hostname from file will
+                               be used by each concurrent benchmark goroutine. Useful for randomizing queries
+                               accross benchmark goroutines.
 
 Args:
   <file>  file containing queries to issue.
