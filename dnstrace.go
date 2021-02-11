@@ -111,7 +111,7 @@ func do(ctx context.Context) []*rstats {
 		questions = append(questions, dns.Fqdn(scanner.Text()))
 	}
 
-	fmt.Printf("Parsed %d hostnames from file %s\n\n", len(questions), *pQueryFile)
+	fmt.Printf("Parsed %d hostnames from file '%s'\n\n", len(questions), *pQueryFile)
 
 	qType := dns.TypeNone
 	switch *pType {
