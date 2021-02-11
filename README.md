@@ -1,10 +1,19 @@
 
 # DNStrace
-forked and modified https://github.com/redsift/dnstrace, 
+forked https://github.com/redsift/dnstrace 
 
 Command-line DNS benchmark tool built to stress test and measure the performance of DNS servers with commodity hardware.
 This tool typically consumes ~30kB per concurrent connection and can maintain ~30,000 QPS per modern core if your server, OS and network allows you to reach suitable levels of concurrency.
 
+## Build
+### for linux
+```
+env GOOS=linux GARCH=amd64 go build
+```
+### for macos
+```
+env GOOS=darwin go build
+```
 
 ## Usage
 
@@ -58,6 +67,8 @@ It is thus very easy to create significant DNS load with non default settings.
 **Do not do this to public DNS services**. You will most likely flag your IP.
 
 ## Example
+
+
 
 ```
 $ dnstrace -n 10 -c 10 --server 8.8.8.8 --recurse data/2-domains
