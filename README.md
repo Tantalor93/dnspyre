@@ -70,7 +70,7 @@ It is thus very easy to create significant DNS load with non default settings.
 **Do not do this to public DNS services**. You will most likely flag your IP.
 
 ## Example
-hostnames provided directly
+### hostnames provided directly
 ```
 $ dnstrace -n 10 -c 10 --server 8.8.8.8 --recurse redsift.io
 Using 1 hostnames
@@ -149,6 +149,8 @@ DNS distribution, 100 datapoints
   26.738687ms | ▄▄▄▄                                        |     1
 ```
 
+### hostnames provided using file
+
 ```
 $ dnstrace -n 10 -c 10 --server 8.8.8.8 --recurse @data/2-domains
 Using 2 hostnames
@@ -219,7 +221,7 @@ DNS distribution, 200 datapoints
   28.835839ms | ▄▄▄▄                                        |     2
 ```
 
-using probability to randomize concurrent queries
+### using probability to randomize concurrent queries
 ```
 $ dnstrace -c 10 --server 8.8.8.8  --recurse --probability 33  @data/alexa
 Using 33575 hostnames
