@@ -104,18 +104,7 @@ func do(ctx context.Context) []*rstats {
 
 	fmt.Printf("Using %d hostnames\n\n", len(questions))
 
-	qType := dns.TypeNone
-	switch *pType {
-	//TODO: Rest of them pt 2
-	case "TXT":
-		qType = dns.TypeTXT
-	case "A":
-		qType = dns.TypeA
-	case "AAAA":
-		qType = dns.TypeAAAA
-	default:
-		panic(fmt.Errorf("Unknown type %q", *pType))
-	}
+	qType := dns.StringToType[*pType]
 
 	srv := *pServer
 	if strings.Index(srv, ":") == -1 {
@@ -254,7 +243,6 @@ func do(ctx context.Context) []*rstats {
 							for _, s := range r.Answer {
 								ok := false
 								switch s.Header().Rrtype {
-								//TODO: Rest of them pt 3
 								case dns.TypeA:
 									a := s.(*dns.A)
 									ok = isExpected(a.A.To4().String())
