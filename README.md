@@ -92,6 +92,11 @@ DNS timings, 100 datapoints
        	 mean: 		 9.484369ms
        	 [+/-sd]:    5.527339ms
        	 max:  		 27.262975ms
+	     p99:		 27.262975ms
+	     p95:		 11.068671ms
+	     p90:		 10.922943ms
+	     p75:		 10.204351ms
+	     p50:		 9.485759ms        
 
 DNS distribution, 100 datapoints
     LATENCY   |                                             | COUNT
