@@ -68,7 +68,7 @@ var (
 	pSilent = pApp.Flag("silent", "Disable stdout.").Default("false").Bool()
 	pColor  = pApp.Flag("color", "ANSI Color output.").Default("true").Bool()
 
-	pQueries = pApp.Arg("queries", "Queries to issue.").Required().Strings()
+	pQueries = pApp.Arg("queries", "Queries to issue. Can be file referenced using @<file-path>, for example @data/2-domains").Required().Strings()
 )
 
 var (
