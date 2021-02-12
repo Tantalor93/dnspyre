@@ -38,7 +38,7 @@ var (
 	pApp = kingpin.New("dnstrace", "A high QPS DNS benchmark.").Author(author)
 
 	pServer = pApp.Flag("server", "DNS server IP:port to test.").Short('s').Default("127.0.0.1").String()
-	pType   = pApp.Flag("type", "Query type.").Short('t').Default("A").Enum("TXT", "A", "AAAA") //TODO: Rest of them pt 1
+	pType   = pApp.Flag("type", "Query type.").Short('t').Default("A").Enum(getSupportedDnsTypes()...)
 
 	pCount       = pApp.Flag("number", "Number of queries to issue. Note that the total number of queries issued = number*concurrency*len(queries).").Short('n').Default("1").Int64()
 	pConcurrency = pApp.Flag("concurrency", "Number of concurrent queries to issue.").Short('c').Default("1").Uint32()
@@ -241,20 +241,8 @@ func do(ctx context.Context) []*rstats {
 
 						if expect := *pExpect; len(expect) > 0 {
 							for _, s := range r.Answer {
-								ok := false
-								switch s.Header().Rrtype {
-								case dns.TypeA:
-									a := s.(*dns.A)
-									ok = isExpected(a.A.To4().String())
-
-								case dns.TypeAAAA:
-									a := s.(*dns.AAAA)
-									ok = isExpected(a.AAAA.String())
-
-								case dns.TypeTXT:
-									t := s.(*dns.TXT)
-									ok = isExpected(strings.Join(t.Txt, ""))
-								}
+								a := dns.TypeToString[s.Header().Rrtype]
+								ok := isExpected(a)
 
 								if ok {
 									atomic.AddInt64(&matched, 1)
@@ -547,4 +535,12 @@ func main() {
 		// something was wrong
 		os.Exit(1)
 	}
+}
+
+func getSupportedDnsTypes() []string {
+	keys := make([]string, 0, len(dns.StringToType))
+	for k := range dns.StringToType {
+		keys = append(keys, k)
+	}
+	return keys
 }
