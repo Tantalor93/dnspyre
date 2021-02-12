@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"log"
 	"math/rand"
 	"time"
 
@@ -50,7 +48,7 @@ var (
 	pExpect = pApp.Flag("expect", "Expect a specific response.").Short('e').Strings()
 
 	pRecurse = pApp.Flag("recurse", "Allow DNS recursion.").Short('r').Default("false").Bool()
-	pProbability = pApp.Flag("probability", "Each hostname from file will be used with probability n %").Default("100").Int()
+	pProbability = pApp.Flag("probability", "Each hostname from file will be used with provided probability in %. Value 100 and above means that each hostname from file will be used by each concurrent benchmark goroutine. Useful for randomizing queries accross benchmark goroutines.").Default("100").Int()
 	pUdpSize = pApp.Flag("edns0", "Enable EDNS0 with specified size.").Default("0").Uint16()
 	pTCP     = pApp.Flag("tcp", "Use TCP fot DNS requests.").Default("false").Bool()
 
@@ -70,7 +68,7 @@ var (
 	pSilent = pApp.Flag("silent", "Disable stdout.").Default("false").Bool()
 	pColor  = pApp.Flag("color", "ANSI Color output.").Default("true").Bool()
 
-	pQueryFile = pApp.Arg("query file", "Path to file with queries.").Required().String()
+	pQueries = pApp.Arg("queries", "Queries to issue.").Required().Strings()
 )
 
 var (
@@ -99,19 +97,12 @@ func isExpected(a string) bool {
 }
 
 func do(ctx context.Context) []*rstats {
-	var questions []string
-	file, err := os.Open(*pQueryFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		questions = append(questions, dns.Fqdn(scanner.Text()))
+	questions := make([]string, len(*pQueries))
+	for i, q := range *pQueries {
+		questions[i] = dns.Fqdn(q)
 	}
 
-	fmt.Printf("Parsed %d hostnames from file '%s'\n\n", len(questions), *pQueryFile)
+	fmt.Printf("Using %d hostnames\n\n", len(questions))
 
 	qType := dns.TypeNone
 	switch *pType {

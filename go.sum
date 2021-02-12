@@ -18,6 +18,8 @@ github.com/miekg/dns v0.0.0-20170812192144-0598bd43cf51 h1:hZ1ngpLE9G7RaoMM6Llix
 github.com/miekg/dns v0.0.0-20170812192144-0598bd43cf51/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
 github.com/olekukonko/tablewriter v0.0.0-20170719101040-be5337e7b39e h1:TXm3cxcAmTO1Gp9W7QK0DeczE8vgXJDUyPPjEXViZ3Y=
 github.com/olekukonko/tablewriter v0.0.0-20170719101040-be5337e7b39e/go.mod h1:vsDQFd/mU46D+Z4whnwzcISnGGzXWMclvtLoiIKAKIo=
+github.com/redsift/dnstrace v0.1.10 h1:74Ujdh/qvkAPX9Hno+wGOnxepSZkQD+g8kR+tfQ8GHI=
+github.com/redsift/dnstrace v0.1.10/go.mod h1:opAxRZN8keolMFgn82TzvYrxiz7K4GIQxLPxr/Caqww=
 go.uber.org/ratelimit v0.0.0-20161026005643-d15fa2e2a63d h1:BwRNZZ6rMD+tp/wOB2R9E4Qr/eiaVcfK9Lc18qNx2aA=
 go.uber.org/ratelimit v0.0.0-20161026005643-d15fa2e2a63d/go.mod h1:2X8KaoNd1J0lZV+PxJk/5+DGbO/tpwLR1m++a7FnB/Y=
 golang.org/x/sys v0.0.0-20170213225739-e24f485414ae h1:GTtEQDSA+M757ZEFcmC1Z5tEQXeyj0/vKmKeGqKRbP4=
