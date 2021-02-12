@@ -404,6 +404,11 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 	mean := time.Duration(timings.Mean())
 	sd := time.Duration(timings.StdDev())
 	max := time.Duration(timings.Max())
+	p99 := time.Duration(timings.ValueAtQuantile(99))
+	p95 := time.Duration(timings.ValueAtQuantile(95))
+	p90 := time.Duration(timings.ValueAtQuantile(90))
+	p75 := time.Duration(timings.ValueAtQuantile(75))
+	p50 := time.Duration(timings.ValueAtQuantile(50))
 
 	if tc := timings.TotalCount(); tc > 0 {
 		fmt.Println()
@@ -412,6 +417,11 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 		fmt.Println("\t mean:\t\t", mean)
 		fmt.Println("\t [+/-sd]:\t", sd)
 		fmt.Println("\t max:\t\t", max)
+		fmt.Println("\t p99:\t\t", p99)
+		fmt.Println("\t p95:\t\t", p95)
+		fmt.Println("\t p90:\t\t", p90)
+		fmt.Println("\t p75:\t\t", p75)
+		fmt.Println("\t p50:\t\t", p50)
 
 		dist := timings.Distribution()
 		if *pHistDisplay && tc > 1 {
