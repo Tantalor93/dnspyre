@@ -1,22 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
-	"time"
-
 	"os"
-
+	"os/signal"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
-
-	"strconv"
-
 	"syscall"
-
-	"context"
-	"os/signal"
+	"time"
 
 	"github.com/alecthomas/kingpin"
 	"github.com/codahale/hdrhistogram"
@@ -38,19 +33,19 @@ var (
 	pApp = kingpin.New("dnstrace", "A high QPS DNS benchmark.").Author(author)
 
 	pServer = pApp.Flag("server", "DNS server IP:port to test.").Short('s').Default("127.0.0.1").String()
-	pType   = pApp.Flag("type", "Query type.").Short('t').Default("A").Enum(getSupportedDnsTypes()...)
+	pType   = pApp.Flag("type", "Query type.").Short('t').Default("A").Enum(getSupportedDNSTypes()...)
 
 	pCount       = pApp.Flag("number", "Number of queries to issue. Note that the total number of queries issued = number*concurrency*len(queries).").Short('n').Default("1").Int64()
 	pConcurrency = pApp.Flag("concurrency", "Number of concurrent queries to issue.").Short('c').Default("1").Uint32()
 	pRate        = pApp.Flag("rate-limit", "Apply a global questions / second rate limit.").Short('l').Default("0").Int()
-	pQperConn     = pApp.Flag("query-per-conn", "Queries on a connection before creating a new one. 0: unlimited").Default("0").Int64()
+	pQperConn    = pApp.Flag("query-per-conn", "Queries on a connection before creating a new one. 0: unlimited").Default("0").Int64()
 
 	pExpect = pApp.Flag("expect", "Expect a specific response.").Short('e').Strings()
 
-	pRecurse = pApp.Flag("recurse", "Allow DNS recursion.").Short('r').Default("false").Bool()
+	pRecurse     = pApp.Flag("recurse", "Allow DNS recursion.").Short('r').Default("false").Bool()
 	pProbability = pApp.Flag("probability", "Each hostname from file will be used with provided probability in %. Value 100 and above means that each hostname from file will be used by each concurrent benchmark goroutine. Useful for randomizing queries accross benchmark goroutines.").Default("100").Int()
-	pUdpSize = pApp.Flag("edns0", "Enable EDNS0 with specified size.").Default("0").Uint16()
-	pTCP     = pApp.Flag("tcp", "Use TCP fot DNS requests.").Default("false").Bool()
+	pUDPSize     = pApp.Flag("edns0", "Enable EDNS0 with specified size.").Default("0").Uint16()
+	pTCP         = pApp.Flag("tcp", "Use TCP fot DNS requests.").Default("false").Bool()
 
 	pWriteTimeout = pApp.Flag("write", "DNS write timeout.").Default("1s").Duration()
 	pReadTimeout  = pApp.Flag("read", "DNS read timeout.").Default(dnsTimeout.String()).Duration()
@@ -107,7 +102,7 @@ func do(ctx context.Context) []*rstats {
 	qType := dns.StringToType[*pType]
 
 	srv := *pServer
-	if strings.Index(srv, ":") == -1 {
+	if !strings.Contains(srv, ":") {
 		srv += ":53"
 	}
 
@@ -127,7 +122,6 @@ func do(ctx context.Context) []*rstats {
 
 	if !*pSilent {
 		fmt.Printf("Benchmarking %s via %s with %d concurrent requests %s\n\n", srv, network, concurrent, limits)
-
 	}
 
 	stats := make([]*rstats, concurrent)
@@ -156,7 +150,7 @@ func do(ctx context.Context) []*rstats {
 			m := new(dns.Msg)
 			m.RecursionDesired = *pRecurse
 			m.Question = make([]dns.Question, 1)
-			question := dns.Question{"", qType, dns.ClassINET}
+			question := dns.Question{Qtype: qType, Qclass: dns.ClassINET}
 
 			// create a new lock free rand source for this goroutine
 			rando := rand.New(rand.NewSource(time.Now().Unix()))
@@ -171,7 +165,7 @@ func do(ctx context.Context) []*rstats {
 					if ctx.Err() != nil {
 						return
 					}
-					if co!=nil && *pQperConn>0 && i%*pQperConn==0 {
+					if co != nil && *pQperConn > 0 && i%*pQperConn == 0 {
 						co.Close()
 						co = nil
 					}
@@ -192,7 +186,7 @@ func do(ctx context.Context) []*rstats {
 							}
 							continue
 						}
-						if udpSize := *pUdpSize; udpSize > 0 {
+						if udpSize := *pUDPSize; udpSize > 0 {
 							m.SetEdns0(udpSize, true)
 							co.UDPSize = udpSize
 						}
@@ -228,7 +222,7 @@ func do(ctx context.Context) []*rstats {
 						co = nil
 						continue
 					}
-					timing := time.Now().Sub(start)
+					timing := time.Since(start)
 
 					st.hist.RecordValue(timing.Nanoseconds())
 
@@ -260,10 +254,8 @@ func do(ctx context.Context) []*rstats {
 						c++
 						st.codes[r.Rcode] = c
 					}
-
 				}
 			}
-
 		}(st)
 	}
 
@@ -309,7 +301,6 @@ func printProgress() {
 		}
 		expect(os.Stdout, "Expected results:\t", amatched, "\n")
 	}
-
 }
 
 func printReport(t time.Duration, stats []*rstats, csv *os.File) {
@@ -332,7 +323,6 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 	}
 
 	if csv != nil {
-
 		writeBars(csv, timings.Distribution())
 
 		fmt.Println()
@@ -392,15 +382,12 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 
 		dist := timings.Distribution()
 		if *pHistDisplay && tc > 1 {
-
 			fmt.Println()
 			fmt.Println("DNS distribution,", tc, "datapoints")
 
 			printBars(dist)
 		}
-
 	}
-
 }
 
 func writeBars(f *os.File, bars []hdrhistogram.Bar) {
@@ -412,7 +399,6 @@ func writeBars(f *os.File, bars []hdrhistogram.Bar) {
 }
 
 func printBars(bars []hdrhistogram.Bar) {
-
 	counts := make([]int64, 0, len(bars))
 	lines := make([][]string, 0, len(bars))
 	added := false
@@ -435,7 +421,6 @@ func printBars(bars []hdrhistogram.Bar) {
 
 		line[0] = time.Duration(b.To/2 + b.From/2).String()
 		line[2] = strconv.FormatInt(b.Count, 10)
-
 	}
 
 	for i, l := range lines {
@@ -478,8 +463,7 @@ func main() {
 	var rLimit syscall.Rlimit
 
 	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit); err == nil {
-		var needed uint64
-		needed = uint64(*pConcurrency) + uint64(fileNoBuffer)
+		needed := uint64(*pConcurrency) + uint64(fileNoBuffer)
 		if rLimit.Cur < needed {
 			fmt.Fprintf(os.Stderr, "current process limit for number of files is %d and insufficient for level of requested concurrency.\n", rLimit.Cur)
 			os.Exit(2)
@@ -517,7 +501,7 @@ func main() {
 		os.Exit(130)
 	}()
 	go func() {
-		for _ = range sigsHup {
+		for range sigsHup {
 			printProgress()
 		}
 	}()
@@ -537,7 +521,7 @@ func main() {
 	}
 }
 
-func getSupportedDnsTypes() []string {
+func getSupportedDNSTypes() []string {
 	keys := make([]string, 0, len(dns.StringToType))
 	for k := range dns.StringToType {
 		keys = append(keys, k)
