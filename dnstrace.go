@@ -43,7 +43,7 @@ var (
 	pExpect = pApp.Flag("expect", "Expect a specific response.").Short('e').Strings()
 
 	pRecurse     = pApp.Flag("recurse", "Allow DNS recursion.").Short('r').Default("false").Bool()
-	pProbability = pApp.Flag("probability", "Each hostname from file will be used with provided probability in %. Value 100 and above means that each hostname from file will be used by each concurrent benchmark goroutine. Useful for randomizing queries accross benchmark goroutines.").Default("100").Int()
+	pProbability = pApp.Flag("probability", "Each hostname from file will be used with provided probability in %. Value 1 and above means that each hostname from file will be used by each concurrent benchmark goroutine. Useful for randomizing queries accross benchmark goroutines.").Default("1").Float64()
 	pUDPSize     = pApp.Flag("edns0", "Enable EDNS0 with specified size.").Default("0").Uint16()
 	pTCP         = pApp.Flag("tcp", "Use TCP fot DNS requests.").Default("false").Bool()
 
@@ -158,8 +158,7 @@ func do(ctx context.Context) []*rstats {
 			var i int64
 			for i = 0; i < *pCount; i++ {
 				for _, q := range questions {
-					intn := rand.Intn(100)
-					if intn > *pProbability {
+					if rand.Float64() > *pProbability {
 						continue
 					}
 					if ctx.Err() != nil {

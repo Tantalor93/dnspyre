@@ -39,7 +39,7 @@ Flags:
       --query-per-conn=0       Queries on a connection before creating a new one. 0: unlimited
   -e, --expect=EXPECT ...      Expect a specific response.
   -r, --recurse                Allow DNS recursion.
-      --probability=100        Each hostname from file will be used with provided probability in %. Value 100 and above means that each hostname from file will be used by each concurrent benchmark
+      --probability=1          Each hostname from file will be used with provided probability in %. Value 1 and above means that each hostname from file will be used by each concurrent benchmark
                                goroutine. Useful for randomizing queries accross benchmark goroutines.
       --edns0=0                Enable EDNS0 with specified size.
       --tcp                    Use TCP fot DNS requests.
@@ -223,7 +223,7 @@ DNS distribution, 200 datapoints
 
 ### using probability to randomize concurrent queries
 ```
-$ dnstrace -c 10 --server 8.8.8.8  --recurse --probability 33  @data/alexa
+$ dnstrace -c 10 --server 8.8.8.8  --recurse --probability 0.33  @data/alexa
 Using 33575 hostnames
 
 Benchmarking 8.8.8.8:53 via udp with 10 concurrent requests
