@@ -1,5 +1,6 @@
 [![Release](https://img.shields.io/github/release/Tantalor93/dnstrace/all.svg)](https://github.com/Tantalor93/dnstrace/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Tantalor93/dnstrace)](https://goreportcard.com/report/github.com/Tantalor93/dnstrace)
+[![Build Status](https://travis-ci.org/Tantalor93/dnstrace.svg?branch=master)](https://travis-ci.org/Tantalor93/dnstrace)
 
 # DNStrace
 forked https://github.com/redsift/dnstrace 
