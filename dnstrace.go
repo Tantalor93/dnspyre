@@ -67,12 +67,13 @@ var (
 )
 
 var (
-	count    int64
-	cerror   int64
-	ecount   int64
-	success  int64
-	matched  int64
-	mismatch int64
+	count     int64
+	cerror    int64
+	ecount    int64
+	success   int64
+	matched   int64
+	mismatch  int64
+	truncated int64
 )
 
 const dnsTimeout = time.Second * 4
@@ -225,6 +226,10 @@ func do(ctx context.Context) []*rstats {
 
 					st.hist.RecordValue(timing.Nanoseconds())
 
+					if r.Truncated {
+						atomic.AddInt64(&truncated, 1)
+					}
+
 					if r.Rcode == dns.RcodeSuccess {
 						if r.Id != m.Id {
 							atomic.AddInt64(&mismatch, 1)
@@ -279,6 +284,7 @@ func printProgress() {
 	amismatch := atomic.LoadInt64(&mismatch)
 	asuccess := atomic.LoadInt64(&success)
 	amatched := atomic.LoadInt64(&matched)
+	atruncated := atomic.LoadInt64(&truncated)
 
 	fmt.Printf("Total requests:\t %d\t\n", acount)
 
@@ -292,6 +298,12 @@ func printProgress() {
 	}
 
 	successFprint(os.Stdout, "DNS success codes:\t", asuccess, "\n")
+
+	if atruncated > 0 {
+		errorFprint(os.Stdout, "Truncated responses:\t", atruncated, "\n")
+	} else {
+		successFprint(os.Stdout, "Truncated responses:\t", atruncated, "\n")
+	}
 
 	if len(*pExpect) > 0 {
 		expect := successFprint

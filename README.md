@@ -80,6 +80,7 @@ Benchmarking 8.8.8.8:53 via udp with 10 conncurrent requests
 
 Total requests:	 100 of 100 (100.0%)
 DNS success codes:     	100
+Truncated responses:	0
 
 DNS response codes
        	NOERROR:       	100
@@ -160,6 +161,7 @@ Benchmarking 8.8.8.8:53 via udp with 10 concurrent requests
 
 Total requests:	 200
 DNS success codes:	200
+Truncated responses:	0
 
 DNS response codes
 	NOERROR:	200
@@ -233,6 +235,7 @@ Total requests:	 2713
 Connection errors:	0
 Read/Write errors:	35
 DNS success codes:	2614
+Truncated responses:    0
 
 DNS response codes
 	NOERROR:	2614
