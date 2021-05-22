@@ -11,9 +11,9 @@ import (
 	"sync"
 	"sync/atomic"
 	"syscall"
+	"github.com/alecthomas/kingpin"
 	"time"
 
-	"github.com/alecthomas/kingpin"
 	"github.com/codahale/hdrhistogram"
 	"github.com/fatih/color"
 	"github.com/miekg/dns"
