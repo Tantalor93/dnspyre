@@ -11,7 +11,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"syscall"
-	"time"
 
 	"github.com/alecthomas/kingpin"
 	"github.com/codahale/hdrhistogram"
