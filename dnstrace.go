@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"os"
@@ -16,7 +15,6 @@ import (
 	"github.com/alecthomas/kingpin"
 	"github.com/codahale/hdrhistogram"
 	"github.com/fatih/color"
-	"github.com/miekg/dns"
 	"github.com/olekukonko/tablewriter"
 	"go.uber.org/ratelimit"
 )
