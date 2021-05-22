@@ -11,6 +11,18 @@ go get github.com/tantalor93/dnstrace
 ```
 will install the binary in your $GOPATH/bin
 
+or download compiled binaries
+
+
+linux
+```
+wget https://github.com/Tantalor93/dnstrace/releases/download/1.0.0/dnstrace-linux-amd64
+```
+darwin(macos)
+```
+wget https://github.com/Tantalor93/dnstrace/releases/download/1.0.0/dnstrace-darwin
+```
+
 ## Build
 ### for linux
 ```
