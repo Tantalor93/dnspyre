@@ -1,4 +1,4 @@
-
+[![Release](https://img.shields.io/github/release/Tantalor93/dnstrace/all.svg)](https://github.com/Tantalor93/dnstrace/releases)
 # DNStrace
 forked https://github.com/redsift/dnstrace 
 
