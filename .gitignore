@@ -34,3 +34,5 @@ dnstrace
 
 *.iml
 dnstrace
+dnstrace-darwin
+dnstrace-linux-amd64

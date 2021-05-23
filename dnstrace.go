@@ -190,13 +190,13 @@ func do(ctx context.Context) []*rstats {
 							m.SetEdns0(udpSize, true)
 							co.UDPSize = udpSize
 						}
-						if pEdnsOpt != nil {
+						if ednsOpt := *pEdnsOpt; len(ednsOpt) > 0 {
 							o := m.IsEdns0()
 							if o == nil {
 								m.SetEdns0(4096, true)
 								o = m.IsEdns0()
 							}
-							s := strings.Split(*pEdnsOpt, ":")
+							s := strings.Split(ednsOpt, ":")
 							data, err := hex.DecodeString(s[1])
 							if err != nil {
 								panic(err)
