@@ -22,11 +22,9 @@ import (
 )
 
 var (
-	// Tag is set by build at compile time to Git Tag
-	Tag = ""
-	// Commit is set by build at compile time to Git SHA1
-	Commit = ""
-	author = "Rahul Powar <rahul@redsift.io>"
+	// Version is set during release of project during build process
+	Version = "development"
+	author = "Ondrej Benkovsky <obenky@gmail.com>, Rahul Powar <rahul@redsift.io>"
 )
 
 var (
@@ -456,16 +454,7 @@ func makeBar(c int64, max int64) string {
 const fileNoBuffer = 9 // app itself needs about 9 for libs
 
 func main() {
-	version := "unknown"
-	if Tag == "" {
-		if Commit != "" {
-			version = Commit
-		}
-	} else {
-		version = fmt.Sprintf("%s-%s", Tag, Commit)
-	}
-
-	pApp.Version(version)
+	pApp.Version(Version)
 	kingpin.MustParse(pApp.Parse(os.Args[1:]))
 
 	// process args
