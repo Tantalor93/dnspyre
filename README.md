@@ -11,6 +11,7 @@
     * [Usage](#usage)
     * [Warning](#warning)
     * [Example](#example)
+        + [IPv6 DNS server benchmarking](#ipv6-dns-server-benchmarking)
         + [hostnames provided directly](#hostnames-provided-directly)
         + [hostnames provided using file](#hostnames-provided-using-file)
         + [using probability to randomize concurrent queries](#using-probability-to-randomize-concurrent-queries)
@@ -59,7 +60,7 @@ A high QPS DNS benchmark.
 
 Flags:
       --help                   Show context-sensitive help (also try --help-long and --help-man).
-  -s, --server="127.0.0.1"     DNS server IP:port to test.
+  -s, --server="127.0.0.1"     DNS server IP:port to test. IPv6 is also supported, for example '[fddd:dddd::]:53'.
   -t, --type=A                 Query type.
   -n, --number=1               Number of queries to issue. Note that the total number of queries issued = number*concurrency*len(queries).
   -c, --concurrency=1          Number of concurrent queries to issue.
@@ -98,6 +99,58 @@ It is thus very easy to create significant DNS load with non default settings.
 **Do not do this to public DNS services**. You will most likely flag your IP.
 
 ## Example
+### IPv6 DNS server benchmarking
+```
+$ dnstrace -n 10 -c 10 --server '[fddd:dddd::]:53' --recurse idnes.cz
+Using 1 hostnames
+
+Benchmarking [fddd:dddd::]:53 via udp with 10 concurrent requests
+
+
+Total requests:	 100
+DNS success codes:	100
+Truncated responses:	0
+
+DNS response codes
+	NOERROR:	100
+
+Time taken for tests:	 470.980954ms
+Questions per second:	 212.3
+
+DNS timings, 100 datapoints
+	 min:		 35.651584ms
+	 mean:		 45.109739ms
+	 [+/-sd]:	 6.021748ms
+	 max:		 79.691775ms
+	 p99:		 71.303167ms
+	 p95:		 58.720255ms
+	 p90:		 50.331647ms
+	 p75:		 46.137343ms
+	 p50:		 46.137343ms
+
+DNS distribution, 100 datapoints
+    LATENCY   |                                             | COUNT
++-------------+---------------------------------------------+-------+
+  36.700159ms | ▄▄▄▄▄                                       |     4
+  38.797311ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄                               |    10
+  40.894463ms | ▄▄▄▄▄▄▄▄                                    |     6
+  42.991615ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄          |    25
+  45.088767ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |    32
+  47.185919ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄                               |    10
+  49.283071ms | ▄▄▄▄                                        |     3
+  51.380223ms | ▄▄▄                                         |     2
+  53.477375ms | ▄                                           |     1
+  55.574527ms |                                             |     0
+  57.671679ms | ▄▄▄▄▄                                       |     4
+  59.768831ms | ▄                                           |     1
+  61.865983ms |                                             |     0
+  63.963135ms |                                             |     0
+  66.060287ms |                                             |     0
+  69.206015ms | ▄                                           |     1
+  73.400319ms |                                             |     0
+  77.594623ms | ▄                                           |     1
+```
+
 ### hostnames provided directly
 ```
 $ dnstrace -n 10 -c 10 --server 8.8.8.8 --recurse redsift.io
