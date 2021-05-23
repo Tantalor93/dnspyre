@@ -75,6 +75,7 @@ Flags:
       --edns0=0                Enable EDNS0 with specified size.
       --ednsopt=""             code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal string. code must be arbitrary numeric value.
       --tcp                    Use TCP fot DNS requests.
+      --dot                    Use DoT for DNS requests.
       --write=1s               DNS write timeout.
       --read=4s                DNS read timeout.
       --codes                  Enable counting DNS return codes.
@@ -559,4 +560,80 @@ DNS distribution, 100 datapoints
   171.966463ms | ▄▄▄▄▄▄▄▄                                    |     3
   180.355071ms | ▄▄▄▄▄▄▄▄                                    |     3
   188.743679ms | ▄▄▄                                         |     1
+```
+### DoT
+```
+$ dnstrace -n 10 -c 10  --dot --recurse  --server 1.1.1.1:853 idnes.cz
+Using 1 hostnames
+
+Benchmarking 1.1.1.1:853 via tcp with 10 concurrent requests
+
+
+Total requests:	 100
+DNS success codes:	100
+Truncated responses:	0
+
+DNS response codes
+	NOERROR:	100
+
+Time taken for tests:	 366.625655ms
+Questions per second:	 272.8
+
+DNS timings, 100 datapoints
+	 min:		 6.815744ms
+	 mean:		 12.059934ms
+	 [+/-sd]:	 5.532558ms
+	 max:		 44.040191ms
+	 p99:		 39.845887ms
+	 p95:		 20.971519ms
+	 p90:		 16.777215ms
+	 p75:		 13.631487ms
+	 p50:		 10.485759ms
+
+DNS distribution, 100 datapoints
+    LATENCY   |                                             | COUNT
++-------------+---------------------------------------------+-------+
+  6.946815ms  | ▄▄▄▄▄▄▄                                     |     2
+  7.208959ms  |                                             |     0
+  7.471103ms  | ▄▄▄▄▄▄▄                                     |     2
+  7.733247ms  | ▄▄▄▄▄▄▄                                     |     2
+  7.995391ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                      |     6
+  8.257535ms  | ▄▄▄▄                                        |     1
+  8.650751ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄        |    10
+  9.175039ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄               |     8
+  9.699327ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄               |     8
+  10.223615ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |    12
+  10.747903ms | ▄▄▄▄▄▄▄▄▄▄▄                                 |     3
+  11.272191ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄        |    10
+  11.796479ms | ▄▄▄▄▄▄▄▄▄▄▄                                 |     3
+  12.320767ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                          |     5
+  12.845055ms | ▄▄▄▄                                        |     1
+  13.369343ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                      |     6
+  13.893631ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                      |     6
+  14.417919ms | ▄▄▄▄                                        |     1
+  14.942207ms | ▄▄▄▄▄▄▄                                     |     2
+  15.466495ms | ▄▄▄▄                                        |     1
+  15.990783ms |                                             |     0
+  16.515071ms | ▄▄▄▄                                        |     1
+  17.301503ms | ▄▄▄▄▄▄▄▄▄▄▄                                 |     3
+  18.350079ms |                                             |     0
+  19.398655ms | ▄▄▄▄                                        |     1
+  20.447231ms | ▄▄▄▄                                        |     1
+  21.495807ms |                                             |     0
+  22.544383ms |                                             |     0
+  23.592959ms | ▄▄▄▄                                        |     1
+  24.641535ms | ▄▄▄▄                                        |     1
+  25.690111ms |                                             |     0
+  26.738687ms |                                             |     0
+  27.787263ms |                                             |     0
+  28.835839ms | ▄▄▄▄                                        |     1
+  29.884415ms |                                             |     0
+  30.932991ms |                                             |     0
+  31.981567ms |                                             |     0
+  33.030143ms |                                             |     0
+  34.603007ms |                                             |     0
+  36.700159ms |                                             |     0
+  38.797311ms | ▄▄▄▄                                        |     1
+  40.894463ms |                                             |     0
+  42.991615ms | ▄▄▄▄                                        |     1
 ```

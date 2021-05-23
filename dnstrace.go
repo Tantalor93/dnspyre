@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/hex"
 	"fmt"
 	"math/rand"
@@ -46,6 +47,7 @@ var (
 	pUDPSize     = pApp.Flag("edns0", "Enable EDNS0 with specified size.").Default("0").Uint16()
 	pEdnsOpt     = pApp.Flag("ednsopt", "code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal string. code must be arbitrary numeric value.").Default("").String()
 	pTCP         = pApp.Flag("tcp", "Use TCP fot DNS requests.").Default("false").Bool()
+	pDOT         = pApp.Flag("dot", "Use DoT for DNS requests.").Default("false").Bool()
 
 	pWriteTimeout = pApp.Flag("write", "DNS write timeout.").Default("1s").Duration()
 	pReadTimeout  = pApp.Flag("read", "DNS read timeout.").Default(dnsTimeout.String()).Duration()
@@ -108,7 +110,7 @@ func do(ctx context.Context) []*rstats {
 	}
 
 	network := "udp"
-	if *pTCP {
+	if *pTCP || *pDOT {
 		network = "tcp"
 	}
 
@@ -177,7 +179,7 @@ func do(ctx context.Context) []*rstats {
 					m.Question[0] = question
 
 					if co == nil {
-						co, err = dns.DialTimeout(network, srv, dnsTimeout)
+						co, err = dial(srv, network)
 						if err != nil {
 							atomic.AddInt64(&cerror, 1)
 
@@ -283,6 +285,13 @@ func do(ctx context.Context) []*rstats {
 	wg.Wait()
 
 	return stats
+}
+
+func dial(srv string, network string) (*dns.Conn, error) {
+	if *pDOT {
+		return dns.DialTimeoutWithTLS(network, srv, &tls.Config{}, dnsTimeout)
+	}
+	return dns.DialTimeout(network, srv, dnsTimeout)
 }
 
 func printProgress() {
