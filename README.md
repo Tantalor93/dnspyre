@@ -1,6 +1,7 @@
 [![Release](https://img.shields.io/github/release/Tantalor93/dnstrace/all.svg)](https://github.com/Tantalor93/dnstrace/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Tantalor93/dnstrace)](https://goreportcard.com/report/github.com/Tantalor93/dnstrace)
 [![Tantalor93](https://circleci.com/gh/Tantalor93/dnstrace/tree/master.svg?style=svg)](https://circleci.com/gh/Tantalor93/dnstrace?branch=master)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Tantalor93/dnstrace/blob/master/LICENSE)
 
 # Table of Contents
 - [DNStrace](#dnstrace)
