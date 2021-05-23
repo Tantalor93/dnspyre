@@ -16,6 +16,7 @@
         + [hostnames provided directly](#hostnames-provided-directly)
         + [hostnames provided using file](#hostnames-provided-using-file)
         + [using probability to randomize concurrent queries](#using-probability-to-randomize-concurrent-queries)
+        + [EDNSOPT usage](#ednsopt-usage)
 
 # DNStrace
 forked https://github.com/redsift/dnstrace 
@@ -72,6 +73,7 @@ Flags:
       --probability=1          Each hostname from file will be used with provided probability in %. Value 1 and above means that each hostname from file will be used by each concurrent benchmark
                                goroutine. Useful for randomizing queries accross benchmark goroutines.
       --edns0=0                Enable EDNS0 with specified size.
+      --ednsopt=""             code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal string. code must be arbitrary numeric value.
       --tcp                    Use TCP fot DNS requests.
       --write=1s               DNS write timeout.
       --read=4s                DNS read timeout.
@@ -445,4 +447,116 @@ DNS distribution, 2678 datapoints
   3.019898879s |                                             |     0
   3.154116607s |                                             |     0
   3.288334335s |                                             |     1
+```
+### EDNSOPT usage
+```
+$ dnstrace -n 10 -c 10  --recurse idnes.cz --server 127.0.0.1 --ednsopt=65518:fddddddd100000000000000000000001
+Using 1 hostnames
+
+Benchmarking 127.0.0.1:53 via udp with 10 concurrent requests
+
+
+Total requests:	 100
+DNS success codes:	100
+Truncated responses:	0
+
+DNS response codes
+	NOERROR:	100
+
+Time taken for tests:	 282.592214ms
+Questions per second:	 353.9
+
+DNS timings, 100 datapoints
+	 min:		 6.291456ms
+	 mean:		 26.523729ms
+	 [+/-sd]:	 48.818084ms
+	 max:		 192.937983ms
+	 p99:		 184.549375ms
+	 p95:		 176.160767ms
+	 p90:		 32.505855ms
+	 p75:		 14.680063ms
+	 p50:		 8.388607ms
+
+DNS distribution, 100 datapoints
+    LATENCY    |                                             | COUNT
++--------------+---------------------------------------------+-------+
+  6.422527ms   | ▄▄▄▄▄▄▄▄▄▄▄▄▄                               |     5
+  6.684671ms   | ▄▄▄▄▄▄▄▄▄▄▄▄▄                               |     5
+  6.946815ms   | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                     |     9
+  7.208959ms   | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |    17
+  7.471103ms   | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                     |     9
+  7.733247ms   | ▄▄▄▄▄▄▄▄                                    |     3
+  7.995391ms   | ▄▄▄                                         |     1
+  8.257535ms   | ▄▄▄                                         |     1
+  8.650751ms   |                                             |     0
+  9.175039ms   | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                        |     8
+  9.699327ms   | ▄▄▄                                         |     1
+  10.223615ms  | ▄▄▄▄▄▄▄▄                                    |     3
+  10.747903ms  |                                             |     0
+  11.272191ms  |                                             |     0
+  11.796479ms  | ▄▄▄                                         |     1
+  12.320767ms  | ▄▄▄▄▄▄▄▄▄▄                                  |     4
+  12.845055ms  | ▄▄▄▄▄▄▄▄                                    |     3
+  13.369343ms  | ▄▄▄                                         |     1
+  13.893631ms  | ▄▄▄▄▄▄▄▄                                    |     3
+  14.417919ms  | ▄▄▄                                         |     1
+  14.942207ms  |                                             |     0
+  15.466495ms  | ▄▄▄                                         |     1
+  15.990783ms  |                                             |     0
+  16.515071ms  | ▄▄▄                                         |     1
+  17.301503ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄                               |     5
+  18.350079ms  | ▄▄▄▄▄▄▄▄                                    |     3
+  19.398655ms  | ▄▄▄▄▄                                       |     2
+  20.447231ms  |                                             |     0
+  21.495807ms  | ▄▄▄                                         |     1
+  22.544383ms  |                                             |     0
+  23.592959ms  |                                             |     0
+  24.641535ms  |                                             |     0
+  25.690111ms  |                                             |     0
+  26.738687ms  | ▄▄▄                                         |     1
+  27.787263ms  |                                             |     0
+  28.835839ms  |                                             |     0
+  29.884415ms  |                                             |     0
+  30.932991ms  |                                             |     0
+  31.981567ms  | ▄▄▄                                         |     1
+  33.030143ms  |                                             |     0
+  34.603007ms  |                                             |     0
+  36.700159ms  |                                             |     0
+  38.797311ms  |                                             |     0
+  40.894463ms  |                                             |     0
+  42.991615ms  |                                             |     0
+  45.088767ms  |                                             |     0
+  47.185919ms  |                                             |     0
+  49.283071ms  |                                             |     0
+  51.380223ms  |                                             |     0
+  53.477375ms  |                                             |     0
+  55.574527ms  |                                             |     0
+  57.671679ms  |                                             |     0
+  59.768831ms  |                                             |     0
+  61.865983ms  |                                             |     0
+  63.963135ms  |                                             |     0
+  66.060287ms  |                                             |     0
+  69.206015ms  |                                             |     0
+  73.400319ms  |                                             |     0
+  77.594623ms  |                                             |     0
+  81.788927ms  |                                             |     0
+  85.983231ms  |                                             |     0
+  90.177535ms  |                                             |     0
+  94.371839ms  |                                             |     0
+  98.566143ms  |                                             |     0
+  102.760447ms |                                             |     0
+  106.954751ms |                                             |     0
+  111.149055ms |                                             |     0
+  115.343359ms |                                             |     0
+  119.537663ms |                                             |     0
+  123.731967ms |                                             |     0
+  127.926271ms |                                             |     0
+  132.120575ms |                                             |     0
+  138.412031ms |                                             |     0
+  146.800639ms |                                             |     0
+  155.189247ms | ▄▄▄▄▄                                       |     2
+  163.577855ms | ▄▄▄                                         |     1
+  171.966463ms | ▄▄▄▄▄▄▄▄                                    |     3
+  180.355071ms | ▄▄▄▄▄▄▄▄                                    |     3
+  188.743679ms | ▄▄▄                                         |     1
 ```

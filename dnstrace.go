@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"math/rand"
 	"os"
@@ -24,7 +25,7 @@ import (
 var (
 	// Version is set during release of project during build process
 	Version = "development"
-	author = "Ondrej Benkovsky <obenky@gmail.com>, Rahul Powar <rahul@redsift.io>"
+	author  = "Ondrej Benkovsky <obenky@gmail.com>, Rahul Powar <rahul@redsift.io>"
 )
 
 var (
@@ -43,6 +44,7 @@ var (
 	pRecurse     = pApp.Flag("recurse", "Allow DNS recursion.").Short('r').Default("false").Bool()
 	pProbability = pApp.Flag("probability", "Each hostname from file will be used with provided probability in %. Value 1 and above means that each hostname from file will be used by each concurrent benchmark goroutine. Useful for randomizing queries accross benchmark goroutines.").Default("1").Float64()
 	pUDPSize     = pApp.Flag("edns0", "Enable EDNS0 with specified size.").Default("0").Uint16()
+	pEdnsOpt     = pApp.Flag("ednsopt", "code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal string. code must be arbitrary numeric value.").Default("").String()
 	pTCP         = pApp.Flag("tcp", "Use TCP fot DNS requests.").Default("false").Bool()
 
 	pWriteTimeout = pApp.Flag("write", "DNS write timeout.").Default("1s").Duration()
@@ -187,6 +189,23 @@ func do(ctx context.Context) []*rstats {
 						if udpSize := *pUDPSize; udpSize > 0 {
 							m.SetEdns0(udpSize, true)
 							co.UDPSize = udpSize
+						}
+						if pEdnsOpt != nil {
+							o := m.IsEdns0()
+							if o == nil {
+								m.SetEdns0(4096, true)
+								o = m.IsEdns0()
+							}
+							s := strings.Split(*pEdnsOpt, ":")
+							data, err := hex.DecodeString(s[1])
+							if err != nil {
+								panic(err)
+							}
+							code, err := strconv.ParseUint(s[0], 10, 16)
+							if err != nil {
+								panic(err)
+							}
+							o.Option = append(o.Option, &dns.EDNS0_LOCAL{Code: uint16(code), Data: data})
 						}
 					}
 
