@@ -17,6 +17,7 @@
         + [hostnames provided using file](#hostnames-provided-using-file)
         + [using probability to randomize concurrent queries](#using-probability-to-randomize-concurrent-queries)
         + [EDNSOPT usage](#ednsopt-usage)
+        + [DoT](#dot)
 
 # DNStrace
 forked https://github.com/redsift/dnstrace 
