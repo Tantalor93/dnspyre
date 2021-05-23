@@ -1,6 +1,6 @@
 module github.com/tantalor93/dnstrace
 
-go 1.12
+go 1.16
 
 require (
 	github.com/alecthomas/kingpin v2.2.5+incompatible
@@ -11,8 +11,8 @@ require (
 	github.com/mattn/go-colorable v0.0.8-0.20170210172801-5411d3eea597
 	github.com/mattn/go-isatty v0.0.2-0.20170307163044-57fdcb988a5c
 	github.com/mattn/go-runewidth v0.0.2
-	github.com/miekg/dns v0.0.0-20170812192144-0598bd43cf51
+	github.com/miekg/dns v1.1.42 // indirect
 	github.com/olekukonko/tablewriter v0.0.0-20170719101040-be5337e7b39e
 	go.uber.org/ratelimit v0.0.0-20161026005643-d15fa2e2a63d
-	golang.org/x/sys v0.0.0-20170213225739-e24f485414ae
+	golang.org/x/sys v0.0.0-20210303074136-134d130e1a04
 )
