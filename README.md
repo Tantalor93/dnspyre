@@ -36,11 +36,11 @@ or download compiled binaries
 
 linux
 ```
-wget https://github.com/Tantalor93/dnstrace/releases/download/1.2.0/dnstrace-linux-amd64
+wget https://github.com/Tantalor93/dnstrace/releases/download/1.3.0/dnstrace-linux-amd64
 ```
 darwin(macos)
 ```
-wget https://github.com/Tantalor93/dnstrace/releases/download/1.2.0/dnstrace-darwin
+wget https://github.com/Tantalor93/dnstrace/releases/download/1.3.0/dnstrace-darwin
 ```
 
 ## Build
