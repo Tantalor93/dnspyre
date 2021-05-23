@@ -2,6 +2,19 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/Tantalor93/dnstrace)](https://goreportcard.com/report/github.com/Tantalor93/dnstrace)
 [![Tantalor93](https://circleci.com/gh/Tantalor93/dnstrace/tree/master.svg?style=svg)](https://circleci.com/gh/Tantalor93/dnstrace?branch=master)
 
+# Table of Contents
+- [DNStrace](#dnstrace)
+    * [Installation](#installation)
+    * [Build](#build)
+        + [for linux](#for-linux)
+        + [for macos](#for-macos)
+    * [Usage](#usage)
+    * [Warning](#warning)
+    * [Example](#example)
+        + [hostnames provided directly](#hostnames-provided-directly)
+        + [hostnames provided using file](#hostnames-provided-using-file)
+        + [using probability to randomize concurrent queries](#using-probability-to-randomize-concurrent-queries)
+
 # DNStrace
 forked https://github.com/redsift/dnstrace 
 
