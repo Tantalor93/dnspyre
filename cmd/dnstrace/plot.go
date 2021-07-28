@@ -9,9 +9,11 @@ import (
 	"gonum.org/v1/plot/vg"
 )
 
-func plotHistogram(file string, times []float64) {
+func plotHistogram(file string, times []datapoint) {
 	var values plotter.Values
-	values = append(values, times...)
+	for _, v := range times {
+		values = append(values, v.duration)
+	}
 	p := plot.New()
 	p.Title.Text = "Latencies distribution"
 
@@ -28,9 +30,11 @@ func plotHistogram(file string, times []float64) {
 	}
 }
 
-func plotBoxPlot(file, server string, times []float64) {
+func plotBoxPlot(file, server string, times []datapoint) {
 	var values plotter.Values
-	values = append(values, times...)
+	for _, v := range times {
+		values = append(values, v.duration)
+	}
 	p := plot.New()
 	p.Title.Text = "Latencies distribution"
 	p.Y.Label.Text = "latencies (ms)"
@@ -41,6 +45,27 @@ func plotBoxPlot(file, server string, times []float64) {
 		panic(err)
 	}
 	p.Add(boxplot)
+
+	if err := p.Save(6*vg.Inch, 6*vg.Inch, file); err != nil {
+		fmt.Fprintln(os.Stderr, "Failed to save plot.", err)
+	}
+}
+
+func plotLine(file string, times []datapoint) {
+	var values plotter.XYs
+	for i, v := range times {
+		values = append(values, plotter.XY{X: float64(i), Y: v.duration})
+	}
+	p := plot.New()
+	p.Title.Text = "Latencies progression during benchmark test"
+	p.X.Label.Text = "number of requests since the start"
+	p.Y.Label.Text = "latencies (ms)"
+
+	l, err := plotter.NewLine(values)
+	if err != nil {
+		panic(err)
+	}
+	p.Add(l)
 
 	if err := p.Save(6*vg.Inch, 6*vg.Inch, file); err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to save plot.", err)
