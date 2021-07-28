@@ -17,6 +17,7 @@
         + [EDNSOPT usage](#ednsopt-usage)
         + [DoT](#dot)
         + [Plotting histogram](#plotting-histogram)
+        + [Plotting boxplot](#plotting-boxplot)
 
 # DNStrace
 forked https://github.com/redsift/dnstrace 
@@ -88,6 +89,7 @@ Flags:
       --silent                  Disable stdout.
       --color                   ANSI Color output.
       --hist=/path/to/plot.png  Plot histogram. Based on suffix format is chosen (.png, .svg, .pdf).
+      --box=/path/to/plot.png   Plot box plot. Based on suffix format is chosen (.png, .svg, .pdf)
       --version                 Show application version.
 
 Args:
@@ -686,3 +688,56 @@ DNS distribution, 200 datapoints
   22.544383ms | ▄▄                                          |     2
 ```
 ![histogram](example/histogram.png)
+
+### Plotting boxplot
+plots boxplot result as PNG to file boxplot.png
+```
+$ dnstrace -n 100 -c 2 --recurse --server 8.8.8.8 --box boxplot.png google.com
+Using 1 hostnames
+Benchmarking 8.8.8.8:53 via udp with 2 concurrent requests
+
+Total requests:		200
+DNS success codes:	200
+Truncated responses:	0
+
+DNS response codes:
+	NOERROR:	200
+
+Time taken for tests:	 835.324247ms
+Questions per second:	 239.4
+DNS timings, 200 datapoints
+	 min:		 7.077888ms
+	 mean:		 8.268021ms
+	 [+/-sd]:	 1.689424ms
+	 max:		 16.252927ms
+	 p99:		 15.728639ms
+	 p95:		 11.010047ms
+	 p90:		 8.912895ms
+	 p75:		 8.126463ms
+	 p50:		 7.864319ms
+
+DNS distribution, 200 datapoints
+    LATENCY   |                                             | COUNT
++-------------+---------------------------------------------+-------+
+  7.208959ms  | ▄▄▄▄▄▄▄▄                                    |    11
+  7.471103ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄              |    39
+  7.733247ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |    56
+  7.995391ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄        |    47
+  8.257535ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                             |    19
+  8.650751ms  | ▄▄▄▄▄▄▄                                     |     9
+  9.175039ms  | ▄▄▄▄                                        |     5
+  9.699327ms  | ▄▄                                          |     2
+  10.223615ms |                                             |     0
+  10.747903ms | ▄▄                                          |     2
+  11.272191ms |                                             |     0
+  11.796479ms |                                             |     0
+  12.320767ms |                                             |     0
+  12.845055ms |                                             |     0
+  13.369343ms |                                             |     0
+  13.893631ms | ▄                                           |     1
+  14.417919ms | ▄                                           |     1
+  14.942207ms | ▄                                           |     1
+  15.466495ms | ▄▄▄▄                                        |     5
+  15.990783ms | ▄▄                                          |     2
+```
+![boxplot](example/boxplot.png)

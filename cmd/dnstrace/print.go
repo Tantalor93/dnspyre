@@ -87,6 +87,10 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 		plotHistogram(*pPlotHist, times)
 	}
 
+	if len(*pPlotBox) != 0 {
+		plotBoxPlot(*pPlotBox, *pServer, times)
+	}
+
 	if csv != nil {
 		writeBars(csv, timings.Distribution())
 
