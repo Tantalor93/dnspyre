@@ -18,7 +18,8 @@ import (
 var (
 	// Version is set during release of project during build process
 	Version = "development"
-	author  = "Ondrej Benkovsky <obenky@gmail.com>, Rahul Powar <rahul@redsift.io>"
+
+	author = "Ondrej Benkovsky <obenky@gmail.com>, Rahul Powar <rahul@redsift.io>"
 
 	logger    = log.New(os.Stdout, "", 0)
 	errLogger = log.New(os.Stderr, "", 0)
@@ -108,26 +109,16 @@ func Execute() {
 	sigsInt := make(chan os.Signal, 8)
 	signal.Notify(sigsInt, syscall.SIGINT)
 
-	sigsHup := make(chan os.Signal, 8)
-	signal.Notify(sigsHup, syscall.SIGHUP)
-
 	defer close(sigsInt)
-	defer close(sigsHup)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
 		<-sigsInt
-		printProgress()
-		errLogger.Println("Cancelling benchmark ^C, again to terminate now.")
+		errLogger.Printf("\nCancelling benchmark ^C, again to terminate now.")
 		cancel()
 		<-sigsInt
-		os.Exit(130)
-	}()
-	go func() {
-		for range sigsHup {
-			printProgress()
-		}
+		os.Exit(1)
 	}()
 
 	// get going
@@ -138,11 +129,6 @@ func Execute() {
 	end := time.Now()
 
 	printReport(end.Sub(start), res, csv)
-
-	if cerror > 0 || ecount > 0 || mismatch > 0 {
-		// something was wrong
-		os.Exit(1)
-	}
 }
 
 func getSupportedDNSTypes() []string {
