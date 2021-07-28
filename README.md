@@ -44,14 +44,10 @@ wget https://github.com/Tantalor93/dnstrace/releases/download/1.3.0/dnstrace-dar
 ```
 
 ## Build
-### for linux
 ```
-env GOOS=linux GARCH=amd64 go build
+Make build
 ```
-### for macos
-```
-env GOOS=darwin go build
-```
+binaries will be in `bin/` folder
 
 ## Usage
 
