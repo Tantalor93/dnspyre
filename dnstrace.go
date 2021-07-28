@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -20,6 +21,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/miekg/dns"
 	"github.com/olekukonko/tablewriter"
+	"github.com/tantalor93/dnstrace/internal/sysutil"
 	"go.uber.org/ratelimit"
 )
 
@@ -488,13 +490,13 @@ func main() {
 	// process args
 	color.NoColor = !*pColor
 
-	var rLimit syscall.Rlimit
-
-	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit); err == nil {
+	lim, err := sysutil.RlimitStack()
+	if err != nil {
+		log.Println("Cannot check limit of number of files. Skipping check. Please make sure it is sufficient manually.", err)
+	} else {
 		needed := uint64(*pConcurrency) + uint64(fileNoBuffer)
-		if rLimit.Cur < needed {
-			fmt.Fprintf(os.Stderr, "current process limit for number of files is %d and insufficient for level of requested concurrency.\n", rLimit.Cur)
-			os.Exit(2)
+		if lim < needed {
+			log.Fatalln("Current process limit for number of files is {} and insufficient for level of requested concurrency.", lim)
 		}
 	}
 
