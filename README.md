@@ -66,7 +66,7 @@ Flags:
   -e, --expect=EXPECT ...      Expect a specific response.
   -r, --recurse                Allow DNS recursion.
       --probability=1          Each hostname from file will be used with provided probability in %. Value 1 and above means that each hostname from file will be used by each concurrent benchmark
-                               goroutine. Useful for randomizing queries accross benchmark goroutines.
+                               goroutine. Useful for randomizing queries across benchmark goroutines.
       --edns0=0                Enable EDNS0 with specified size.
       --ednsopt=""             code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal string. code must be arbitrary numeric value.
       --tcp                    Use TCP fot DNS requests.
