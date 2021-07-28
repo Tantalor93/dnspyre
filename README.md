@@ -7,8 +7,6 @@
 - [DNStrace](#dnstrace)
     * [Installation](#installation)
     * [Build](#build)
-        + [for linux](#for-linux)
-        + [for macos](#for-macos)
     * [Usage](#usage)
     * [Warning](#warning)
     * [Example](#example)
