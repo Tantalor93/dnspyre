@@ -14,15 +14,17 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
+var (
+	errPrint     = color.New(color.FgRed).Fprint
+	successPrint = color.New(color.FgGreen).Fprint
+)
+
 func printProgress() {
 	if *pSilent {
 		return
 	}
 
 	fmt.Println()
-
-	errorFprint := color.New(color.FgRed).Fprint
-	successFprint := color.New(color.FgGreen).Fprint
 
 	acount := atomic.LoadInt64(&count)
 	acerror := atomic.LoadInt64(&cerror)
@@ -35,26 +37,26 @@ func printProgress() {
 	fmt.Printf("Total requests:\t\t%d\t\n", acount)
 
 	if acerror > 0 || aecount > 0 {
-		errorFprint(os.Stdout, "Connection errors:\t", acerror, "\n")
-		errorFprint(os.Stdout, "Read/Write errors:\t", aecount, "\n")
+		errPrint(os.Stdout, "Connection errors:\t", acerror, "\n")
+		errPrint(os.Stdout, "Read/Write errors:\t", aecount, "\n")
 	}
 
 	if amismatch > 0 {
-		errorFprint(os.Stdout, "ID mismatch errors:\t", amismatch, "\n")
+		errPrint(os.Stdout, "ID mismatch errors:\t", amismatch, "\n")
 	}
 
-	successFprint(os.Stdout, "DNS success codes:\t", asuccess, "\n")
+	successPrint(os.Stdout, "DNS success codes:\t", asuccess, "\n")
 
 	if atruncated > 0 {
-		errorFprint(os.Stdout, "Truncated responses:\t", atruncated, "\n")
+		errPrint(os.Stdout, "Truncated responses:\t", atruncated, "\n")
 	} else {
-		successFprint(os.Stdout, "Truncated responses:\t", atruncated, "\n")
+		successPrint(os.Stdout, "Truncated responses:\t", atruncated, "\n")
 	}
 
 	if len(*pExpect) > 0 {
-		expect := successFprint
+		expect := successPrint
 		if amatched != asuccess {
-			expect = errorFprint
+			expect = errPrint
 		}
 		expect(os.Stdout, "Expected results:\t", amatched, "\n")
 	}
@@ -93,15 +95,12 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 	printProgress()
 
 	if len(codeTotals) > 0 {
-		errorFprint := color.New(color.FgRed).Fprint
-		successFprint := color.New(color.FgGreen).Fprint
-
 		fmt.Println()
 		fmt.Println("DNS response codes:")
 		for i := dns.RcodeSuccess; i <= dns.RcodeBadCookie; i++ {
-			printFn := errorFprint
+			printFn := errPrint
 			if i == dns.RcodeSuccess {
-				printFn = successFprint
+				printFn = successPrint
 			}
 			if c, ok := codeTotals[i]; ok {
 				printFn(os.Stdout, "\t", dns.RcodeToString[i]+":\t", c, "\n")
