@@ -102,15 +102,13 @@ It is thus very easy to create significant DNS load with non default settings.
 ```
 $ dnstrace -n 10 -c 10 --server '[fddd:dddd::]:53' --recurse idnes.cz
 Using 1 hostnames
-
 Benchmarking [fddd:dddd::]:53 via udp with 10 concurrent requests
-
 
 Total requests:	 100
 DNS success codes:	100
 Truncated responses:	0
 
-DNS response codes
+DNS response codes:
 	NOERROR:	100
 
 Time taken for tests:	 470.980954ms
@@ -154,15 +152,13 @@ DNS distribution, 100 datapoints
 ```
 $ dnstrace -n 10 -c 10 --server 8.8.8.8 --recurse redsift.io
 Using 1 hostnames
-
 Benchmarking 8.8.8.8:53 via udp with 10 conncurrent requests
-
 
 Total requests:	 100 of 100 (100.0%)
 DNS success codes:     	100
 Truncated responses:	0
 
-DNS response codes
+DNS response codes:
        	NOERROR:       	100
 
 Time taken for tests:  	 107.091332ms
@@ -235,15 +231,13 @@ DNS distribution, 100 datapoints
 ```
 $ dnstrace -n 10 -c 10 --server 8.8.8.8 --recurse @data/2-domains
 Using 2 hostnames
-
 Benchmarking 8.8.8.8:53 via udp with 10 concurrent requests
-
 
 Total requests:	 200
 DNS success codes:	200
 Truncated responses:	0
 
-DNS response codes
+DNS response codes:
 	NOERROR:	200
 
 Time taken for tests:	 266.985025ms
@@ -307,9 +301,7 @@ DNS distribution, 200 datapoints
 ```
 $ dnstrace -c 10 --server 8.8.8.8  --recurse --probability 0.33  @data/alexa
 Using 33575 hostnames
-
 Benchmarking 8.8.8.8:53 via udp with 10 concurrent requests
-
 
 Total requests:	 2713
 Connection errors:	0
@@ -317,7 +309,7 @@ Read/Write errors:	35
 DNS success codes:	2614
 Truncated responses:    0
 
-DNS response codes
+DNS response codes:
 	NOERROR:	2614
 	SERVFAIL:	15
 	NXDOMAIN:	49
@@ -448,15 +440,13 @@ DNS distribution, 2678 datapoints
 ```
 $ dnstrace -n 10 -c 10  --recurse idnes.cz --server 127.0.0.1 --ednsopt=65518:fddddddd100000000000000000000001
 Using 1 hostnames
-
 Benchmarking 127.0.0.1:53 via udp with 10 concurrent requests
-
 
 Total requests:	 100
 DNS success codes:	100
 Truncated responses:	0
 
-DNS response codes
+DNS response codes:
 	NOERROR:	100
 
 Time taken for tests:	 282.592214ms
@@ -560,15 +550,13 @@ DNS distribution, 100 datapoints
 ```
 $ dnstrace -n 10 -c 10  --dot --recurse  --server 1.1.1.1:853 idnes.cz
 Using 1 hostnames
-
 Benchmarking 1.1.1.1:853 via tcp with 10 concurrent requests
-
 
 Total requests:	 100
 DNS success codes:	100
 Truncated responses:	0
 
-DNS response codes
+DNS response codes:
 	NOERROR:	100
 
 Time taken for tests:	 366.625655ms
