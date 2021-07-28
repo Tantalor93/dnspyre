@@ -29,6 +29,9 @@ var (
 	// Version is set during release of project during build process
 	Version = "development"
 	author  = "Ondrej Benkovsky <obenky@gmail.com>, Rahul Powar <rahul@redsift.io>"
+
+	logger    = log.New(os.Stdout, "", 0)
+	errLogger = log.New(os.Stderr, "", 0)
 )
 
 var (
@@ -102,7 +105,7 @@ func do(ctx context.Context) []*rstats {
 		questions[i] = dns.Fqdn(q)
 	}
 
-	fmt.Printf("Using %d hostnames\n\n", len(questions))
+	logger.Printf("Using %d hostnames", len(questions))
 
 	qType := dns.StringToType[*pType]
 
@@ -126,7 +129,7 @@ func do(ctx context.Context) []*rstats {
 	}
 
 	if !*pSilent {
-		fmt.Printf("Benchmarking %s via %s with %d concurrent requests %s\n\n", srv, network, concurrent, limits)
+		logger.Printf("Benchmarking %s via %s with %d concurrent requests %s", srv, network, concurrent, limits)
 	}
 
 	stats := make([]*rstats, concurrent)
@@ -186,7 +189,7 @@ func do(ctx context.Context) []*rstats {
 							atomic.AddInt64(&cerror, 1)
 
 							if *pIOErrors {
-								fmt.Fprintln(os.Stderr, "i/o error dialing: ", err.Error())
+								errLogger.Println("i/o error dialing: ", err.Error())
 							}
 							continue
 						}
@@ -223,7 +226,7 @@ func do(ctx context.Context) []*rstats {
 						// error writing
 						atomic.AddInt64(&ecount, 1)
 						if *pIOErrors {
-							fmt.Fprintln(os.Stderr, "i/o error writing: ", err.Error())
+							errLogger.Println("i/o error dialing: ", err.Error())
 						}
 						co.Close()
 						co = nil
@@ -237,7 +240,7 @@ func do(ctx context.Context) []*rstats {
 						// error reading
 						atomic.AddInt64(&ecount, 1)
 						if *pIOErrors {
-							fmt.Fprintln(os.Stderr, "i/o error reading: ", err.Error())
+							errLogger.Println("i/o error dialing: ", err.Error())
 						}
 						co.Close()
 						co = nil
@@ -301,7 +304,7 @@ func printProgress() {
 		return
 	}
 
-	fmt.Println()
+	logger.Println()
 
 	errorFprint := color.New(color.FgRed).Fprint
 	successFprint := color.New(color.FgGreen).Fprint
@@ -314,7 +317,7 @@ func printProgress() {
 	amatched := atomic.LoadInt64(&matched)
 	atruncated := atomic.LoadInt64(&truncated)
 
-	fmt.Printf("Total requests:\t %d\t\n", acount)
+	logger.Printf("Total requests:\t %d\t", acount)
 
 	if acerror > 0 || aecount > 0 {
 		errorFprint(os.Stdout, "Connection errors:\t", acerror, "\n")
@@ -364,8 +367,8 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 	if csv != nil {
 		writeBars(csv, timings.Distribution())
 
-		fmt.Println()
-		fmt.Println("DNS distribution written to", csv.Name())
+		logger.Println()
+		logger.Println("DNS distribution written to", csv.Name())
 	}
 
 	if *pSilent {
@@ -378,8 +381,8 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 		errorFprint := color.New(color.FgRed).Fprint
 		successFprint := color.New(color.FgGreen).Fprint
 
-		fmt.Println()
-		fmt.Println("DNS response codes")
+		logger.Println()
+		logger.Println("DNS response codes")
 		for i := dns.RcodeSuccess; i <= dns.RcodeBadCookie; i++ {
 			printFn := errorFprint
 			if i == dns.RcodeSuccess {
@@ -391,10 +394,10 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 		}
 	}
 
-	fmt.Println()
+	logger.Println()
 
-	fmt.Println("Time taken for tests:\t", t.String())
-	fmt.Printf("Questions per second:\t %0.1f\n", float64(count)/t.Seconds())
+	logger.Println("Time taken for tests:\t", t.String())
+	logger.Printf("Questions per second:\t %0.1f", float64(count)/t.Seconds())
 
 	min := time.Duration(timings.Min())
 	mean := time.Duration(timings.Mean())
@@ -407,22 +410,22 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 	p50 := time.Duration(timings.ValueAtQuantile(50))
 
 	if tc := timings.TotalCount(); tc > 0 {
-		fmt.Println()
-		fmt.Println("DNS timings,", tc, "datapoints")
-		fmt.Println("\t min:\t\t", min)
-		fmt.Println("\t mean:\t\t", mean)
-		fmt.Println("\t [+/-sd]:\t", sd)
-		fmt.Println("\t max:\t\t", max)
-		fmt.Println("\t p99:\t\t", p99)
-		fmt.Println("\t p95:\t\t", p95)
-		fmt.Println("\t p90:\t\t", p90)
-		fmt.Println("\t p75:\t\t", p75)
-		fmt.Println("\t p50:\t\t", p50)
+		logger.Println()
+		logger.Println("DNS timings,", tc, "datapoints")
+		logger.Println("\t min:\t\t", min)
+		logger.Println("\t mean:\t\t", mean)
+		logger.Println("\t [+/-sd]:\t", sd)
+		logger.Println("\t max:\t\t", max)
+		logger.Println("\t p99:\t\t", p99)
+		logger.Println("\t p95:\t\t", p95)
+		logger.Println("\t p90:\t\t", p90)
+		logger.Println("\t p75:\t\t", p75)
+		logger.Println("\t p50:\t\t", p50)
 
 		dist := timings.Distribution()
 		if *pHistDisplay && tc > 1 {
-			fmt.Println()
-			fmt.Println("DNS distribution,", tc, "datapoints")
+			logger.Println()
+			logger.Println("DNS distribution,", tc, "datapoints")
 
 			printBars(dist)
 		}
@@ -492,11 +495,11 @@ func main() {
 
 	lim, err := sysutil.RlimitStack()
 	if err != nil {
-		log.Println("Cannot check limit of number of files. Skipping check. Please make sure it is sufficient manually.", err)
+		logger.Println("Cannot check limit of number of files. Skipping check. Please make sure it is sufficient manually.", err)
 	} else {
 		needed := uint64(*pConcurrency) + uint64(fileNoBuffer)
 		if lim < needed {
-			log.Fatalln("Current process limit for number of files is {} and insufficient for level of requested concurrency.", lim)
+			logger.Fatalf("Current process limit for number of files is %d and insufficient for level of requested concurrency.", lim)
 		}
 	}
 
@@ -504,8 +507,7 @@ func main() {
 	if *pCsv != "" {
 		f, err := os.Create(*pCsv)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			os.Exit(2)
+			logger.Fatalln("Failed to create file for CSV export.")
 		}
 
 		csv = f
@@ -525,7 +527,7 @@ func main() {
 	go func() {
 		<-sigsInt
 		printProgress()
-		fmt.Fprintln(os.Stderr, "Cancelling benchmark ^C, again to terminate now.")
+		errLogger.Println("Cancelling benchmark ^C, again to terminate now.")
 		cancel()
 		<-sigsInt
 		os.Exit(130)
