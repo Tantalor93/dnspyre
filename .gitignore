@@ -29,13 +29,8 @@ _testmain.go
 # External packages folder
 vendor/
 .idea/
-dnstrace
 *.log
 
 *.iml
-dnstrace
-dnstrace-darwin
-dnstrace-linux-amd64
-dnstrace-windows-amd64
 bin/
 report/
