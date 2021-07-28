@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/rand"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -30,7 +31,7 @@ func do(ctx context.Context) []*rstats {
 		questions[i] = dns.Fqdn(q)
 	}
 
-	logger.Printf("Using %d hostnames", len(questions))
+	fmt.Printf("Using %d hostnames\n", len(questions))
 
 	qType := dns.StringToType[*pType]
 
@@ -54,7 +55,7 @@ func do(ctx context.Context) []*rstats {
 	}
 
 	if !*pSilent {
-		logger.Printf("Benchmarking %s via %s with %d concurrent requests %s", srv, network, concurrent, limits)
+		fmt.Printf("Benchmarking %s via %s with %d concurrent requests %s\n", srv, network, concurrent, limits)
 	}
 
 	stats := make([]*rstats, concurrent)
@@ -114,7 +115,7 @@ func do(ctx context.Context) []*rstats {
 							atomic.AddInt64(&cerror, 1)
 
 							if *pIOErrors {
-								errLogger.Println("i/o error dialing: ", err.Error())
+								fmt.Fprintln(os.Stderr, "i/o error dialing: ", err)
 							}
 							continue
 						}
@@ -151,7 +152,7 @@ func do(ctx context.Context) []*rstats {
 						// error writing
 						atomic.AddInt64(&ecount, 1)
 						if *pIOErrors {
-							errLogger.Println("i/o error dialing: ", err.Error())
+							fmt.Fprintln(os.Stderr, "i/o error dialing: ", err)
 						}
 						co.Close()
 						co = nil
@@ -165,7 +166,7 @@ func do(ctx context.Context) []*rstats {
 						// error reading
 						atomic.AddInt64(&ecount, 1)
 						if *pIOErrors {
-							errLogger.Println("i/o error dialing: ", err.Error())
+							fmt.Fprintln(os.Stderr, "i/o error dialing: ", err)
 						}
 						co.Close()
 						co = nil

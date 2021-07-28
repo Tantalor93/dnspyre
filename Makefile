@@ -1,7 +1,7 @@
 export GO111MODULE := on
 
 EXECUTABLE = dnstrace
-VERSION = deveopment
+VERSION = development
 
 all: check test build
 

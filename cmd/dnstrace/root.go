@@ -2,7 +2,7 @@ package dnstrace
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -20,9 +20,6 @@ var (
 	Version = "development"
 
 	author = "Ondrej Benkovsky <obenky@gmail.com>, Rahul Powar <rahul@redsift.io>"
-
-	logger    = log.New(os.Stdout, "", 0)
-	errLogger = log.New(os.Stderr, "", 0)
 )
 
 var (
@@ -88,11 +85,12 @@ func Execute() {
 
 	lim, err := sysutil.RlimitStack()
 	if err != nil {
-		logger.Println("Cannot check limit of number of files. Skipping check. Please make sure it is sufficient manually.", err)
+		fmt.Fprintln(os.Stderr, "Cannot check limit of number of files. Skipping check. Please make sure it is sufficient manually.", err)
 	} else {
 		needed := uint64(*pConcurrency) + uint64(fileNoBuffer)
 		if lim < needed {
-			logger.Fatalf("Current process limit for number of files is %d and insufficient for level of requested concurrency.", lim)
+			fmt.Fprintf(os.Stderr, "Current process limit for number of files is %d and insufficient for level of requested concurrency.", lim)
+			os.Exit(1)
 		}
 	}
 
@@ -100,7 +98,8 @@ func Execute() {
 	if *pCsv != "" {
 		f, err := os.Create(*pCsv)
 		if err != nil {
-			logger.Fatalln("Failed to create file for CSV export.")
+			fmt.Fprintln(os.Stderr, "Failed to create file for CSV export.", err)
+			os.Exit(1)
 		}
 
 		csv = f
@@ -115,7 +114,7 @@ func Execute() {
 
 	go func() {
 		<-sigsInt
-		errLogger.Printf("\nCancelling benchmark ^C, again to terminate now.")
+		fmt.Fprintf(os.Stderr, "\nCancelling benchmark ^C, again to terminate now.")
 		cancel()
 		<-sigsInt
 		os.Exit(1)

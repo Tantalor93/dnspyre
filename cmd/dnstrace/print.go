@@ -1,6 +1,7 @@
 package dnstrace
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -18,7 +19,7 @@ func printProgress() {
 		return
 	}
 
-	logger.Println()
+	fmt.Println()
 
 	errorFprint := color.New(color.FgRed).Fprint
 	successFprint := color.New(color.FgGreen).Fprint
@@ -31,7 +32,7 @@ func printProgress() {
 	amatched := atomic.LoadInt64(&matched)
 	atruncated := atomic.LoadInt64(&truncated)
 
-	logger.Printf("Total requests:\t %d\t", acount)
+	fmt.Printf("Total requests:\t\t%d\t\n", acount)
 
 	if acerror > 0 || aecount > 0 {
 		errorFprint(os.Stdout, "Connection errors:\t", acerror, "\n")
@@ -81,8 +82,8 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 	if csv != nil {
 		writeBars(csv, timings.Distribution())
 
-		logger.Println()
-		logger.Println("DNS distribution written to", csv.Name())
+		fmt.Println()
+		fmt.Println("DNS distribution written to", csv.Name())
 	}
 
 	if *pSilent {
@@ -95,8 +96,8 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 		errorFprint := color.New(color.FgRed).Fprint
 		successFprint := color.New(color.FgGreen).Fprint
 
-		logger.Println()
-		logger.Println("DNS response codes")
+		fmt.Println()
+		fmt.Println("DNS response codes:")
 		for i := dns.RcodeSuccess; i <= dns.RcodeBadCookie; i++ {
 			printFn := errorFprint
 			if i == dns.RcodeSuccess {
@@ -108,10 +109,10 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 		}
 	}
 
-	logger.Println()
+	fmt.Println()
 
-	logger.Println("Time taken for tests:\t", t.String())
-	logger.Printf("Questions per second:\t %0.1f", float64(count)/t.Seconds())
+	fmt.Println("Time taken for tests:\t", t.String())
+	fmt.Printf("Questions per second:\t %0.1f", float64(count)/t.Seconds())
 
 	min := time.Duration(timings.Min())
 	mean := time.Duration(timings.Mean())
@@ -124,22 +125,22 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 	p50 := time.Duration(timings.ValueAtQuantile(50))
 
 	if tc := timings.TotalCount(); tc > 0 {
-		logger.Println()
-		logger.Println("DNS timings,", tc, "datapoints")
-		logger.Println("\t min:\t\t", min)
-		logger.Println("\t mean:\t\t", mean)
-		logger.Println("\t [+/-sd]:\t", sd)
-		logger.Println("\t max:\t\t", max)
-		logger.Println("\t p99:\t\t", p99)
-		logger.Println("\t p95:\t\t", p95)
-		logger.Println("\t p90:\t\t", p90)
-		logger.Println("\t p75:\t\t", p75)
-		logger.Println("\t p50:\t\t", p50)
+		fmt.Println()
+		fmt.Println("DNS timings,", tc, "datapoints")
+		fmt.Println("\t min:\t\t", min)
+		fmt.Println("\t mean:\t\t", mean)
+		fmt.Println("\t [+/-sd]:\t", sd)
+		fmt.Println("\t max:\t\t", max)
+		fmt.Println("\t p99:\t\t", p99)
+		fmt.Println("\t p95:\t\t", p95)
+		fmt.Println("\t p90:\t\t", p90)
+		fmt.Println("\t p75:\t\t", p75)
+		fmt.Println("\t p50:\t\t", p50)
 
 		dist := timings.Distribution()
 		if *pHistDisplay && tc > 1 {
-			logger.Println()
-			logger.Println("DNS distribution,", tc, "datapoints")
+			fmt.Println()
+			fmt.Println("DNS distribution,", tc, "datapoints")
 
 			printBars(dist)
 		}
