@@ -18,6 +18,7 @@
         + [DoT](#dot)
         + [Plotting histogram](#plotting-histogram)
         + [Plotting boxplot](#plotting-boxplot)
+        + [Plotting line graph](#plotting-line-graph)
 
 # DNStrace
 forked https://github.com/redsift/dnstrace 
@@ -90,6 +91,7 @@ Flags:
       --color                   ANSI Color output.
       --hist=/path/to/plot.png  Plot histogram. Based on suffix format is chosen (.png, .svg, .pdf).
       --box=/path/to/plot.png   Plot box plot. Based on suffix format is chosen (.png, .svg, .pdf)
+      --line=/path/to/plot.png  Plot line graph representing latencies since the start of the benchmark. Based on suffix format is chosen (.png, .svg, .pdf)
       --version                 Show application version.
 
 Args:
@@ -741,3 +743,66 @@ DNS distribution, 200 datapoints
   15.990783ms | ▄▄                                          |     2
 ```
 ![boxplot](example/boxplot.png)
+
+### Plotting line graph
+plots line graph result as PNG to file line.png
+```
+$ dnstrace -n 100 -c 2 --recurse --server 8.8.8.8 --line line.png google.com
+Using 1 hostnames
+Benchmarking 8.8.8.8:53 via udp with 2 concurrent requests 
+
+Total requests:         200     
+Connection errors:      0
+Read/Write errors:      1
+DNS success codes:      199
+Truncated responses:    0
+
+DNS response codes:
+        NOERROR:        199
+
+Time taken for tests:    5.589751381s
+Questions per second:    35.8
+DNS timings, 199 datapoints
+         min:            13.1072ms
+         mean:           16.063235ms
+         [+/-sd]:        4.17821ms
+         max:            44.040191ms
+         p99:            35.651583ms
+         p95:            23.068671ms
+         p90:            19.922943ms
+         p75:            16.252927ms
+         p50:            15.204351ms
+
+DNS distribution, 199 datapoints
+    LATENCY   |                                             | COUNT  
++-------------+---------------------------------------------+-------+
+  13.369343ms | ▄▄▄▄▄                                       |     6  
+  13.893631ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄             |    39  
+  14.417919ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |    54  
+  14.942207ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                    |    30  
+  15.466495ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                              |    18  
+  15.990783ms | ▄▄▄▄▄▄▄▄▄▄                                  |    13  
+  16.515071ms | ▄▄▄▄▄                                       |     6  
+  17.301503ms | ▄▄▄▄▄▄                                      |     8  
+  18.350079ms | ▄▄                                          |     3  
+  19.398655ms | ▄▄                                          |     3  
+  20.447231ms | ▄▄                                          |     2  
+  21.495807ms | ▄▄▄                                         |     4  
+  22.544383ms | ▄▄▄                                         |     4  
+  23.592959ms |                                             |     0  
+  24.641535ms |                                             |     0  
+  25.690111ms |                                             |     0  
+  26.738687ms | ▄                                           |     1  
+  27.787263ms | ▄                                           |     1  
+  28.835839ms |                                             |     0  
+  29.884415ms | ▄▄                                          |     2  
+  30.932991ms |                                             |     0  
+  31.981567ms | ▄                                           |     1  
+  33.030143ms | ▄                                           |     1  
+  34.603007ms | ▄                                           |     1  
+  36.700159ms | ▄                                           |     1  
+  38.797311ms |                                             |     0  
+  40.894463ms |                                             |     0  
+  42.991615ms | ▄                                           |     1  
+```
+![line](example/line.png)

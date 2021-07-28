@@ -21,14 +21,19 @@ import (
 const dnsTimeout = time.Second * 4
 
 type rstats struct {
-	codes     map[int]int64
-	hist      *hdrhistogram.Histogram
-	timingsMs []float64
+	codes   map[int]int64
+	hist    *hdrhistogram.Histogram
+	timings []datapoint
 }
 
-func (r *rstats) record(timing time.Duration) {
+type datapoint struct {
+	duration float64
+	start    time.Time
+}
+
+func (r *rstats) record(time time.Time, timing time.Duration) {
 	r.hist.RecordValue(timing.Nanoseconds())
-	r.timingsMs = append(r.timingsMs, float64(timing.Milliseconds()))
+	r.timings = append(r.timings, datapoint{float64(timing.Milliseconds()), time})
 }
 
 func do(ctx context.Context) []*rstats {
@@ -179,7 +184,7 @@ func do(ctx context.Context) []*rstats {
 						continue
 					}
 
-					st.record(time.Since(start))
+					st.record(start, time.Since(start))
 
 					if r.Truncated {
 						atomic.AddInt64(&truncated, 1)
