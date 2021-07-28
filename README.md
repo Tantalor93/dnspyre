@@ -26,6 +26,16 @@ forked https://github.com/redsift/dnstrace
 Command-line DNS benchmark tool built to stress test and measure the performance of DNS servers with commodity hardware.
 This tool typically consumes ~30kB per concurrent connection and can maintain ~30,000 QPS per modern core if your server, OS and network allows you to reach suitable levels of concurrency.
 
+This tool supports wide variety of options to customize DNS benchmark and benchmark output. For example you can:
+* benchmark DNS servers with IPv4 and IPv6 addresses (for example GoogleDNS `8.8.8.8` and `2001:4860:4860::8888`)
+* benchmark DNS servers with all kinds of query types (A, AAAA, CNAME, HTTPS, ...)
+* benchmark DNS servers with a lot of parallel queries and connections (`--number`, `--concurrency` options)
+* benchmark DNS servers using DNS queries over UDP or TCP
+* benchmark DNS servers with DoT
+* benchmark DNS servers with uneven random load from provided high volume resources (see `/data` resources and `--probability` option)  
+* plot benchmark results via CLI histogram or plot the benchmark results as boxplot, histogram, line graphs and export
+them via all kind of image formats (ong, svg, pdf)
+
 ## Installation 
 ```
 go get github.com/tantalor93/dnstrace
