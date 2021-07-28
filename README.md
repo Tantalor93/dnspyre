@@ -43,7 +43,7 @@ wget https://github.com/Tantalor93/dnstrace/releases/download/1.3.0/dnstrace-dar
 
 ## Build
 ```
-Make build
+make build
 ```
 binaries will be in `bin/` folder
 
