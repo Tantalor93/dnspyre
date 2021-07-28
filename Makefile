@@ -39,9 +39,9 @@ generate:
 
 build: generate
 	@echo "Running build"
-	env GOOS=darwin go build -ldflags="-X 'main.Version=$(VERSION)-darwin'" -o bin/$(EXECUTABLE)-darwin
-	env GOOS=linux GARCH=amd64 go build -ldflags="-X 'main.Version=$(VERSION)-linux-amd64'" -o bin/$(EXECUTABLE)-linux-amd64
-	env GOOS=windows GARCH=amd64 go build -tags -ldflags="-X 'main.Version=$(VERSION)-windows-amd64'" -o bin/$(EXECUTABLE)-windows-amd64
+	env GOOS=darwin go build -ldflags="-X 'github.com/tantalor93/dnstrace/cmd/dnstrace.Version=$(VERSION)-darwin'" -o bin/$(EXECUTABLE)-darwin
+	env GOOS=linux GARCH=amd64 go build -ldflags="-X 'github.com/tantalor93/dnstrace/cmd/dnstrace.Version=$(VERSION)-linux-amd64'" -o bin/$(EXECUTABLE)-linux-amd64
+	env GOOS=windows GARCH=amd64 go build -tags -ldflags="-X 'github.com/tantalor93/dnstrace/cmd/dnstrace.Version=$(VERSION)-windows-amd64'" -o bin/$(EXECUTABLE)-windows-amd64
 
 clean:
 	rm -rf "bin/"
