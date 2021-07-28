@@ -114,7 +114,7 @@ func Execute() {
 
 	go func() {
 		<-sigsInt
-		fmt.Fprintf(os.Stderr, "\nCancelling benchmark ^C, again to terminate now.")
+		fmt.Fprintf(os.Stderr, "\nCancelling benchmark ^C, again to terminate now.\n")
 		cancel()
 		<-sigsInt
 		os.Exit(1)
