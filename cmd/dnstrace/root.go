@@ -58,6 +58,8 @@ var (
 	pSilent = pApp.Flag("silent", "Disable stdout.").Default("false").Bool()
 	pColor  = pApp.Flag("color", "ANSI Color output.").Default("true").Bool()
 
+	pPlotHist = pApp.Flag("hist", "Plot histogram. Based on suffix format is chosen (.png, .svg, .pdf)").Default("").PlaceHolder("/path/to/plot.png").String()
+
 	pQueries = pApp.Arg("queries", "Queries to issue. Can be file referenced using @<file-path>, for example @data/2-domains").Required().Strings()
 )
 

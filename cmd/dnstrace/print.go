@@ -72,13 +72,19 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 	// merge all the stats here
 	timings := hdrhistogram.New(pHistMin.Nanoseconds(), pHistMax.Nanoseconds(), *pHistPre)
 	codeTotals := make(map[int]int64)
+	times := make([]float64, 0)
 	for _, s := range stats {
 		timings.Merge(s.hist)
+		times = append(times, s.timingsMs...)
 		if s.codes != nil {
 			for k, v := range s.codes {
 				codeTotals[k] = codeTotals[k] + v
 			}
 		}
+	}
+
+	if len(*pPlotHist) != 0 {
+		plotHistogram(*pPlotHist, times)
 	}
 
 	if csv != nil {

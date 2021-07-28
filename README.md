@@ -16,6 +16,7 @@
         + [using probability to randomize concurrent queries](#using-probability-to-randomize-concurrent-queries)
         + [EDNSOPT usage](#ednsopt-usage)
         + [DoT](#dot)
+        + [Plotting histogram](#plotting-histogram)
 
 # DNStrace
 forked https://github.com/redsift/dnstrace 
@@ -60,33 +61,34 @@ usage: dnstrace [<flags>] <queries>...
 A high QPS DNS benchmark.
 
 Flags:
-      --help                   Show context-sensitive help (also try --help-long and --help-man).
-  -s, --server="127.0.0.1"     DNS server IP:port to test. IPv6 is also supported, for example '[fddd:dddd::]:53'.
-  -t, --type=A                 Query type.
-  -n, --number=1               Number of queries to issue. Note that the total number of queries issued = number*concurrency*len(queries).
-  -c, --concurrency=1          Number of concurrent queries to issue.
-  -l, --rate-limit=0           Apply a global questions / second rate limit.
-      --query-per-conn=0       Queries on a connection before creating a new one. 0: unlimited
-  -e, --expect=EXPECT ...      Expect a specific response.
-  -r, --recurse                Allow DNS recursion.
-      --probability=1          Each hostname from file will be used with provided probability in %. Value 1 and above means that each hostname from file will be used by each concurrent benchmark
-                               goroutine. Useful for randomizing queries across benchmark goroutines.
-      --edns0=0                Enable EDNS0 with specified size.
-      --ednsopt=""             code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal string. code must be arbitrary numeric value.
-      --tcp                    Use TCP fot DNS requests.
-      --dot                    Use DoT for DNS requests.
-      --write=1s               DNS write timeout.
-      --read=4s                DNS read timeout.
-      --codes                  Enable counting DNS return codes.
-      --min=400µs              Minimum value for timing histogram.
-      --max=4s                 Maximum value for histogram.
-      --precision=[1-5]        Significant figure for histogram precision.
-      --distribution           Display distribution histogram of timings to stdout.
-      --csv=/path/to/file.csv  Export distribution to CSV.
-      --io-errors              Log I/O errors to stderr.
-      --silent                 Disable stdout.
-      --color                  ANSI Color output.
-      --version                Show application version.
+      --help                    Show context-sensitive help (also try --help-long and --help-man).
+  -s, --server="127.0.0.1"      DNS server IP:port to test. IPv6 is also supported, for example '[fddd:dddd::]:53'.
+  -t, --type=A                  Query type.
+  -n, --number=1                Number of queries to issue. Note that the total number of queries issued = number*concurrency*len(queries).
+  -c, --concurrency=1           Number of concurrent queries to issue.
+  -l, --rate-limit=0            Apply a global questions / second rate limit.
+      --query-per-conn=0        Queries on a connection before creating a new one. 0: unlimited
+  -e, --expect=EXPECT ...       Expect a specific response.
+  -r, --recurse                 Allow DNS recursion.
+      --probability=1           Each hostname from file will be used with provided probability in %. Value 1 and above means that each hostname from file will be used by each concurrent benchmark
+                                goroutine. Useful for randomizing queries across benchmark goroutines.
+      --edns0=0                 Enable EDNS0 with specified size.
+      --ednsopt=""              code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal string. code must be arbitrary numeric value.
+      --tcp                     Use TCP fot DNS requests.
+      --dot                     Use DoT for DNS requests.
+      --write=1s                DNS write timeout.
+      --read=4s                 DNS read timeout.
+      --codes                   Enable counting DNS return codes.
+      --min=400µs               Minimum value for timing histogram.
+      --max=4s                  Maximum value for histogram.
+      --precision=[1-5]         Significant figure for histogram precision.
+      --distribution            Display distribution histogram of timings to stdout.
+      --csv=/path/to/file.csv   Export distribution to CSV.
+      --io-errors               Log I/O errors to stderr.
+      --silent                  Disable stdout.
+      --color                   ANSI Color output.
+      --hist=/path/to/plot.png  Plot histogram. Based on suffix format is chosen (.png, .svg, .pdf).
+      --version                 Show application version.
 
 Args:
   <queries>  Queries to issue. Can be file referenced using @<file-path>, for example @data/2-domains
@@ -623,4 +625,121 @@ DNS distribution, 100 datapoints
   38.797311ms | ▄▄▄▄                                        |     1
   40.894463ms |                                             |     0
   42.991615ms | ▄▄▄▄                                        |     1
+```
+
+### Plotting histogram
+plots histogram result as PNG to file histogram.png 
+```
+$ dnstrace -n 100 -c 2 --recurse --server 8.8.8.8 --hist histogram.png google.com
+Using 1 hostnames
+Benchmarking 8.8.8.8:53 via udp with 2 concurrent requests
+
+Total requests:		200
+DNS success codes:	200
+Truncated responses:	0
+
+DNS response codes:
+	NOERROR:	200
+
+Time taken for tests:	 824.979907ms
+Questions per second:	 242.4
+DNS timings, 200 datapoints
+	 min:		 7.077888ms
+	 mean:		 8.205762ms
+	 [+/-sd]:	 1.938975ms
+	 max:		 23.068671ms
+	 p99:		 16.252927ms
+	 p95:		 9.437183ms
+	 p90:		 8.912895ms
+	 p75:		 8.126463ms
+	 p50:		 7.864319ms
+
+DNS distribution, 200 datapoints
+    LATENCY   |                                             | COUNT
++-------------+---------------------------------------------+-------+
+  7.208959ms  | ▄▄▄▄▄▄▄▄▄▄▄                                 |    13
+  7.471103ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |    50
+  7.733247ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄   |    48
+  7.995391ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄    |    46
+  8.257535ms  | ▄▄▄▄▄▄▄▄▄▄                                  |    12
+  8.650751ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                            |    19
+  9.175039ms  | ▄▄                                          |     2
+  9.699327ms  | ▄▄                                          |     2
+  10.223615ms |                                             |     0
+  10.747903ms | ▄                                           |     1
+  11.272191ms |                                             |     0
+  11.796479ms |                                             |     0
+  12.320767ms |                                             |     0
+  12.845055ms |                                             |     0
+  13.369343ms |                                             |     0
+  13.893631ms |                                             |     0
+  14.417919ms |                                             |     0
+  14.942207ms |                                             |     0
+  15.466495ms | ▄▄▄                                         |     4
+  15.990783ms | ▄                                           |     1
+  16.515071ms |                                             |     0
+  17.301503ms |                                             |     0
+  18.350079ms |                                             |     0
+  19.398655ms |                                             |     0
+  20.447231ms |                                             |     0
+  21.495807ms |                                             |     0
+  22.544383ms | ▄▄                                          |     2
+```
+
+plots histogram result as SVG to file histogram.svg
+```
+$ dnstrace -n 100 -c 2 --recurse --server 8.8.8.8 --hist histogram.svg google.com
+Using 1 hostnames
+Benchmarking 8.8.8.8:53 via udp with 2 concurrent requests
+
+Total requests:		200
+DNS success codes:	200
+Truncated responses:	0
+
+DNS response codes:
+	NOERROR:	200
+
+Time taken for tests:	 824.979907ms
+Questions per second:	 242.4
+DNS timings, 200 datapoints
+	 min:		 7.077888ms
+	 mean:		 8.205762ms
+	 [+/-sd]:	 1.938975ms
+	 max:		 23.068671ms
+	 p99:		 16.252927ms
+	 p95:		 9.437183ms
+	 p90:		 8.912895ms
+	 p75:		 8.126463ms
+	 p50:		 7.864319ms
+
+DNS distribution, 200 datapoints
+    LATENCY   |                                             | COUNT
++-------------+---------------------------------------------+-------+
+  7.208959ms  | ▄▄▄▄▄▄▄▄▄▄▄                                 |    13
+  7.471103ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |    50
+  7.733247ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄   |    48
+  7.995391ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄    |    46
+  8.257535ms  | ▄▄▄▄▄▄▄▄▄▄                                  |    12
+  8.650751ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                            |    19
+  9.175039ms  | ▄▄                                          |     2
+  9.699327ms  | ▄▄                                          |     2
+  10.223615ms |                                             |     0
+  10.747903ms | ▄                                           |     1
+  11.272191ms |                                             |     0
+  11.796479ms |                                             |     0
+  12.320767ms |                                             |     0
+  12.845055ms |                                             |     0
+  13.369343ms |                                             |     0
+  13.893631ms |                                             |     0
+  14.417919ms |                                             |     0
+  14.942207ms |                                             |     0
+  15.466495ms | ▄▄▄                                         |     4
+  15.990783ms | ▄                                           |     1
+  16.515071ms |                                             |     0
+  17.301503ms |                                             |     0
+  18.350079ms |                                             |     0
+  19.398655ms |                                             |     0
+  20.447231ms |                                             |     0
+  21.495807ms |                                             |     0
+  22.544383ms | ▄▄                                          |     2
 ```
