@@ -9,7 +9,7 @@ import (
 	"gonum.org/v1/plot/vg"
 )
 
-func plotHistogram(file string, times []datapoint) {
+func plotHistogramLatency(file string, times []datapoint) {
 	var values plotter.Values
 	for _, v := range times {
 		values = append(values, v.duration)
@@ -30,7 +30,7 @@ func plotHistogram(file string, times []datapoint) {
 	}
 }
 
-func plotBoxPlot(file, server string, times []datapoint) {
+func plotBoxPlotLatency(file, server string, times []datapoint) {
 	var values plotter.Values
 	for _, v := range times {
 		values = append(values, v.duration)
@@ -51,7 +51,7 @@ func plotBoxPlot(file, server string, times []datapoint) {
 	}
 }
 
-func plotLine(file string, times []datapoint) {
+func plotLineLatency(file string, times []datapoint) {
 	var values plotter.XYs
 	for i, v := range times {
 		values = append(values, plotter.XY{X: float64(i), Y: v.duration})

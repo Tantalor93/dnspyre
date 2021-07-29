@@ -58,9 +58,8 @@ var (
 	pSilent = pApp.Flag("silent", "Disable stdout.").Default("false").Bool()
 	pColor  = pApp.Flag("color", "ANSI Color output.").Default("true").Bool()
 
-	pPlotHist = pApp.Flag("hist", "Plot histogram. Based on suffix format is chosen (.png, .svg, .pdf)").Default("").PlaceHolder("/path/to/plot.png").String()
-	pPlotBox  = pApp.Flag("box", "Plot box plot. Based on suffix format is chosen (.png, .svg, .pdf)").Default("").PlaceHolder("/path/to/plot.png").String()
-	pPlotLine = pApp.Flag("line", "Plot line graph representing latencies since the start of the benchmark. Based on suffix format is chosen (.png, .svg, .pdf)").Default("").PlaceHolder("/path/to/plot.png").String()
+	pPlotDir    = pApp.Flag("plot", "Plot benchmark results and export them to directory.").Default("").PlaceHolder("/path/to/folder").String()
+	pPlotFormat = pApp.Flag("plotf", "Format of graphs. Supported formats png, svg, pdf.").Default("png").Enum("png", "svg", "pdf")
 
 	pQueries = pApp.Arg("queries", "Queries to issue. Can be file referenced using @<file-path>, for example @data/2-domains").Required().Strings()
 )

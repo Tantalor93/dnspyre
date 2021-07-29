@@ -89,16 +89,12 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 		return times[i].start.Before(times[j].start)
 	})
 
-	if len(*pPlotHist) != 0 {
-		plotHistogram(*pPlotHist, times)
-	}
-
-	if len(*pPlotBox) != 0 {
-		plotBoxPlot(*pPlotBox, *pServer, times)
-	}
-
-	if len(*pPlotLine) != 0 {
-		plotLine(*pPlotLine, times)
+	if len(*pPlotDir) != 0 {
+		now := time.Now()
+		unix := now.Unix()
+		plotHistogramLatency(getFileName("latency-hist", unix), times)
+		plotBoxPlotLatency(getFileName("latency-box", unix), *pServer, times)
+		plotLineLatency(getFileName("latency-line", unix), times)
 	}
 
 	if csv != nil {
@@ -164,6 +160,10 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 			printBars(dist)
 		}
 	}
+}
+
+func getFileName(filePrefix string, unix int64) string {
+	return *pPlotDir + "/" + filePrefix + "-" + strconv.FormatInt(unix, 10) + "." + *pPlotFormat
 }
 
 func writeBars(f *os.File, bars []hdrhistogram.Bar) {

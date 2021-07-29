@@ -16,9 +16,7 @@
         + [using probability to randomize concurrent queries](#using-probability-to-randomize-concurrent-queries)
         + [EDNSOPT usage](#ednsopt-usage)
         + [DoT](#dot)
-        + [Plotting histogram](#plotting-histogram)
-        + [Plotting boxplot](#plotting-boxplot)
-        + [Plotting line graph](#plotting-line-graph)
+        + [Plotting graphs](#plotting-graphs)
 
 # DNStrace
 forked https://github.com/redsift/dnstrace 
@@ -34,7 +32,7 @@ This tool supports wide variety of options to customize DNS benchmark and benchm
 * benchmark DNS servers with DoT
 * benchmark DNS servers with uneven random load from provided high volume resources (see `/data` resources and `--probability` option)  
 * plot benchmark results via CLI histogram or plot the benchmark results as boxplot, histogram, line graphs and export
-them via all kind of image formats (ong, svg, pdf)
+them via all kind of image formats (png, svg, pdf)
 
 ## Installation 
 ```
@@ -99,9 +97,8 @@ Flags:
       --io-errors               Log I/O errors to stderr.
       --silent                  Disable stdout.
       --color                   ANSI Color output.
-      --hist=/path/to/plot.png  Plot histogram. Based on suffix format is chosen (.png, .svg, .pdf).
-      --box=/path/to/plot.png   Plot box plot. Based on suffix format is chosen (.png, .svg, .pdf)
-      --line=/path/to/plot.png  Plot line graph representing latencies since the start of the benchmark. Based on suffix format is chosen (.png, .svg, .pdf)
+      --plot=/path/to/folder    Plot benchmark results and export them to directory.
+      --plotf=png               Format of graphs. Supported formats png, svg, pdf.
       --version                 Show application version.
 
 Args:
@@ -641,178 +638,55 @@ DNS distribution, 100 datapoints
   42.991615ms | ▄▄▄▄                                        |     1
 ```
 
-### Plotting histogram
-plots histogram result as PNG to file histogram.png 
+### Plotting graphs
+plots benchmark results as histograms, boxplots and line graphs to the current directory
 ```
-$ dnstrace -n 100 -c 2 --recurse --server 8.8.8.8 --hist histogram.png google.com
-Using 1 hostnames
-Benchmarking 8.8.8.8:53 via udp with 2 concurrent requests
-
-Total requests:		200
-DNS success codes:	200
-Truncated responses:	0
-
-DNS response codes:
-	NOERROR:	200
-
-Time taken for tests:	 824.979907ms
-Questions per second:	 242.4
-DNS timings, 200 datapoints
-	 min:		 7.077888ms
-	 mean:		 8.205762ms
-	 [+/-sd]:	 1.938975ms
-	 max:		 23.068671ms
-	 p99:		 16.252927ms
-	 p95:		 9.437183ms
-	 p90:		 8.912895ms
-	 p75:		 8.126463ms
-	 p50:		 7.864319ms
-
-DNS distribution, 200 datapoints
-    LATENCY   |                                             | COUNT
-+-------------+---------------------------------------------+-------+
-  7.208959ms  | ▄▄▄▄▄▄▄▄▄▄▄                                 |    13
-  7.471103ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |    50
-  7.733247ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄   |    48
-  7.995391ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄    |    46
-  8.257535ms  | ▄▄▄▄▄▄▄▄▄▄                                  |    12
-  8.650751ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                            |    19
-  9.175039ms  | ▄▄                                          |     2
-  9.699327ms  | ▄▄                                          |     2
-  10.223615ms |                                             |     0
-  10.747903ms | ▄                                           |     1
-  11.272191ms |                                             |     0
-  11.796479ms |                                             |     0
-  12.320767ms |                                             |     0
-  12.845055ms |                                             |     0
-  13.369343ms |                                             |     0
-  13.893631ms |                                             |     0
-  14.417919ms |                                             |     0
-  14.942207ms |                                             |     0
-  15.466495ms | ▄▄▄                                         |     4
-  15.990783ms | ▄                                           |     1
-  16.515071ms |                                             |     0
-  17.301503ms |                                             |     0
-  18.350079ms |                                             |     0
-  19.398655ms |                                             |     0
-  20.447231ms |                                             |     0
-  21.495807ms |                                             |     0
-  22.544383ms | ▄▄                                          |     2
-```
-![histogram](example/histogram.png)
-
-### Plotting boxplot
-plots boxplot result as PNG to file boxplot.png
-```
-$ dnstrace -n 100 -c 2 --recurse --server 8.8.8.8 --box boxplot.png google.com
-Using 1 hostnames
-Benchmarking 8.8.8.8:53 via udp with 2 concurrent requests
-
-Total requests:		200
-DNS success codes:	200
-Truncated responses:	0
-
-DNS response codes:
-	NOERROR:	200
-
-Time taken for tests:	 835.324247ms
-Questions per second:	 239.4
-DNS timings, 200 datapoints
-	 min:		 7.077888ms
-	 mean:		 8.268021ms
-	 [+/-sd]:	 1.689424ms
-	 max:		 16.252927ms
-	 p99:		 15.728639ms
-	 p95:		 11.010047ms
-	 p90:		 8.912895ms
-	 p75:		 8.126463ms
-	 p50:		 7.864319ms
-
-DNS distribution, 200 datapoints
-    LATENCY   |                                             | COUNT
-+-------------+---------------------------------------------+-------+
-  7.208959ms  | ▄▄▄▄▄▄▄▄                                    |    11
-  7.471103ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄              |    39
-  7.733247ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |    56
-  7.995391ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄        |    47
-  8.257535ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                             |    19
-  8.650751ms  | ▄▄▄▄▄▄▄                                     |     9
-  9.175039ms  | ▄▄▄▄                                        |     5
-  9.699327ms  | ▄▄                                          |     2
-  10.223615ms |                                             |     0
-  10.747903ms | ▄▄                                          |     2
-  11.272191ms |                                             |     0
-  11.796479ms |                                             |     0
-  12.320767ms |                                             |     0
-  12.845055ms |                                             |     0
-  13.369343ms |                                             |     0
-  13.893631ms | ▄                                           |     1
-  14.417919ms | ▄                                           |     1
-  14.942207ms | ▄                                           |     1
-  15.466495ms | ▄▄▄▄                                        |     5
-  15.990783ms | ▄▄                                          |     2
-```
-![boxplot](example/boxplot.png)
-
-### Plotting line graph
-plots line graph result as PNG to file line.png
-```
-$ dnstrace -n 100 -c 2 --recurse --server 8.8.8.8 --line line.png google.com
+$ dnstrace -n 100 -c 2 --server 8.8.8.8 --plot . --recurse google.com
 Using 1 hostnames
 Benchmarking 8.8.8.8:53 via udp with 2 concurrent requests 
 
 Total requests:         200     
-Connection errors:      0
-Read/Write errors:      1
-DNS success codes:      199
+DNS success codes:      200
 Truncated responses:    0
 
 DNS response codes:
-        NOERROR:        199
+        NOERROR:        200
 
-Time taken for tests:    5.589751381s
-Questions per second:    35.8
-DNS timings, 199 datapoints
-         min:            13.1072ms
-         mean:           16.063235ms
-         [+/-sd]:        4.17821ms
-         max:            44.040191ms
-         p99:            35.651583ms
-         p95:            23.068671ms
-         p90:            19.922943ms
-         p75:            16.252927ms
-         p50:            15.204351ms
+Time taken for tests:    801.971775ms
+Questions per second:    249.4
+DNS timings, 200 datapoints
+         min:            7.077888ms
+         mean:           7.950172ms
+         [+/-sd]:        955.172µs
+         max:            14.680063ms
+         p99:            13.631487ms
+         p95:            9.437183ms
+         p90:            8.912895ms
+         p75:            8.126463ms
+         p50:            7.864319ms
 
-DNS distribution, 199 datapoints
+DNS distribution, 200 datapoints
     LATENCY   |                                             | COUNT  
 +-------------+---------------------------------------------+-------+
-  13.369343ms | ▄▄▄▄▄                                       |     6  
-  13.893631ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄             |    39  
-  14.417919ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |    54  
-  14.942207ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                    |    30  
-  15.466495ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                              |    18  
-  15.990783ms | ▄▄▄▄▄▄▄▄▄▄                                  |    13  
-  16.515071ms | ▄▄▄▄▄                                       |     6  
-  17.301503ms | ▄▄▄▄▄▄                                      |     8  
-  18.350079ms | ▄▄                                          |     3  
-  19.398655ms | ▄▄                                          |     3  
-  20.447231ms | ▄▄                                          |     2  
-  21.495807ms | ▄▄▄                                         |     4  
-  22.544383ms | ▄▄▄                                         |     4  
-  23.592959ms |                                             |     0  
-  24.641535ms |                                             |     0  
-  25.690111ms |                                             |     0  
-  26.738687ms | ▄                                           |     1  
-  27.787263ms | ▄                                           |     1  
-  28.835839ms |                                             |     0  
-  29.884415ms | ▄▄                                          |     2  
-  30.932991ms |                                             |     0  
-  31.981567ms | ▄                                           |     1  
-  33.030143ms | ▄                                           |     1  
-  34.603007ms | ▄                                           |     1  
-  36.700159ms | ▄                                           |     1  
-  38.797311ms |                                             |     0  
-  40.894463ms |                                             |     0  
-  42.991615ms | ▄                                           |     1  
+  7.208959ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                   |    30  
+  7.471103ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |    52  
+  7.733247ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                   |    30  
+  7.995391ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄        |    44  
+  8.257535ms  | ▄▄▄▄▄▄▄▄▄                                   |    11  
+  8.650751ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                            |    19  
+  9.175039ms  | ▄▄▄▄▄▄▄                                     |     8  
+  9.699327ms  | ▄▄                                          |     2  
+  10.223615ms |                                             |     0  
+  10.747903ms |                                             |     0  
+  11.272191ms | ▄                                           |     1  
+  11.796479ms |                                             |     0  
+  12.320767ms |                                             |     0  
+  12.845055ms |                                             |     0  
+  13.369343ms | ▄                                           |     1  
+  13.893631ms |                                             |     0  
+  14.417919ms | ▄▄                                          |     2  
 ```
-![line](example/line.png)
+![latency histogram](example/latency-hist-1627535882.png)
+![latency boxplot](example/latency-box-1627535882.png)
+![latency line](example/latency-line-1627535882.png)
+
