@@ -1,7 +1,8 @@
 export GO111MODULE := on
 
 EXECUTABLE = dnstrace
-VERSION = development
+GITCOMMIT:=$(shell git describe --dirty --always)
+VERSION = $(GITCOMMIT)
 
 all: check test build
 
