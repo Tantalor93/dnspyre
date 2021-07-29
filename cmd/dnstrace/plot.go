@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image/color"
 	"os"
+	"sort"
 
 	"github.com/miekg/dns"
 	"gonum.org/v1/plot"
@@ -92,6 +93,41 @@ func plotResponses(file string, rcodes map[int]int64) {
 	p.NominalX(names...)
 	p.Y.Label.Text = "count"
 	barchart.Color = color.Gray{Y: 128}
+
+	if err := p.Save(6*vg.Inch, 6*vg.Inch, file); err != nil {
+		fmt.Fprintln(os.Stderr, "Failed to save plot.", err)
+	}
+}
+
+func plotLineThroughput(file string, times []datapoint) {
+	var values plotter.XYs
+	m := make(map[int64]int64)
+	for _, v := range times {
+		unix := v.start.Unix()
+		if _, ok := m[unix]; !ok {
+			m[unix] = 0
+		}
+		m[unix]++
+	}
+
+	for k, v := range m {
+		values = append(values, plotter.XY{X: float64(k), Y: float64(v)})
+	}
+
+	sort.SliceStable(values, func(i, j int) bool {
+		return values[i].X < values[j].X
+	})
+
+	p := plot.New()
+	p.Title.Text = "Throughput per second"
+	p.X.Label.Text = "time of test (s)"
+	p.Y.Label.Text = "number of requests (per sec)"
+
+	l, err := plotter.NewLine(values)
+	if err != nil {
+		panic(err)
+	}
+	p.Add(l)
 
 	if err := p.Save(6*vg.Inch, 6*vg.Inch, file); err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to save plot.", err)
