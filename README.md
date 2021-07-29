@@ -652,13 +652,13 @@ Truncated responses:    0
 DNS response codes:
         NOERROR:        200
 
-Time taken for tests:    801.971775ms
-Questions per second:    249.4
+Time taken for tests:    800.892504ms
+Questions per second:    249.7
 DNS timings, 200 datapoints
-         min:            7.077888ms
-         mean:           7.950172ms
-         [+/-sd]:        955.172µs
-         max:            14.680063ms
+         min:            6.815744ms
+         mean:           8.005222ms
+         [+/-sd]:        1.172558ms
+         max:            17.825791ms
          p99:            13.631487ms
          p95:            9.437183ms
          p90:            8.912895ms
@@ -668,25 +668,33 @@ DNS timings, 200 datapoints
 DNS distribution, 200 datapoints
     LATENCY   |                                             | COUNT  
 +-------------+---------------------------------------------+-------+
-  7.208959ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                   |    30  
-  7.471103ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |    52  
-  7.733247ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                   |    30  
-  7.995391ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄        |    44  
-  8.257535ms  | ▄▄▄▄▄▄▄▄▄                                   |    11  
-  8.650751ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                            |    19  
-  9.175039ms  | ▄▄▄▄▄▄▄                                     |     8  
-  9.699327ms  | ▄▄                                          |     2  
+  6.946815ms  | ▄                                           |     1  
+  7.208959ms  | ▄▄▄▄▄                                       |     7  
+  7.471103ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |    64  
+  7.733247ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄            |    48  
+  7.995391ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                  |    38  
+  8.257535ms  | ▄▄▄▄▄▄▄                                     |    11  
+  8.650751ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄                               |    19  
+  9.175039ms  | ▄▄▄▄                                        |     6  
+  9.699327ms  | ▄                                           |     2  
   10.223615ms |                                             |     0  
   10.747903ms |                                             |     0  
-  11.272191ms | ▄                                           |     1  
+  11.272191ms |                                             |     0  
   11.796479ms |                                             |     0  
   12.320767ms |                                             |     0  
-  12.845055ms |                                             |     0  
+  12.845055ms | ▄                                           |     1  
   13.369343ms | ▄                                           |     1  
   13.893631ms |                                             |     0  
-  14.417919ms | ▄▄                                          |     2  
+  14.417919ms |                                             |     0  
+  14.942207ms |                                             |     0  
+  15.466495ms |                                             |     0  
+  15.990783ms |                                             |     0  
+  16.515071ms |                                             |     0  
+  17.301503ms | ▄                                           |     2  
 ```
-![latency histogram](example/latency-hist-1627535882.png)
-![latency boxplot](example/latency-box-1627535882.png)
-![latency line](example/latency-line-1627535882.png)
+![latency histogram](example/latency-hist-1627538880.png)
+![latency boxplot](example/latency-box-1627538880.png)
+![latency line](example/latency-line-1627538880.png)
+![respones bar](example/responses-bar-1627538880.png)
+
 
