@@ -96,6 +96,7 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 		plotBoxPlotLatency(getFileName("latency-box", unix), *pServer, times)
 		plotLineLatency(getFileName("latency-line", unix), times)
 		plotResponses(getFileName("responses-bar", unix), codeTotals)
+		plotLineThroughput(getFileName("throughput-line", unix), times)
 	}
 
 	if csv != nil {

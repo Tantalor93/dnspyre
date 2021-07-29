@@ -640,60 +640,60 @@ DNS distribution, 100 datapoints
 ### Plotting graphs
 plots benchmark results as histograms, boxplots and line graphs to the current directory
 ```
-$ dnstrace -n 100 -c 2 --server 8.8.8.8 --plot . --recurse google.com
+$ dnstrace -n 500 -c 2 --server 8.8.8.8 --plot . --recurse google.com
 Using 1 hostnames
 Benchmarking 8.8.8.8:53 via udp with 2 concurrent requests 
 
-Total requests:         200     
-DNS success codes:      200
+Total requests:         1000    
+DNS success codes:      1000
 Truncated responses:    0
 
 DNS response codes:
-        NOERROR:        200
+        NOERROR:        1000
 
-Time taken for tests:    800.892504ms
-Questions per second:    249.7
-DNS timings, 200 datapoints
-         min:            6.815744ms
-         mean:           8.005222ms
-         [+/-sd]:        1.172558ms
+Time taken for tests:    3.992691089s
+Questions per second:    250.5
+DNS timings, 1000 datapoints
+         min:            7.077888ms
+         mean:           7.957774ms
+         [+/-sd]:        1.164865ms
          max:            17.825791ms
-         p99:            13.631487ms
-         p95:            9.437183ms
+         p99:            15.728639ms
+         p95:            8.912895ms
          p90:            8.912895ms
          p75:            8.126463ms
          p50:            7.864319ms
 
-DNS distribution, 200 datapoints
+DNS distribution, 1000 datapoints
     LATENCY   |                                             | COUNT  
 +-------------+---------------------------------------------+-------+
-  6.946815ms  | ▄                                           |     1  
-  7.208959ms  | ▄▄▄▄▄                                       |     7  
-  7.471103ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |    64  
-  7.733247ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄            |    48  
-  7.995391ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                  |    38  
-  8.257535ms  | ▄▄▄▄▄▄▄                                     |    11  
-  8.650751ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄                               |    19  
-  9.175039ms  | ▄▄▄▄                                        |     6  
-  9.699327ms  | ▄                                           |     2  
+  7.208959ms  | ▄▄▄▄▄▄▄▄▄▄▄▄                                |   102  
+  7.471103ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |   354  
+  7.733247ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                        |   165  
+  7.995391ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                         |   154  
+  8.257535ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄                               |   108  
+  8.650751ms  | ▄▄▄▄▄▄▄▄                                    |    69  
+  9.175039ms  | ▄▄                                          |    15  
+  9.699327ms  |                                             |     0  
   10.223615ms |                                             |     0  
-  10.747903ms |                                             |     0  
-  11.272191ms |                                             |     0  
-  11.796479ms |                                             |     0  
-  12.320767ms |                                             |     0  
-  12.845055ms | ▄                                           |     1  
-  13.369343ms | ▄                                           |     1  
+  10.747903ms | ▄                                           |     5  
+  11.272191ms |                                             |     4  
+  11.796479ms |                                             |     4  
+  12.320767ms |                                             |     1  
+  12.845055ms |                                             |     2  
+  13.369343ms |                                             |     3  
   13.893631ms |                                             |     0  
   14.417919ms |                                             |     0  
-  14.942207ms |                                             |     0  
-  15.466495ms |                                             |     0  
-  15.990783ms |                                             |     0  
-  16.515071ms |                                             |     0  
-  17.301503ms | ▄                                           |     2  
+  14.942207ms |                                             |     1  
+  15.466495ms | ▄                                           |     9  
+  15.990783ms |                                             |     2  
+  16.515071ms |                                             |     1  
+  17.301503ms |                                             |     1  
 ```
-![latency histogram](example/latency-hist-1627538880.png)
-![latency boxplot](example/latency-box-1627538880.png)
-![latency line](example/latency-line-1627538880.png)
-![respones bar](example/responses-bar-1627538880.png)
+![latency histogram](example/latency-hist-1627558867.png)
+![latency boxplot](example/latency-box-1627558867.png)
+![latency line](example/latency-line-1627558867.png)
+![respones bar](example/responses-bar-1627558867.png)
+![throughput line](example/throughput-line-1627558867.png)
 
 
