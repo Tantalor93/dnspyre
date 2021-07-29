@@ -25,8 +25,9 @@ var (
 var (
 	pApp = kingpin.New("dnstrace", "A high QPS DNS benchmark.").Author(author)
 
-	pServer = pApp.Flag("server", "DNS server IP:port to test. IPv6 is also supported, for example '[fddd:dddd::]:53'.").Short('s').Default("127.0.0.1").String()
-	pType   = pApp.Flag("type", "Query type.").Short('t').Default("A").Enum(getSupportedDNSTypes()...)
+	pServer = pApp.Flag("server", "DNS server IP:port to test. IPv6 is also supported, for example '[fddd:dddd::]:53'. "+
+		"Also DoH servers are supported such as `https://1.1.1.1`, when such server is provided, the benchmark automatically switches to the use of DoH.").Short('s').Default("127.0.0.1").String()
+	pType = pApp.Flag("type", "Query type.").Short('t').Default("A").Enum(getSupportedDNSTypes()...)
 
 	pCount       = pApp.Flag("number", "Number of queries to issue. Note that the total number of queries issued = number*concurrency*len(queries).").Short('n').Default("1").Int64()
 	pConcurrency = pApp.Flag("concurrency", "Number of concurrent queries to issue.").Short('c').Default("1").Uint32()

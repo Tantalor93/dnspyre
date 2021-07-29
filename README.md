@@ -30,6 +30,7 @@ This tool supports wide variety of options to customize DNS benchmark and benchm
 * benchmark DNS servers with a lot of parallel queries and connections (`--number`, `--concurrency` options)
 * benchmark DNS servers using DNS queries over UDP or TCP
 * benchmark DNS servers with DoT
+* benchmark DNS servers using DoH  
 * benchmark DNS servers with uneven random load from provided high volume resources (see `/data` resources and `--probability` option)  
 * plot benchmark results via CLI histogram or plot the benchmark results as boxplot, histogram, line graphs and export
 them via all kind of image formats (png, svg, pdf)
@@ -71,7 +72,8 @@ A high QPS DNS benchmark.
 
 Flags:
       --help                    Show context-sensitive help (also try --help-long and --help-man).
-  -s, --server="127.0.0.1"      DNS server IP:port to test. IPv6 is also supported, for example '[fddd:dddd::]:53'.
+  -s, --server="127.0.0.1"      DNS server IP:port to test. IPv6 is also supported, for example '[fddd:dddd::]:53'. Also DoH servers are supported such as `https://1.1.1.1`, when such server is provided,
+                                the benchmark automatically switches to the use of DoH. 
   -t, --type=A                  Query type.
   -n, --number=1                Number of queries to issue. Note that the total number of queries issued = number*concurrency*len(queries).
   -c, --concurrency=1           Number of concurrent queries to issue.
@@ -635,6 +637,108 @@ DNS distribution, 100 datapoints
   38.797311ms | ▄▄▄▄                                        |     1
   40.894463ms |                                             |     0
   42.991615ms | ▄▄▄▄                                        |     1
+```
+
+### DoH
+```
+$ dnstrace -n 200 -c 2 --server 'https://1.1.1.1' --recurse google.com
+Using 1 hostnames
+Benchmarking https://1.1.1.1 via udp with 2 concurrent requests
+
+Total requests:		400
+DNS success codes:	400
+Truncated responses:	0
+
+DNS response codes:
+	NOERROR:	400
+
+Time taken for tests:	 2.273113716s
+Questions per second:	 176.0
+DNS timings, 400 datapoints
+	 min:		 8.126464ms
+	 mean:		 11.364597ms
+	 [+/-sd]:	 12.113622ms
+	 max:		 184.549375ms
+	 p99:		 17.825791ms
+	 p95:		 14.680063ms
+	 p90:		 13.631487ms
+	 p75:		 11.534335ms
+	 p50:		 9.961471ms
+
+DNS distribution, 400 datapoints
+    LATENCY    |                                             | COUNT
++--------------+---------------------------------------------+-------+
+  8.257535ms   | ▄▄                                          |     4
+  8.650751ms   | ▄▄▄▄▄▄▄▄▄                                   |    21
+  9.175039ms   | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄   |    91
+  9.699327ms   | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |    96
+  10.223615ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                  |    58
+  10.747903ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄                               |    29
+  11.272191ms  | ▄▄▄▄▄▄▄                                     |    15
+  11.796479ms  | ▄▄▄▄▄▄▄                                     |    15
+  12.320767ms  | ▄▄▄▄▄▄▄▄                                    |    18
+  12.845055ms  | ▄▄▄▄▄                                       |    11
+  13.369343ms  | ▄▄▄▄▄                                       |    12
+  13.893631ms  | ▄▄▄                                         |     7
+  14.417919ms  | ▄▄                                          |     4
+  14.942207ms  | ▄▄                                          |     5
+  15.466495ms  | ▄                                           |     3
+  15.990783ms  | ▄                                           |     3
+  16.515071ms  |                                             |     1
+  17.301503ms  | ▄                                           |     3
+  18.350079ms  |                                             |     1
+  19.398655ms  |                                             |     1
+  20.447231ms  |                                             |     0
+  21.495807ms  |                                             |     0
+  22.544383ms  |                                             |     0
+  23.592959ms  |                                             |     0
+  24.641535ms  |                                             |     0
+  25.690111ms  |                                             |     0
+  26.738687ms  |                                             |     0
+  27.787263ms  |                                             |     0
+  28.835839ms  |                                             |     0
+  29.884415ms  |                                             |     0
+  30.932991ms  |                                             |     0
+  31.981567ms  |                                             |     0
+  33.030143ms  |                                             |     0
+  34.603007ms  |                                             |     0
+  36.700159ms  |                                             |     0
+  38.797311ms  |                                             |     0
+  40.894463ms  |                                             |     0
+  42.991615ms  |                                             |     0
+  45.088767ms  |                                             |     0
+  47.185919ms  |                                             |     0
+  49.283071ms  |                                             |     0
+  51.380223ms  |                                             |     0
+  53.477375ms  |                                             |     0
+  55.574527ms  |                                             |     0
+  57.671679ms  |                                             |     0
+  59.768831ms  |                                             |     0
+  61.865983ms  |                                             |     0
+  63.963135ms  |                                             |     0
+  66.060287ms  |                                             |     0
+  69.206015ms  |                                             |     0
+  73.400319ms  |                                             |     0
+  77.594623ms  |                                             |     0
+  81.788927ms  |                                             |     0
+  85.983231ms  |                                             |     0
+  90.177535ms  |                                             |     0
+  94.371839ms  |                                             |     0
+  98.566143ms  |                                             |     0
+  102.760447ms |                                             |     0
+  106.954751ms |                                             |     0
+  111.149055ms |                                             |     0
+  115.343359ms |                                             |     0
+  119.537663ms |                                             |     0
+  123.731967ms |                                             |     0
+  127.926271ms |                                             |     0
+  132.120575ms |                                             |     0
+  138.412031ms |                                             |     0
+  146.800639ms |                                             |     0
+  155.189247ms |                                             |     0
+  163.577855ms |                                             |     0
+  171.966463ms |                                             |     0
+  180.355071ms | ▄                                           |     2
 ```
 
 ### Plotting graphs
