@@ -15,6 +15,7 @@ require (
 	github.com/miekg/dns v1.1.43
 	github.com/olekukonko/tablewriter v0.0.0-20170719101040-be5337e7b39e
 	github.com/sergi/go-diff v1.2.0 // indirect
+	github.com/stretchr/testify v1.7.0
 	go.uber.org/ratelimit v0.2.0
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
 	gonum.org/v1/plot v0.9.0
