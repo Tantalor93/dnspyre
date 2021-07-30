@@ -55,25 +55,28 @@ func Test_do(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 			rs := do(ctx)
-			assert.Len(t, rs, 2, "do(ctx) rstats")
 
-			assert.NotNil(t, rs[0].hist, "do(ctx) rstats histogram")
-			assert.NotNil(t, rs[1].hist, "do(ctx) rstats histogram")
+			if assert.Len(t, rs, 2, "do(ctx) rstats") {
+				if assert.NotNil(t, rs[0].hist, "do(ctx) rstats histogram") {
+					assert.NotNil(t, rs[0].codes, "do(ctx) rstats codes")
+					assert.Equal(t, int64(1), rs[0].codes[0], "do(ctx) rstats codes NOERROR")
+				}
 
-			assert.NotNil(t, rs[0].codes, "do(ctx) rstats codes")
-			assert.NotNil(t, rs[1].codes, "do(ctx) rstats codes")
+				if assert.NotNil(t, rs[1].hist, "do(ctx) rstats histogram") {
+					assert.NotNil(t, rs[1].codes, "do(ctx) rstats codes")
+					assert.Equal(t, int64(1), rs[1].codes[0], "do(ctx) rstats codes NOERROR")
+				}
 
-			assert.Equal(t, int64(1), rs[0].codes[0], "do(ctx) rstats codes NOERROR")
-			assert.Equal(t, int64(1), rs[1].codes[0], "do(ctx) rstats codes NOERROR")
+				if assert.Len(t, rs[0].timings, 1, "do(ctx) rstats timings") {
+					assert.NotZero(t, rs[0].timings[0].duration, "do(ctx) rstats timings duration")
+					assert.NotZero(t, rs[0].timings[0].start, "do(ctx) rstats timings start")
+				}
 
-			assert.Len(t, rs[0].timings, 1, "do(ctx) rstats timings")
-			assert.Len(t, rs[1].timings, 1, "do(ctx) rstats timings")
-
-			assert.NotZero(t, rs[0].timings[0].duration, "do(ctx) rstats timings duration")
-			assert.NotZero(t, rs[1].timings[0].duration, "do(ctx) rstats timings duration")
-
-			assert.NotZero(t, rs[0].timings[0].start, "do(ctx) rstats timings start")
-			assert.NotZero(t, rs[1].timings[0].start, "do(ctx) rstats timings start")
+				if assert.Len(t, rs[1].timings, 1, "do(ctx) rstats timings") {
+					assert.NotZero(t, rs[1].timings[0].duration, "do(ctx) rstats timings duration")
+					assert.NotZero(t, rs[1].timings[0].start, "do(ctx) rstats timings start")
+				}
+			}
 
 			assert.Equal(t, int64(2), count, "total counter")
 			assert.Zero(t, cerror, "connection error counter")
