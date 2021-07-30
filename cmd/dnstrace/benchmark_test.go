@@ -2,6 +2,7 @@ package dnstrace
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -49,22 +50,22 @@ func Test_do(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupTest(tt.args.server, tt.args.tcp, tt.args.dot)
+			setupBenchmarkTest(tt.args.server, tt.args.tcp, tt.args.dot)
 			resetPackageCounters()
 
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
 			rs := do(ctx)
 
 			if assert.Len(t, rs, 2, "do(ctx) rstats") {
 				if assert.NotNil(t, rs[0].hist, "do(ctx) rstats histogram") {
 					assert.NotNil(t, rs[0].codes, "do(ctx) rstats codes")
-					assert.Equal(t, int64(1), rs[0].codes[0], "do(ctx) rstats codes NOERROR")
+					assert.Equal(t, int64(1), rs[0].codes[0], "do(ctx) rstats codes NOERROR, state:"+fmt.Sprint(rs[0].codes))
 				}
 
 				if assert.NotNil(t, rs[1].hist, "do(ctx) rstats histogram") {
 					assert.NotNil(t, rs[1].codes, "do(ctx) rstats codes")
-					assert.Equal(t, int64(1), rs[1].codes[0], "do(ctx) rstats codes NOERROR")
+					assert.Equal(t, int64(1), rs[1].codes[0], "do(ctx) rstats codes NOERROR, state:"+fmt.Sprint(rs[1].codes))
 				}
 
 				if assert.Len(t, rs[0].timings, 1, "do(ctx) rstats timings") {
@@ -89,7 +90,7 @@ func Test_do(t *testing.T) {
 	}
 }
 
-func setupTest(server string, tcp, dot bool) {
+func setupBenchmarkTest(server string, tcp, dot bool) {
 	pQueries = &[]string{"google.com."}
 
 	typ := "A"
@@ -119,14 +120,4 @@ func setupTest(server string, tcp, dot bool) {
 
 	expect := []string{"A"}
 	pExpect = &expect
-}
-
-func resetPackageCounters() {
-	count = 0
-	cerror = 0
-	ecount = 0
-	success = 0
-	matched = 0
-	mismatch = 0
-	truncated = 0
 }

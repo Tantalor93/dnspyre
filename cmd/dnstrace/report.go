@@ -35,7 +35,7 @@ func printProgress() {
 	amatched := atomic.LoadInt64(&matched)
 	atruncated := atomic.LoadInt64(&truncated)
 
-	fmt.Printf("Total requests:\t\t%d\t\n", acount)
+	fmt.Printf("Total requests:\t\t%d\n", acount)
 
 	if acerror > 0 || aecount > 0 {
 		errPrint(os.Stdout, "Connection errors:\t", acerror, "\n")
