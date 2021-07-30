@@ -2,6 +2,7 @@ package doh
 
 import (
 	"bytes"
+	"errors"
 	"net/http"
 
 	"github.com/miekg/dns"
@@ -25,6 +26,10 @@ func Send(server string, msg *dns.Msg) (*dns.Msg, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New("unexpected HTTP status")
+	}
 
 	buffer := bytes.Buffer{}
 	_, err = buffer.ReadFrom(resp.Body)
