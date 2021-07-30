@@ -16,6 +16,7 @@
         + [using probability to randomize concurrent queries](#using-probability-to-randomize-concurrent-queries)
         + [EDNSOPT usage](#ednsopt-usage)
         + [DoT](#dot)
+        + [DoH](#doh)
         + [Plotting graphs](#plotting-graphs)
 
 # DNStrace
