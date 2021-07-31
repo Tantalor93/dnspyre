@@ -1,6 +1,7 @@
 package doh
 
 import (
+	"context"
 	"testing"
 
 	"github.com/miekg/dns"
@@ -31,7 +32,7 @@ func TestSend(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Send(tt.args.server, tt.args.msg)
+			got, err := Send(context.Background(), tt.args.server, tt.args.msg)
 
 			if tt.wantErr {
 				assert.Error(t, err, "Send() error")

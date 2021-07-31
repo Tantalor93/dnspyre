@@ -2,6 +2,7 @@ package doh
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"net/http"
 
@@ -11,7 +12,7 @@ import (
 var client = http.Client{}
 
 // Send sends DNS message to the given DNS server over DoH
-func Send(server string, msg *dns.Msg) (*dns.Msg, error) {
+func Send(ctx context.Context, server string, msg *dns.Msg) (*dns.Msg, error) {
 	pack, err := msg.Pack()
 	if err != nil {
 		return nil, err
@@ -21,6 +22,7 @@ func Send(server string, msg *dns.Msg) (*dns.Msg, error) {
 	if err != nil {
 		return nil, err
 	}
+	request = request.WithContext(ctx)
 	request.Header.Set("Accept", "application/dns-message")
 	request.Header.Set("content-type", "application/dns-message")
 
