@@ -1,0 +1,23 @@
+name: Go Coverage
+on: [pull_request]
+jobs:
+  test:
+    name: Coverage
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Install Go
+      uses: actions/setup-go@v2
+      id: go
+
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Build
+      run: go build -v ./...
+
+    - name: Test With Coverage
+      run: |
+        go test -coverprofile=cover.out -covermode=atomic -race ./...; [ -f cover.out ] && cat cover.out >> ../coverage.txt
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v2.0.2

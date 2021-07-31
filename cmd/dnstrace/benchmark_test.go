@@ -120,4 +120,7 @@ func setupBenchmarkTest(server string, tcp, dot bool) {
 
 	expect := []string{"A"}
 	pExpect = &expect
+
+	recurse := true
+	pRecurse = &recurse
 }
