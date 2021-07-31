@@ -17,7 +17,10 @@ func Send(server string, msg *dns.Msg) (*dns.Msg, error) {
 		return nil, err
 	}
 
-	request, _ := http.NewRequest("POST", server+"/dns-query", bytes.NewReader(pack))
+	request, err := http.NewRequest("POST", server+"/dns-query", bytes.NewReader(pack))
+	if err != nil {
+		return nil, err
+	}
 	request.Header.Set("Accept", "application/dns-message")
 	request.Header.Set("content-type", "application/dns-message")
 
