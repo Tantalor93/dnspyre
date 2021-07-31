@@ -49,9 +49,14 @@ func do(ctx context.Context) []*rstats {
 		srv += ":53"
 	}
 
+	useDoH := strings.HasPrefix(*pServer, "https")
+
 	network := "udp"
 	if *pTCP || *pDOT {
 		network = "tcp"
+	}
+	if useDoH {
+		network = "https"
 	}
 
 	concurrent := *pConcurrency
@@ -98,7 +103,6 @@ func do(ctx context.Context) []*rstats {
 			// create a new lock free rand source for this goroutine
 			rando := rand.New(rand.NewSource(time.Now().Unix()))
 
-			useDoH := strings.HasPrefix(*pServer, "http")
 			var i int64
 			for i = 0; i < *pCount; i++ {
 				for _, q := range questions {
