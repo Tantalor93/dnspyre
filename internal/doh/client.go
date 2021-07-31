@@ -9,10 +9,21 @@ import (
 	"github.com/miekg/dns"
 )
 
-var client = http.Client{}
+// Client encapsulates and provides logic for querying DNS servers over DoH
+type Client struct {
+	c *http.Client
+}
 
-// Send sends DNS message to the given DNS server over DoH
-func Send(ctx context.Context, server string, msg *dns.Msg) (*dns.Msg, error) {
+// NewClient creates new Client instance with standard net/http client. If nil, default http.Client is used.
+func NewClient(c *http.Client) *Client {
+	if c == nil {
+		c = &http.Client{}
+	}
+	return &Client{c}
+}
+
+// PostSend sends DNS message to the given DNS server over DoH using POST, see https://datatracker.ietf.org/doc/html/rfc8484#section-4.1
+func (dc *Client) PostSend(ctx context.Context, server string, msg *dns.Msg) (*dns.Msg, error) {
 	pack, err := msg.Pack()
 	if err != nil {
 		return nil, err
@@ -26,7 +37,7 @@ func Send(ctx context.Context, server string, msg *dns.Msg) (*dns.Msg, error) {
 	request.Header.Set("Accept", "application/dns-message")
 	request.Header.Set("content-type", "application/dns-message")
 
-	resp, err := client.Do(request)
+	resp, err := dc.c.Do(request)
 	if err != nil {
 		return nil, err
 	}

@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSend(t *testing.T) {
+func Test_PostSend(t *testing.T) {
 	type args struct {
 		server string
 		msg    *dns.Msg
@@ -32,13 +32,15 @@ func TestSend(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Send(context.Background(), tt.args.server, tt.args.msg)
+			client := NewClient(nil)
+
+			got, err := client.PostSend(context.Background(), tt.args.server, tt.args.msg)
 
 			if tt.wantErr {
-				assert.Error(t, err, "Send() error")
+				assert.Error(t, err, "PostSend() error")
 			} else {
-				assert.NotNil(t, got, "Send() response")
-				assert.Equal(t, tt.wantRcode, got.Rcode, "Send() rcode")
+				assert.NotNil(t, got, "PostSend() response")
+				assert.Equal(t, tt.wantRcode, got.Rcode, "PostSend() rcode")
 			}
 		})
 	}
