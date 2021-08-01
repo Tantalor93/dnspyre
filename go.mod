@@ -16,7 +16,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.0-20170719101040-be5337e7b39e
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/stretchr/testify v1.7.0
-	github.com/tantalor93/doh-go v0.0.0-20210801173902-bd6f877f039b // indirect
+	github.com/tantalor93/doh-go v0.0.0-20210801173902-bd6f877f039b
 	go.uber.org/ratelimit v0.2.0
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
 	gonum.org/v1/plot v0.9.0
