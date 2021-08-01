@@ -12,7 +12,7 @@ import (
 
 	"github.com/HdrHistogram/hdrhistogram-go"
 	"github.com/miekg/dns"
-	"github.com/tantalor93/dnstrace/internal/doh"
+	"github.com/tantalor93/doh-go/doh"
 	"go.uber.org/ratelimit"
 )
 
