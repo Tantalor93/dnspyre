@@ -78,8 +78,6 @@ github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81P
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5CcY=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
-github.com/tantalor93/doh-go v0.0.0-20210731214227-ba23c961efc3 h1:HCrWNaKP+5DfimIzGLsUnuEA5gd+oG5p/Wh0r9COMnA=
-github.com/tantalor93/doh-go v0.0.0-20210731214227-ba23c961efc3/go.mod h1:huQbBybJYCMipbDXgkk9qx8IBVBm1E//+PBOo8OBbmU=
 github.com/tantalor93/doh-go v0.0.0-20210801173902-bd6f877f039b h1:viFiu3zx/s5CNo12TIVBM+rrI/cDqwoOz0QvAS/VyYk=
 github.com/tantalor93/doh-go v0.0.0-20210801173902-bd6f877f039b/go.mod h1:huQbBybJYCMipbDXgkk9qx8IBVBm1E//+PBOo8OBbmU=
 go.uber.org/atomic v1.7.0 h1:ADUqmZGgLDDfbSL9ZmPxKTybcoEYHgpYfELNoN+7hsw=
