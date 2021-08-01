@@ -126,7 +126,7 @@ func do(ctx context.Context) []*rstats {
 
 					start := time.Now()
 					if useDoH {
-						r, err = dohClient.PostSend(ctx, *pServer, m)
+						r, err = dohClient.SendViaPost(ctx, *pServer, m)
 						if err != nil {
 							atomic.AddInt64(&ecount, 1)
 							continue

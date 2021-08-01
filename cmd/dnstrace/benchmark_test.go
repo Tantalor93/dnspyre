@@ -44,7 +44,7 @@ func Test_do(t *testing.T) {
 		{
 			"benchmark against GoogleDNS - DNS over HTTPS",
 			args{
-				server: "https://1.1.1.1",
+				server: "https://1.1.1.1/dns-query",
 			},
 		},
 	}

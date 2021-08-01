@@ -74,8 +74,8 @@ A high QPS DNS benchmark.
 
 Flags:
       --help                    Show context-sensitive help (also try --help-long and --help-man).
-  -s, --server="127.0.0.1"      DNS server IP:port to test. IPv6 is also supported, for example '[fddd:dddd::]:53'. Also DoH servers are supported such as `https://1.1.1.1`, when such server is provided,
-                                the benchmark automatically switches to the use of DoH. 
+  -s, --server="127.0.0.1"      DNS server IP:port to test. IPv6 is also supported, for example '[fddd:dddd::]:53'. Also DoH servers are supported such as `https://1.1.1.1/dns-query`, when such server is provided,
+                                the benchmark automatically switches to the use of DoH. Note that path on which DoH server handles requests (like `/dns-query`) has to be provided as well.
   -t, --type=A                  Query type.
   -n, --number=1                Number of queries to issue. Note that the total number of queries issued = number*concurrency*len(queries).
   -c, --concurrency=1           Number of concurrent queries to issue.
@@ -643,9 +643,9 @@ DNS distribution, 100 datapoints
 
 ### DoH
 ```
-$ dnstrace -n 200 -c 2 --server 'https://1.1.1.1' --recurse google.com
+$ dnstrace -n 200 -c 2 --server 'https://1.1.1.1/dns-query' --recurse google.com
 Using 1 hostnames
-Benchmarking https://1.1.1.1 via udp with 2 concurrent requests
+Benchmarking https://1.1.1.1/dns-query via udp with 2 concurrent requests
 
 Total requests:		400
 DNS success codes:	400
