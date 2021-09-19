@@ -44,34 +44,34 @@ func Test_do(t *testing.T) {
 			},
 		},
 		{
-			"benchmark against GoogleDNS - DNS over HTTPS",
+			"benchmark against Cloudflare - DNS over HTTPS",
 			args{
 				server: "https://1.1.1.1/dns-query",
 			},
 		},
 		{
-			"benchmark against GoogleDNS - DNS over HTTPS - GET method",
+			"benchmark against Cloudflare - DNS over HTTPS - GET method",
 			args{
 				server:    "https://1.1.1.1/dns-query",
 				dohMethod: "get",
 			},
 		},
 		{
-			"benchmark against GoogleDNS - DNS over HTTPS - POST method",
+			"benchmark against Cloudflare - DNS over HTTPS - POST method",
 			args{
 				server:    "https://1.1.1.1/dns-query",
 				dohMethod: "post",
 			},
 		},
 		{
-			"benchmark against GoogleDNS - DNS over HTTPS/1.1",
+			"benchmark against Cloudflare - DNS over HTTPS/1.1",
 			args{
 				server:      "https://1.1.1.1/dns-query",
 				dohProtocol: "1.1",
 			},
 		},
 		{
-			"benchmark against GoogleDNS - DNS over HTTPS/2",
+			"benchmark against Cloudflare - DNS over HTTPS/2",
 			args{
 				server:      "https://1.1.1.1/dns-query",
 				dohProtocol: "2",
