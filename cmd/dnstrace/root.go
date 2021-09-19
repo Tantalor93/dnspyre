@@ -62,8 +62,9 @@ var (
 	pPlotDir    = pApp.Flag("plot", "Plot benchmark results and export them to directory.").Default("").PlaceHolder("/path/to/folder").String()
 	pPlotFormat = pApp.Flag("plotf", "Format of graphs. Supported formats png, svg, pdf.").Default("png").Enum("png", "svg", "pdf")
 
-	pQueries   = pApp.Arg("queries", "Queries to issue. Can be file referenced using @<file-path>, for example @data/2-domains").Required().Strings()
-	pDoHmethod = pApp.Flag("doh-method", "HTTP method to use for DoH requests").Default("post").Enum("get", "post")
+	pQueries     = pApp.Arg("queries", "Queries to issue. Can be file referenced using @<file-path>, for example @data/2-domains").Required().Strings()
+	pDoHmethod   = pApp.Flag("doh-method", "HTTP method to use for DoH requests").Default("post").Enum("get", "post")
+	pDoHProtocol = pApp.Flag("doh-protocol", "HTTP protocol to use for DoH requests").Default("1.1").Enum("1.1", "2")
 )
 
 var (

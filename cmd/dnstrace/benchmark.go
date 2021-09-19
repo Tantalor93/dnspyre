@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
@@ -14,6 +15,7 @@ import (
 	"github.com/miekg/dns"
 	"github.com/tantalor93/doh-go/doh"
 	"go.uber.org/ratelimit"
+	"golang.org/x/net/http2"
 )
 
 const dnsTimeout = time.Second * 4
@@ -59,7 +61,20 @@ func do(ctx context.Context) []*rstats {
 	var dohFunc func(context.Context, string, *dns.Msg) (*dns.Msg, error)
 	if useDoH {
 		network = "https"
-		dohClient = *doh.NewClient(nil)
+		var tr http.RoundTripper
+		switch *pDoHProtocol {
+		case "1.1":
+			network = network + "/1.1"
+			tr = &http.Transport{}
+		case "2":
+			network = network + "/2"
+			tr = &http2.Transport{}
+		default:
+			network = network + "/1.1"
+			tr = &http.Transport{}
+		}
+		c := http.Client{Transport: tr}
+		dohClient = *doh.NewClient(&c)
 
 		switch *pDoHmethod {
 		case "post":
