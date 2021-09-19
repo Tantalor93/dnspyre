@@ -28,8 +28,7 @@ var (
 	pServer = pApp.Flag("server", "DNS server IP:port to test. IPv6 is also supported, for example '[fddd:dddd::]:53'. "+
 		"Also DoH servers are supported such as `https://1.1.1.1/dns-query`, when such server is provided, the benchmark automatically switches to the use of DoH. "+
 		"Note that path on which DoH server handles requests (like `/dns-query`) has to be provided as well.").Short('s').Default("127.0.0.1").String()
-	pType = pApp.Flag("type", "Query type.").Short('t').Default("A").Enum(getSupportedDNSTypes()...)
-
+	pType        = pApp.Flag("type", "Query type.").Short('t').Default("A").Enum(getSupportedDNSTypes()...)
 	pCount       = pApp.Flag("number", "Number of queries to issue. Note that the total number of queries issued = number*concurrency*len(queries).").Short('n').Default("1").Int64()
 	pConcurrency = pApp.Flag("concurrency", "Number of concurrent queries to issue.").Short('c').Default("1").Uint32()
 	pRate        = pApp.Flag("rate-limit", "Apply a global questions / second rate limit.").Short('l').Default("0").Int()
@@ -63,7 +62,8 @@ var (
 	pPlotDir    = pApp.Flag("plot", "Plot benchmark results and export them to directory.").Default("").PlaceHolder("/path/to/folder").String()
 	pPlotFormat = pApp.Flag("plotf", "Format of graphs. Supported formats png, svg, pdf.").Default("png").Enum("png", "svg", "pdf")
 
-	pQueries = pApp.Arg("queries", "Queries to issue. Can be file referenced using @<file-path>, for example @data/2-domains").Required().Strings()
+	pQueries   = pApp.Arg("queries", "Queries to issue. Can be file referenced using @<file-path>, for example @data/2-domains").Required().Strings()
+	pDoHmethod = pApp.Flag("doh-method", "HTTP method to use for DoH requests").Default("post").Enum("get", "post")
 )
 
 var (

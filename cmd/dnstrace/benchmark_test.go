@@ -11,9 +11,10 @@ import (
 
 func Test_do(t *testing.T) {
 	type args struct {
-		server string
-		tcp    bool
-		dot    bool
+		server    string
+		tcp       bool
+		dot       bool
+		dohMethod string
 	}
 	tests := []struct {
 		name string
@@ -47,11 +48,31 @@ func Test_do(t *testing.T) {
 				server: "https://1.1.1.1/dns-query",
 			},
 		},
+		{
+			"benchmark against GoogleDNS - DNS over HTTPS - GET method",
+			args{
+				server:    "https://1.1.1.1/dns-query",
+				dohMethod: "get",
+			},
+		},
+		{
+			"benchmark against GoogleDNS - DNS over HTTPS - POST method",
+			args{
+				server:    "https://1.1.1.1/dns-query",
+				dohMethod: "post",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			time.Sleep(time.Second) // add delay before tests
+
 			setupBenchmarkTest(tt.args.server, tt.args.tcp, tt.args.dot)
 			resetPackageCounters()
+
+			if len(tt.args.dohMethod) > 0 {
+				pDoHmethod = &tt.args.dohMethod
+			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
@@ -91,7 +112,7 @@ func Test_do(t *testing.T) {
 }
 
 func setupBenchmarkTest(server string, tcp, dot bool) {
-	pQueries = &[]string{"google.com."}
+	pQueries = &[]string{"example.com."}
 
 	typ := "A"
 	pType = &typ

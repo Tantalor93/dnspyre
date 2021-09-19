@@ -56,9 +56,22 @@ func do(ctx context.Context) []*rstats {
 	if *pTCP || *pDOT {
 		network = "tcp"
 	}
+	var dohFunc func(context.Context, string, *dns.Msg) (*dns.Msg, error)
 	if useDoH {
 		network = "https"
 		dohClient = *doh.NewClient(nil)
+
+		switch *pDoHmethod {
+		case "post":
+			network = network + " (POST)"
+			dohFunc = dohClient.SendViaPost
+		case "get":
+			network = network + " (GET)"
+			dohFunc = dohClient.SendViaGet
+		default:
+			network = network + " (POST)"
+			dohFunc = dohClient.SendViaPost
+		}
 	}
 
 	concurrent := *pConcurrency
@@ -126,7 +139,7 @@ func do(ctx context.Context) []*rstats {
 
 					start := time.Now()
 					if useDoH {
-						r, err = dohClient.SendViaPost(ctx, *pServer, m)
+						r, err = dohFunc(ctx, *pServer, m)
 						if err != nil {
 							atomic.AddInt64(&ecount, 1)
 							continue
