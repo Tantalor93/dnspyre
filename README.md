@@ -18,6 +18,7 @@
         + [EDNSOPT usage](#ednsopt-usage)
         + [DoT](#dot)
         + [DoH](#doh)
+          + [DoH via GET/POST](#doh-via-getpost)
         + [Plotting graphs](#plotting-graphs)
 
 # DNStrace
