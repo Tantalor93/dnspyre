@@ -102,6 +102,7 @@ Flags:
       --color                   ANSI Color output.
       --plot=/path/to/folder    Plot benchmark results and export them to directory.
       --plotf=png               Format of graphs. Supported formats png, svg, pdf.
+      --doh-method=post         HTTP method to use for DoH requests
       --version                 Show application version.
 
 Args:
@@ -456,6 +457,7 @@ DNS distribution, 2678 datapoints
   3.154116607s |                                             |     0
   3.288334335s |                                             |     1
 ```
+
 ### EDNSOPT usage
 ```
 $ dnstrace -n 10 -c 10  --recurse idnes.cz --server 127.0.0.1 --ednsopt=65518:fddddddd100000000000000000000001
@@ -645,7 +647,7 @@ DNS distribution, 100 datapoints
 ```
 $ dnstrace -n 200 -c 2 --server 'https://1.1.1.1/dns-query' --recurse google.com
 Using 1 hostnames
-Benchmarking https://1.1.1.1/dns-query via udp with 2 concurrent requests
+Benchmarking https://1.1.1.1/dns-query via https (POST) with 2 concurrent requests
 
 Total requests:		400
 DNS success codes:	400
@@ -741,6 +743,39 @@ DNS distribution, 400 datapoints
   163.577855ms |                                             |     0
   171.966463ms |                                             |     0
   180.355071ms | ▄                                           |     2
+```
+
+#### DoH via GET/POST
+you can also specify whether the DoH is done via GET or POST using `--doh-method`
+```
+$ dnstrace -c 2 --server 'https://1.1.1.1/dns-query' --doh-method get --recurse google.com
+Using 1 hostnames
+Benchmarking https://1.1.1.1/dns-query via https (GET) with 2 concurrent requests
+
+Total requests:		2
+DNS success codes:	2
+Truncated responses:	0
+
+DNS response codes:
+	NOERROR:	2
+
+Time taken for tests:	 325.90605ms
+Questions per second:	 6.1
+DNS timings, 2 datapoints
+	 min:		 318.767104ms
+	 mean:		 327.155712ms
+	 [+/-sd]:	 0s
+	 max:		 335.544319ms
+	 p99:		 335.544319ms
+	 p95:		 335.544319ms
+	 p90:		 335.544319ms
+	 p75:		 335.544319ms
+	 p50:		 335.544319ms
+
+DNS distribution, 2 datapoints
+    LATENCY    |                                             | COUNT
++--------------+---------------------------------------------+-------+
+  327.155711ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |     2
 ```
 
 ### Plotting graphs
