@@ -19,6 +19,7 @@
         + [DoT](#dot)
         + [DoH](#doh)
           + [DoH via GET/POST](#doh-via-getpost)
+          + [DoH/1.1, DoH/2](#doh11-doh2)
         + [Plotting graphs](#plotting-graphs)
 
 # DNStrace
@@ -104,6 +105,7 @@ Flags:
       --plot=/path/to/folder    Plot benchmark results and export them to directory.
       --plotf=png               Format of graphs. Supported formats png, svg, pdf.
       --doh-method=post         HTTP method to use for DoH requests
+      --doh-protocol=1.1        HTTP protocol to use for DoH requests
       --version                 Show application version.
 
 Args:
@@ -648,7 +650,7 @@ DNS distribution, 100 datapoints
 ```
 $ dnstrace -n 200 -c 2 --server 'https://1.1.1.1/dns-query' --recurse google.com
 Using 1 hostnames
-Benchmarking https://1.1.1.1/dns-query via https (POST) with 2 concurrent requests
+Benchmarking https://1.1.1.1/dns-query via https/1.1 (POST) with 2 concurrent requests
 
 Total requests:		400
 DNS success codes:	400
@@ -751,7 +753,7 @@ you can also specify whether the DoH is done via GET or POST using `--doh-method
 ```
 $ dnstrace -c 2 --server 'https://1.1.1.1/dns-query' --doh-method get --recurse google.com
 Using 1 hostnames
-Benchmarking https://1.1.1.1/dns-query via https (GET) with 2 concurrent requests
+Benchmarking https://1.1.1.1/dns-query via https/1.1 (GET) with 2 concurrent requests
 
 Total requests:		2
 DNS success codes:	2
@@ -778,6 +780,40 @@ DNS distribution, 2 datapoints
 +--------------+---------------------------------------------+-------+
   327.155711ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |     2
 ```
+
+#### DoH/1.1, DoH/2
+you can also specify whether the DoH is done over HTTP/1.1 or HTTP/2 using `--doh-protocol`
+```
+$ dnstrace -c 2 --server 'https://1.1.1.1/dns-query' --doh-protocol 2 --recurse google.com
+Using 1 hostnames
+Benchmarking https://1.1.1.1/dns-query via https/2 (POST) with 2 concurrent requests
+
+Total requests:		2
+DNS success codes:	2
+Truncated responses:	0
+
+DNS response codes:
+	NOERROR:	2
+
+Time taken for tests:	 325.90605ms
+Questions per second:	 6.1
+DNS timings, 2 datapoints
+	 min:		 318.767104ms
+	 mean:		 327.155712ms
+	 [+/-sd]:	 0s
+	 max:		 335.544319ms
+	 p99:		 335.544319ms
+	 p95:		 335.544319ms
+	 p90:		 335.544319ms
+	 p75:		 335.544319ms
+	 p50:		 335.544319ms
+
+DNS distribution, 2 datapoints
+    LATENCY    |                                             | COUNT
++--------------+---------------------------------------------+-------+
+  327.155711ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |     2
+```
+
 
 ### Plotting graphs
 plots benchmark results as histograms, boxplots and line graphs to the current directory

@@ -11,10 +11,11 @@ import (
 
 func Test_do(t *testing.T) {
 	type args struct {
-		server    string
-		tcp       bool
-		dot       bool
-		dohMethod string
+		server      string
+		tcp         bool
+		dot         bool
+		dohMethod   string
+		dohProtocol string
 	}
 	tests := []struct {
 		name string
@@ -62,6 +63,20 @@ func Test_do(t *testing.T) {
 				dohMethod: "post",
 			},
 		},
+		{
+			"benchmark against GoogleDNS - DNS over HTTPS/1.1",
+			args{
+				server:      "https://1.1.1.1/dns-query",
+				dohProtocol: "1.1",
+			},
+		},
+		{
+			"benchmark against GoogleDNS - DNS over HTTPS/2",
+			args{
+				server:      "https://1.1.1.1/dns-query",
+				dohProtocol: "2",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -72,6 +87,9 @@ func Test_do(t *testing.T) {
 
 			if len(tt.args.dohMethod) > 0 {
 				pDoHmethod = &tt.args.dohMethod
+			}
+			if len(tt.args.dohProtocol) > 0 {
+				pDoHProtocol = &tt.args.dohProtocol
 			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
