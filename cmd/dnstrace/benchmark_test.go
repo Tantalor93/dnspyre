@@ -2,142 +2,189 @@ package dnstrace
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/coredns/coredns/plugin/test"
+	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func Test_do(t *testing.T) {
+const (
+	udp = "udp"
+	tcp = "tcp"
+
+	get  = "get"
+	post = "post"
+)
+
+func Test_do_classic_dns(t *testing.T) {
 	type args struct {
-		server      string
-		tcp         bool
-		dot         bool
-		dohMethod   string
-		dohProtocol string
+		protocol string
 	}
 	tests := []struct {
 		name string
 		args args
 	}{
 		{
-			"benchmark against GoogleDNS - DNS over UDP",
+			"benchmark - DNS over UDP",
 			args{
-				server: "8.8.8.8",
-				tcp:    false,
+				protocol: udp,
 			},
 		},
 		{
-			"benchmark against GoogleDNS - DNS over TCP",
+			"benchmark - DNS over TCP",
 			args{
-				server: "8.8.8.8",
-				tcp:    true,
-			},
-		},
-		{
-			"benchmark against GoogleDNS - DNS over TLS",
-			args{
-				server: "8.8.8.8:853",
-				tcp:    true,
-				dot:    true,
-			},
-		},
-		{
-			"benchmark against Cloudflare - DNS over HTTPS",
-			args{
-				server: "https://1.1.1.1/dns-query",
-			},
-		},
-		{
-			"benchmark against Cloudflare - DNS over HTTPS - GET method",
-			args{
-				server:    "https://1.1.1.1/dns-query",
-				dohMethod: "get",
-			},
-		},
-		{
-			"benchmark against Cloudflare - DNS over HTTPS - POST method",
-			args{
-				server:    "https://1.1.1.1/dns-query",
-				dohMethod: "post",
-			},
-		},
-		{
-			"benchmark against Cloudflare - DNS over HTTPS/1.1",
-			args{
-				server:      "https://1.1.1.1/dns-query",
-				dohProtocol: "1.1",
-			},
-		},
-		{
-			"benchmark against Cloudflare - DNS over HTTPS/2",
-			args{
-				server:      "https://1.1.1.1/dns-query",
-				dohProtocol: "2",
+				protocol: tcp,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			time.Sleep(time.Second) // add delay before tests
+			s := NewServer(tt.args.protocol, func(w dns.ResponseWriter, r *dns.Msg) {
+				ret := new(dns.Msg)
+				ret.SetReply(r)
+				ret.Answer = append(ret.Answer, test.A("example.org. IN A 127.0.0.1"))
 
-			setupBenchmarkTest(tt.args.server, tt.args.tcp, tt.args.dot)
+				// wait some time to actually have some observable duration
+				time.Sleep(time.Millisecond * 500)
+
+				w.WriteMsg(ret)
+			})
+			defer s.Close()
+
+			setupBenchmarkTest(s.Addr, tt.args.protocol == tcp)
 			resetPackageCounters()
-
-			if len(tt.args.dohMethod) > 0 {
-				pDoHmethod = &tt.args.dohMethod
-			}
-			if len(tt.args.dohProtocol) > 0 {
-				pDoHProtocol = &tt.args.dohProtocol
-			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
 			rs := do(ctx)
 
-			if assert.Len(t, rs, 2, "do(ctx) rstats") {
-				if assert.NotNil(t, rs[0].hist, "do(ctx) rstats histogram") {
-					assert.NotNil(t, rs[0].codes, "do(ctx) rstats codes")
-					assert.Equal(t, int64(1), rs[0].codes[0], "do(ctx) rstats codes NOERROR, state:"+fmt.Sprint(rs[0].codes))
-				}
-
-				if assert.NotNil(t, rs[1].hist, "do(ctx) rstats histogram") {
-					assert.NotNil(t, rs[1].codes, "do(ctx) rstats codes")
-					assert.Equal(t, int64(1), rs[1].codes[0], "do(ctx) rstats codes NOERROR, state:"+fmt.Sprint(rs[1].codes))
-				}
-
-				if assert.Len(t, rs[0].timings, 1, "do(ctx) rstats timings") {
-					assert.NotZero(t, rs[0].timings[0].duration, "do(ctx) rstats timings duration")
-					assert.NotZero(t, rs[0].timings[0].start, "do(ctx) rstats timings start")
-				}
-
-				if assert.Len(t, rs[1].timings, 1, "do(ctx) rstats timings") {
-					assert.NotZero(t, rs[1].timings[0].duration, "do(ctx) rstats timings duration")
-					assert.NotZero(t, rs[1].timings[0].start, "do(ctx) rstats timings start")
-				}
-			}
-
-			assert.Equal(t, int64(2), count, "total counter")
-			assert.Zero(t, cerror, "connection error counter")
-			assert.Zero(t, ecount, "error counter")
-			assert.Equal(t, int64(2), success, "success counter")
-			assert.Equal(t, int64(2), matched, "matched counter")
-			assert.Zero(t, mismatch, "mismatch counter")
-			assert.Zero(t, truncated, "truncated counter")
+			assertResult(t, rs)
 		})
 	}
 }
 
-func setupBenchmarkTest(server string, tcp, dot bool) {
-	pQueries = &[]string{"example.com."}
+func Test_do_doh_post(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		bd, err := ioutil.ReadAll(r.Body)
+		require.NoError(t, err, "error reading body")
+
+		msg := dns.Msg{}
+		err = msg.Unpack(bd)
+		require.NoError(t, err, "error unpacking request body")
+		require.Len(t, msg.Question, 1, "single question expected")
+
+		msg.Answer = append(msg.Answer, test.A("example.org. IN A 127.0.0.1"))
+
+		pack, err := msg.Pack()
+		require.NoError(t, err, "error packing response")
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 500)
+
+		_, err = w.Write(pack)
+		require.NoError(t, err, "error writing response")
+	}))
+	defer ts.Close()
+
+	*pDoHmethod = post
+
+	setupBenchmarkTest(ts.URL, true)
+	resetPackageCounters()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs := do(ctx)
+
+	assertResult(t, rs)
+}
+
+func Test_do_doh_get(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		dnsQryParam := query.Get("dns")
+		require.NotEmpty(t, dnsQryParam, "expected dns query param not found")
+
+		bd, err := base64.StdEncoding.DecodeString(dnsQryParam)
+		require.NoError(t, err, "error decoding query param DNS")
+
+		msg := dns.Msg{}
+		err = msg.Unpack(bd)
+		require.NoError(t, err, "error unpacking request body")
+		require.Len(t, msg.Question, 1, "single question expected")
+
+		msg.Answer = append(msg.Answer, test.A("example.org. IN A 127.0.0.1"))
+
+		pack, err := msg.Pack()
+		require.NoError(t, err, "error packing response")
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 500)
+
+		_, err = w.Write(pack)
+		require.NoError(t, err, "error writing response")
+	}))
+	defer ts.Close()
+
+	*pDoHmethod = get
+
+	setupBenchmarkTest(ts.URL, true)
+	resetPackageCounters()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs := do(ctx)
+
+	assertResult(t, rs)
+}
+
+func assertResult(t *testing.T, rs []*rstats) {
+	if assert.Len(t, rs, 2, "do(ctx) rstats") {
+		if assert.NotNil(t, rs[0].hist, "do(ctx) rstats histogram") {
+			assert.NotNil(t, rs[0].codes, "do(ctx) rstats codes")
+			assert.Equal(t, int64(1), rs[0].codes[0], "do(ctx) rstats codes NOERROR, state:"+fmt.Sprint(rs[0].codes))
+		}
+
+		if assert.NotNil(t, rs[1].hist, "do(ctx) rstats histogram") {
+			assert.NotNil(t, rs[1].codes, "do(ctx) rstats codes")
+			assert.Equal(t, int64(1), rs[1].codes[0], "do(ctx) rstats codes NOERROR, state:"+fmt.Sprint(rs[1].codes))
+		}
+
+		if assert.Len(t, rs[0].timings, 1, "do(ctx) rstats timings") {
+			assert.NotZero(t, rs[0].timings[0].duration, "do(ctx) rstats timings duration")
+			assert.NotZero(t, rs[0].timings[0].start, "do(ctx) rstats timings start")
+		}
+
+		if assert.Len(t, rs[1].timings, 1, "do(ctx) rstats timings") {
+			assert.NotZero(t, rs[1].timings[0].duration, "do(ctx) rstats timings duration")
+			assert.NotZero(t, rs[1].timings[0].start, "do(ctx) rstats timings start")
+		}
+	}
+
+	assert.Equal(t, int64(2), count, "total counter")
+	assert.Zero(t, cerror, "connection error counter")
+	assert.Zero(t, ecount, "error counter")
+	assert.Equal(t, int64(2), success, "success counter")
+	assert.Equal(t, int64(2), matched, "matched counter")
+	assert.Zero(t, mismatch, "mismatch counter")
+	assert.Zero(t, truncated, "truncated counter")
+}
+
+func setupBenchmarkTest(server string, tcp bool) {
+	pQueries = &[]string{"example.org."}
 
 	typ := "A"
 	pType = &typ
 
 	pServer = &server
 	pTCP = &tcp
-	pDOT = &dot
 
 	concurrency := uint32(2)
 	pConcurrency = &concurrency

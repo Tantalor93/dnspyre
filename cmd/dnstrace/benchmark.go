@@ -47,17 +47,19 @@ func do(ctx context.Context) []*rstats {
 	qType := dns.StringToType[*pType]
 
 	srv := *pServer
-	if !strings.Contains(srv, ":") {
+
+	useDoH := strings.HasPrefix(*pServer, "http")
+
+	if !strings.Contains(srv, ":") && !useDoH {
 		srv += ":53"
 	}
-
-	useDoH := strings.HasPrefix(*pServer, "https")
-	var dohClient doh.Client
 
 	network := "udp"
 	if *pTCP || *pDOT {
 		network = "tcp"
 	}
+
+	var dohClient doh.Client
 	var dohFunc func(context.Context, string, *dns.Msg) (*dns.Msg, error)
 	if useDoH {
 		network = "https"
