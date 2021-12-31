@@ -34,3 +34,4 @@ vendor/
 *.iml
 bin/
 report/
+dnstrace

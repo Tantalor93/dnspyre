@@ -8,8 +8,7 @@ require (
 	github.com/alecthomas/colour v0.1.0 // indirect
 	github.com/alecthomas/kingpin v2.2.5+incompatible
 	github.com/alecthomas/repr v0.0.0-20210611225437-1a2716eca9d6 // indirect
-	github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc // indirect
-	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
+	github.com/coredns/coredns v1.8.6
 	github.com/fatih/color v1.12.0
 	github.com/mattn/go-runewidth v0.0.2 // indirect
 	github.com/miekg/dns v1.1.43
@@ -19,6 +18,6 @@ require (
 	github.com/tantalor93/doh-go v0.0.0-20210801173902-bd6f877f039b
 	go.uber.org/ratelimit v0.2.0
 	golang.org/x/net v0.0.0-20210917221730-978cfadd31cf
-	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
+	golang.org/x/sys v0.0.0-20210917161153-d61c044b1678
 	gonum.org/v1/plot v0.9.0
 )
