@@ -10,7 +10,7 @@
     * [Build](#build)
     * [Usage](#usage)
     * [Warning](#warning)
-    * [Example](#examples)
+    * [Examples](#examples)
 
 # DNStrace
 forked https://github.com/redsift/dnstrace 
