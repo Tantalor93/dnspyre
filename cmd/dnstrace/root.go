@@ -125,7 +125,11 @@ func Execute() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
-		<-sigsInt
+		_, ok := <-sigsInt
+		if !ok {
+			// standard exit based on channel close
+			return
+		}
 		fmt.Fprintf(os.Stderr, "\nCancelling benchmark ^C, again to terminate now.\n")
 		cancel()
 		<-sigsInt
