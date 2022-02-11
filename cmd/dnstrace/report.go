@@ -73,6 +73,7 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 	// merge all the stats here
 	timings := hdrhistogram.New(pHistMin.Nanoseconds(), pHistMax.Nanoseconds(), *pHistPre)
 	codeTotals := make(map[int]int64)
+	qtypeTotals := make(map[string]int64)
 	times := make([]datapoint, 0)
 	for _, s := range stats {
 		timings.Merge(s.hist)
@@ -80,6 +81,11 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 		if s.codes != nil {
 			for k, v := range s.codes {
 				codeTotals[k] = codeTotals[k] + v
+			}
+		}
+		if s.qtypes != nil {
+			for k, v := range s.qtypes {
+				qtypeTotals[k] = qtypeTotals[k] + v
 			}
 		}
 	}
@@ -123,6 +129,14 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 			if c, ok := codeTotals[i]; ok {
 				printFn(os.Stdout, "\t", dns.RcodeToString[i]+":\t", c, "\n")
 			}
+		}
+	}
+
+	if len(qtypeTotals) > 0 {
+		fmt.Println()
+		fmt.Println("DNS question types:")
+		for k, v := range qtypeTotals {
+			successPrint(os.Stdout, "\t", k+":\t", v, "\n")
 		}
 	}
 

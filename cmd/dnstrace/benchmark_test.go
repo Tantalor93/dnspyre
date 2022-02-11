@@ -147,41 +147,52 @@ func Test_do_doh_get(t *testing.T) {
 
 func assertResult(t *testing.T, rs []*rstats) {
 	if assert.Len(t, rs, 2, "do(ctx) rstats") {
-		if assert.NotNil(t, rs[0].hist, "do(ctx) rstats histogram") {
-			assert.NotNil(t, rs[0].codes, "do(ctx) rstats codes")
-			assert.Equal(t, int64(1), rs[0].codes[0], "do(ctx) rstats codes NOERROR, state:"+fmt.Sprint(rs[0].codes))
-		}
-
-		if assert.NotNil(t, rs[1].hist, "do(ctx) rstats histogram") {
-			assert.NotNil(t, rs[1].codes, "do(ctx) rstats codes")
-			assert.Equal(t, int64(1), rs[1].codes[0], "do(ctx) rstats codes NOERROR, state:"+fmt.Sprint(rs[1].codes))
-		}
-
-		if assert.Len(t, rs[0].timings, 1, "do(ctx) rstats timings") {
-			assert.NotZero(t, rs[0].timings[0].duration, "do(ctx) rstats timings duration")
-			assert.NotZero(t, rs[0].timings[0].start, "do(ctx) rstats timings start")
-		}
-
-		if assert.Len(t, rs[1].timings, 1, "do(ctx) rstats timings") {
-			assert.NotZero(t, rs[1].timings[0].duration, "do(ctx) rstats timings duration")
-			assert.NotZero(t, rs[1].timings[0].start, "do(ctx) rstats timings start")
-		}
+		rs0 := rs[0]
+		rs1 := rs[1]
+		assertRstats(t, rs0)
+		assertRstats(t, rs1)
+		assertTimings(t, rs0)
+		assertTimings(t, rs1)
 	}
 
-	assert.Equal(t, int64(2), count, "total counter")
+	assert.Equal(t, int64(4), count, "total counter")
 	assert.Zero(t, cerror, "connection error counter")
 	assert.Zero(t, ecount, "error counter")
-	assert.Equal(t, int64(2), success, "success counter")
-	assert.Equal(t, int64(2), matched, "matched counter")
+	assert.Equal(t, int64(4), success, "success counter")
+	assert.Equal(t, int64(4), matched, "matched counter")
 	assert.Zero(t, mismatch, "mismatch counter")
 	assert.Zero(t, truncated, "truncated counter")
+}
+
+func assertRstats(t *testing.T, rs *rstats) {
+	assert.NotNil(t, rs.hist, "do(ctx) rstats histogram")
+
+	if assert.NotNil(t, rs.codes, "do(ctx) rstats codes") {
+		assert.Equal(t, int64(2), rs.codes[0], "do(ctx) rstats codes NOERROR, state:"+fmt.Sprint(rs.codes))
+	}
+
+	if assert.NotNil(t, rs.qtypes, "do(ctx) rstats qtypes") {
+		assert.Equal(t, int64(1), rs.qtypes[dns.TypeToString[dns.TypeA]], "do(ctx) rstats qtypes A, state:"+fmt.Sprint(rs.codes))
+		assert.Equal(t, int64(1), rs.qtypes[dns.TypeToString[dns.TypeAAAA]], "do(ctx) rstats qtypes AAAA, state:"+fmt.Sprint(rs.codes))
+	}
+}
+
+func assertTimings(t *testing.T, rs *rstats) {
+	if assert.Len(t, rs.timings, 2, "do(ctx) rstats timings") {
+		t0 := rs.timings[0]
+		t1 := rs.timings[1]
+		assert.NotZero(t, t0.duration, "do(ctx) rstats timings duration")
+		assert.NotZero(t, t0.start, "do(ctx) rstats timings start")
+		assert.NotZero(t, t1.duration, "do(ctx) rstats timings duration")
+		assert.NotZero(t, t1.start, "do(ctx) rstats timings start")
+	}
 }
 
 func setupBenchmarkTest(server string, tcp bool) {
 	pQueries = &[]string{"example.org."}
 
-	typ := "A"
-	pType = &typ
+	typ := []string{"A", "AAAA"}
+	pTypes = &typ
 
 	pServer = &server
 	pTCP = &tcp

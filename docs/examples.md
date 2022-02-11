@@ -37,6 +37,16 @@ loads hostnames from given data source file
 dnstrace -n 10 -c 10 --server 8.8.8.8 --recurse @data/2-domains
 ```
 
+### sending queries of multiple different query types
+this can be achieved by repeating type `-t`, all queries will be made by each specified query type
+```
+dnstrace -n 10 -c 10 --server 8.8.8.8 --recurse -t A -t AAAA @data/2-domains
+```
+together with probability option this can be used for generating arbitrary random load
+```
+./dnstrace -n 10 -c 10 --server 8.8.8.8 --recurse -t A -t AAAA @data/2-domains --probability 0.33
+```
+
 ### IPv6 DNS server benchmarking
 ```
 dnstrace -n 10 -c 10 --server '[fddd:dddd::]:53' --recurse idnes.cz
