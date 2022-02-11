@@ -35,6 +35,10 @@ func Example_printReport() {
 		codes: map[int]int64{
 			dns.RcodeSuccess: 2,
 		},
+		qtypes: map[string]int64{
+			"A":    1,
+			"AAAA": 1,
+		},
 		hist:    h,
 		timings: []datapoint{d1, d2},
 	}
@@ -51,6 +55,10 @@ func Example_printReport() {
 	//
 	//DNS response codes:
 	//	NOERROR:	2
+	//
+	//DNS question types:
+	//	A:	1
+	//	AAAA:	1
 	//
 	//Time taken for tests:	 1s
 	//Questions per second:	 1.0
