@@ -44,7 +44,7 @@ dnstrace -n 10 -c 10 --server 8.8.8.8 --recurse -t A -t AAAA @data/2-domains
 ```
 together with probability option this can be used for generating arbitrary random load
 ```
-./dnstrace -n 10 -c 10 --server 8.8.8.8 --recurse -t A -t AAAA @data/2-domains --probability 0.33
+dnstrace -n 10 -c 10 --server 8.8.8.8 --recurse -t A -t AAAA @data/2-domains --probability 0.33
 ```
 
 ### IPv6 DNS server benchmarking
