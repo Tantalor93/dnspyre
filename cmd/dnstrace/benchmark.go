@@ -138,7 +138,7 @@ func do(ctx context.Context) []*rstats {
 			var i int64
 			for i = 0; i < *pCount; i++ {
 				for _, q := range questions {
-					if rand.Float64() > *pProbability {
+					if rando.Float64() > *pProbability {
 						continue
 					}
 					if ctx.Err() != nil {
