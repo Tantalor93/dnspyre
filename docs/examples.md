@@ -3,6 +3,7 @@
 + [sending AAAA DNS queries](#sending-AAAA-DNS-queries)
 + [hostnames provided directly](#multiple-hostnames-provided-directly)
 + [hostnames provided using file](#hostnames-provided-using-file)
++ [sending queries of multiple different query types](#sending-queries-of-multiple-different-query-types)
 + [IPv6 DNS server benchmarking](#ipv6-dns-server-benchmarking)
 + [using probability to randomize concurrent queries](#using-probability-to-randomize-concurrent-queries)
 + [EDNSOPT usage](#ednsopt-usage)
