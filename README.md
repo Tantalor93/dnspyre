@@ -31,7 +31,7 @@ them via all kind of image formats (png, svg, pdf)
 
 ## Installation 
 ```
-go get github.com/tantalor93/dnstrace@v1.7.1
+go get github.com/tantalor93/dnstrace@v1.8.0
 ```
 will install the binary in your $GOPATH/bin
 
@@ -39,15 +39,15 @@ or download compiled binaries
 
 linux
 ```
-wget https://github.com/Tantalor93/dnstrace/releases/download/v1.7.1/dnstrace-linux-amd64
+wget https://github.com/Tantalor93/dnstrace/releases/download/v1.8.0/dnstrace-linux-amd64
 ```
 darwin(macos)
 ```
-wget https://github.com/Tantalor93/dnstrace/releases/download/v1.7.1/dnstrace-darwin
+wget https://github.com/Tantalor93/dnstrace/releases/download/v1.8.0/dnstrace-darwin
 ```
 windows
 ```
-wget https://github.com/Tantalor93/dnstrace/releases/download/v1.7.1/dnstrace-windows-amd64
+wget https://github.com/Tantalor93/dnstrace/releases/download/v1.8.0/dnstrace-windows-amd64
 ```
 
 ## Build
