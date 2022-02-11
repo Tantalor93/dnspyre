@@ -79,7 +79,7 @@ func do(ctx context.Context) []*rstats {
 			network = network + "/1.1"
 			tr = &http.Transport{}
 		}
-		c := http.Client{Transport: tr}
+		c := http.Client{Transport: tr, Timeout: *pReadTimeout}
 		dohClient = *doh.NewClient(&c)
 
 		switch *pDoHmethod {
