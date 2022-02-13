@@ -7,15 +7,14 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync/atomic"
 
 	"github.com/miekg/dns"
 )
 
-func dialConnection(srv, network string, m *dns.Msg) (*dns.Conn, error) {
+func dialConnection(srv, network string, m *dns.Msg, st *rstats) (*dns.Conn, error) {
 	co, err := dial(srv, network)
 	if err != nil {
-		atomic.AddInt64(&cerror, 1)
+		st.cerror++
 
 		if *pIOErrors {
 			fmt.Fprintln(os.Stderr, "i/o error dialing: ", err)

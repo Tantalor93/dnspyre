@@ -60,7 +60,6 @@ func Test_do_classic_dns(t *testing.T) {
 			defer s.Close()
 
 			setupBenchmarkTest(s.Addr, tt.args.protocol == tcp)
-			resetPackageCounters()
 
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
@@ -97,7 +96,6 @@ func Test_do_doh_post(t *testing.T) {
 	*pDoHmethod = post
 
 	setupBenchmarkTest(ts.URL, true)
-	resetPackageCounters()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -136,7 +134,6 @@ func Test_do_doh_get(t *testing.T) {
 	*pDoHmethod = get
 
 	setupBenchmarkTest(ts.URL, true)
-	resetPackageCounters()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -154,14 +151,6 @@ func assertResult(t *testing.T, rs []*rstats) {
 		assertTimings(t, rs0)
 		assertTimings(t, rs1)
 	}
-
-	assert.Equal(t, int64(4), count, "total counter")
-	assert.Zero(t, cerror, "connection error counter")
-	assert.Zero(t, ecount, "error counter")
-	assert.Equal(t, int64(4), success, "success counter")
-	assert.Equal(t, int64(4), matched, "matched counter")
-	assert.Zero(t, mismatch, "mismatch counter")
-	assert.Zero(t, truncated, "truncated counter")
 }
 
 func assertRstats(t *testing.T, rs *rstats) {
@@ -175,6 +164,14 @@ func assertRstats(t *testing.T, rs *rstats) {
 		assert.Equal(t, int64(1), rs.qtypes[dns.TypeToString[dns.TypeA]], "do(ctx) rstats qtypes A, state:"+fmt.Sprint(rs.codes))
 		assert.Equal(t, int64(1), rs.qtypes[dns.TypeToString[dns.TypeAAAA]], "do(ctx) rstats qtypes AAAA, state:"+fmt.Sprint(rs.codes))
 	}
+
+	assert.Equal(t, int64(2), rs.count, "do(ctx) total counter")
+	assert.Zero(t, rs.cerror, "do(ctx) connection error counter")
+	assert.Zero(t, rs.ecount, "error counter")
+	assert.Equal(t, int64(2), rs.success, "do(ctx) success counter")
+	assert.Equal(t, int64(2), rs.matched, "do(ctx) matched counter")
+	assert.Zero(t, rs.mismatch, "do(ctx) mismatch counter")
+	assert.Zero(t, rs.truncated, "do(ctx) truncated counter")
 }
 
 func assertTimings(t *testing.T, rs *rstats) {

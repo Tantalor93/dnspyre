@@ -8,7 +8,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/HdrHistogram/hdrhistogram-go"
@@ -25,6 +24,14 @@ type rstats struct {
 	qtypes  map[string]int64
 	hist    *hdrhistogram.Histogram
 	timings []datapoint
+
+	count     int64
+	cerror    int64
+	ecount    int64
+	success   int64
+	matched   int64
+	mismatch  int64
+	truncated int64
 }
 
 type datapoint struct {
@@ -149,7 +156,7 @@ func do(ctx context.Context) []*rstats {
 						if ctx.Err() != nil {
 							return
 						}
-						atomic.AddInt64(&count, 1)
+						st.count++
 
 						// instead of setting the question, do this manually for lower overhead and lock free access to id
 						question.Name = q
@@ -163,7 +170,7 @@ func do(ctx context.Context) []*rstats {
 						if useDoH {
 							r, err = dohFunc(ctx, *pServer, &m)
 							if err != nil {
-								atomic.AddInt64(&ecount, 1)
+								st.ecount++
 								continue
 							}
 						} else {
@@ -173,7 +180,7 @@ func do(ctx context.Context) []*rstats {
 							}
 
 							if co == nil {
-								co, err = dialConnection(srv, network, &m)
+								co, err = dialConnection(srv, network, &m, st)
 								if err != nil {
 									continue
 								}
@@ -182,7 +189,7 @@ func do(ctx context.Context) []*rstats {
 							co.SetWriteDeadline(start.Add(*pWriteTimeout))
 							if err = co.WriteMsg(&m); err != nil {
 								// error writing
-								atomic.AddInt64(&ecount, 1)
+								st.ecount++
 								if *pIOErrors {
 									fmt.Fprintln(os.Stderr, "i/o error dialing: ", err)
 								}
@@ -196,7 +203,7 @@ func do(ctx context.Context) []*rstats {
 							r, err = co.ReadMsg()
 							if err != nil {
 								// error reading
-								atomic.AddInt64(&ecount, 1)
+								st.ecount++
 								if *pIOErrors {
 									fmt.Fprintln(os.Stderr, "i/o error dialing: ", err)
 								}
@@ -221,15 +228,15 @@ func do(ctx context.Context) []*rstats {
 
 func evaluateResponse(r *dns.Msg, q *dns.Msg, st *rstats) {
 	if r.Truncated {
-		atomic.AddInt64(&truncated, 1)
+		st.truncated++
 	}
 
 	if r.Rcode == dns.RcodeSuccess {
 		if r.Id != q.Id {
-			atomic.AddInt64(&mismatch, 1)
+			st.mismatch++
 			return
 		}
-		atomic.AddInt64(&success, 1)
+		st.success++
 
 		if expect := *pExpect; len(expect) > 0 {
 			for _, s := range r.Answer {
@@ -237,7 +244,7 @@ func evaluateResponse(r *dns.Msg, q *dns.Msg, st *rstats) {
 				ok := isExpected(a)
 
 				if ok {
-					atomic.AddInt64(&matched, 1)
+					st.matched++
 					break
 				}
 			}

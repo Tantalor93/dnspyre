@@ -73,16 +73,6 @@ var (
 	pQueries = pApp.Arg("queries", "Queries to issue. Can be file referenced using @<file-path>, for example @data/2-domains").Required().Strings()
 )
 
-var (
-	count     int64
-	cerror    int64
-	ecount    int64
-	success   int64
-	matched   int64
-	mismatch  int64
-	truncated int64
-)
-
 const (
 	fileNoBuffer = 9 // app itself needs about 9 for libs
 )
