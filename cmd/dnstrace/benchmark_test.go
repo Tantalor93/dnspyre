@@ -13,7 +13,6 @@ import (
 	"github.com/coredns/coredns/plugin/test"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -60,7 +59,6 @@ func Test_do_classic_dns(t *testing.T) {
 			defer s.Close()
 
 			setupBenchmarkTest(s.Addr, tt.args.protocol == tcp)
-			resetPackageCounters()
 
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
@@ -74,30 +72,36 @@ func Test_do_classic_dns(t *testing.T) {
 func Test_do_doh_post(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		bd, err := ioutil.ReadAll(r.Body)
-		require.NoError(t, err, "error reading body")
+		if err != nil {
+			panic(err)
+		}
 
 		msg := dns.Msg{}
 		err = msg.Unpack(bd)
-		require.NoError(t, err, "error unpacking request body")
-		require.Len(t, msg.Question, 1, "single question expected")
+		if err != nil {
+			panic(err)
+		}
 
 		msg.Answer = append(msg.Answer, test.A("example.org. IN A 127.0.0.1"))
 
 		pack, err := msg.Pack()
-		require.NoError(t, err, "error packing response")
+		if err != nil {
+			panic(err)
+		}
 
 		// wait some time to actually have some observable duration
 		time.Sleep(time.Millisecond * 500)
 
 		_, err = w.Write(pack)
-		require.NoError(t, err, "error writing response")
+		if err != nil {
+			panic(err)
+		}
 	}))
 	defer ts.Close()
 
 	*pDoHmethod = post
 
 	setupBenchmarkTest(ts.URL, true)
-	resetPackageCounters()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -110,33 +114,38 @@ func Test_do_doh_get(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		dnsQryParam := query.Get("dns")
-		require.NotEmpty(t, dnsQryParam, "expected dns query param not found")
 
 		bd, err := base64.StdEncoding.DecodeString(dnsQryParam)
-		require.NoError(t, err, "error decoding query param DNS")
+		if err != nil {
+			panic(err)
+		}
 
 		msg := dns.Msg{}
 		err = msg.Unpack(bd)
-		require.NoError(t, err, "error unpacking request body")
-		require.Len(t, msg.Question, 1, "single question expected")
+		if err != nil {
+			panic(err)
+		}
 
 		msg.Answer = append(msg.Answer, test.A("example.org. IN A 127.0.0.1"))
 
 		pack, err := msg.Pack()
-		require.NoError(t, err, "error packing response")
+		if err != nil {
+			panic(err)
+		}
 
 		// wait some time to actually have some observable duration
 		time.Sleep(time.Millisecond * 500)
 
 		_, err = w.Write(pack)
-		require.NoError(t, err, "error writing response")
+		if err != nil {
+			panic(err)
+		}
 	}))
 	defer ts.Close()
 
 	*pDoHmethod = get
 
 	setupBenchmarkTest(ts.URL, true)
-	resetPackageCounters()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -154,14 +163,6 @@ func assertResult(t *testing.T, rs []*rstats) {
 		assertTimings(t, rs0)
 		assertTimings(t, rs1)
 	}
-
-	assert.Equal(t, int64(4), count, "total counter")
-	assert.Zero(t, cerror, "connection error counter")
-	assert.Zero(t, ecount, "error counter")
-	assert.Equal(t, int64(4), success, "success counter")
-	assert.Equal(t, int64(4), matched, "matched counter")
-	assert.Zero(t, mismatch, "mismatch counter")
-	assert.Zero(t, truncated, "truncated counter")
 }
 
 func assertRstats(t *testing.T, rs *rstats) {
@@ -175,6 +176,14 @@ func assertRstats(t *testing.T, rs *rstats) {
 		assert.Equal(t, int64(1), rs.qtypes[dns.TypeToString[dns.TypeA]], "do(ctx) rstats qtypes A, state:"+fmt.Sprint(rs.codes))
 		assert.Equal(t, int64(1), rs.qtypes[dns.TypeToString[dns.TypeAAAA]], "do(ctx) rstats qtypes AAAA, state:"+fmt.Sprint(rs.codes))
 	}
+
+	assert.Equal(t, int64(2), rs.count, "do(ctx) total counter")
+	assert.Zero(t, rs.cerror, "do(ctx) connection error counter")
+	assert.Zero(t, rs.ecount, "error counter")
+	assert.Equal(t, int64(2), rs.success, "do(ctx) success counter")
+	assert.Equal(t, int64(2), rs.matched, "do(ctx) matched counter")
+	assert.Zero(t, rs.mismatch, "do(ctx) mismatch counter")
+	assert.Zero(t, rs.truncated, "do(ctx) truncated counter")
 }
 
 func assertTimings(t *testing.T, rs *rstats) {

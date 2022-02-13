@@ -6,7 +6,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/HdrHistogram/hdrhistogram-go"
@@ -20,46 +19,36 @@ var (
 	successPrint = color.New(color.FgGreen).Fprint
 )
 
-func printProgress() {
+func printProgress(totalCount, totalCerror, totalEcount, totalSuccess, totalMatched, totalMismatch, totalTruncated int64) {
 	if *pSilent {
 		return
 	}
 
-	fmt.Println()
+	fmt.Printf("\nTotal requests:\t\t%d\n", totalCount)
 
-	acount := atomic.LoadInt64(&count)
-	acerror := atomic.LoadInt64(&cerror)
-	aecount := atomic.LoadInt64(&ecount)
-	amismatch := atomic.LoadInt64(&mismatch)
-	asuccess := atomic.LoadInt64(&success)
-	amatched := atomic.LoadInt64(&matched)
-	atruncated := atomic.LoadInt64(&truncated)
-
-	fmt.Printf("Total requests:\t\t%d\n", acount)
-
-	if acerror > 0 || aecount > 0 {
-		errPrint(os.Stdout, "Connection errors:\t", acerror, "\n")
-		errPrint(os.Stdout, "Read/Write errors:\t", aecount, "\n")
+	if totalCerror > 0 || totalEcount > 0 {
+		errPrint(os.Stdout, "Connection errors:\t", totalCerror, "\n")
+		errPrint(os.Stdout, "Read/Write errors:\t", totalEcount, "\n")
 	}
 
-	if amismatch > 0 {
-		errPrint(os.Stdout, "ID mismatch errors:\t", amismatch, "\n")
+	if totalMismatch > 0 {
+		errPrint(os.Stdout, "ID mismatch errors:\t", totalMismatch, "\n")
 	}
 
-	successPrint(os.Stdout, "DNS success codes:\t", asuccess, "\n")
+	successPrint(os.Stdout, "DNS success codes:\t", totalSuccess, "\n")
 
-	if atruncated > 0 {
-		errPrint(os.Stdout, "Truncated responses:\t", atruncated, "\n")
+	if totalTruncated > 0 {
+		errPrint(os.Stdout, "Truncated responses:\t", totalTruncated, "\n")
 	} else {
-		successPrint(os.Stdout, "Truncated responses:\t", atruncated, "\n")
+		successPrint(os.Stdout, "Truncated responses:\t", totalTruncated, "\n")
 	}
 
 	if len(*pExpect) > 0 {
 		expect := successPrint
-		if amatched != asuccess {
+		if totalMatched != totalSuccess {
 			expect = errPrint
 		}
-		expect(os.Stdout, "Expected results:\t", amatched, "\n")
+		expect(os.Stdout, "Expected results:\t", totalMatched, "\n")
 	}
 }
 
@@ -75,6 +64,15 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 	codeTotals := make(map[int]int64)
 	qtypeTotals := make(map[string]int64)
 	times := make([]datapoint, 0)
+
+	var totalCount int64
+	var totalCerror int64
+	var totalEcount int64
+	var totalSuccess int64
+	var totalMatched int64
+	var totalMismatch int64
+	var totalTruncated int64
+
 	for _, s := range stats {
 		timings.Merge(s.hist)
 		times = append(times, s.timings...)
@@ -88,6 +86,13 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 				qtypeTotals[k] = qtypeTotals[k] + v
 			}
 		}
+		totalCount += s.count
+		totalCerror += s.cerror
+		totalEcount += s.ecount
+		totalSuccess += s.success
+		totalMatched += s.matched
+		totalMismatch += s.mismatch
+		totalTruncated += s.truncated
 	}
 
 	// sort data points from the oldest to the earliest so we can better plot time dependant graphs (like line)
@@ -116,7 +121,7 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 		return
 	}
 
-	printProgress()
+	printProgress(totalCount, totalCerror, totalEcount, totalSuccess, totalMatched, totalMismatch, totalTruncated)
 
 	if len(codeTotals) > 0 {
 		fmt.Println()
@@ -143,7 +148,7 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 	fmt.Println()
 
 	fmt.Println("Time taken for tests:\t", t.String())
-	fmt.Printf("Questions per second:\t %0.1f", float64(count)/t.Seconds())
+	fmt.Printf("Questions per second:\t %0.1f", float64(totalCount)/t.Seconds())
 
 	min := time.Duration(timings.Min())
 	mean := time.Duration(timings.Mean())
