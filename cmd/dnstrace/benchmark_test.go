@@ -13,7 +13,6 @@ import (
 	"github.com/coredns/coredns/plugin/test"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -73,23 +72,30 @@ func Test_do_classic_dns(t *testing.T) {
 func Test_do_doh_post(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		bd, err := ioutil.ReadAll(r.Body)
-		require.NoError(t, err, "error reading body")
+		if err != nil {
+			panic(err)
+		}
 
 		msg := dns.Msg{}
 		err = msg.Unpack(bd)
-		require.NoError(t, err, "error unpacking request body")
-		require.Len(t, msg.Question, 1, "single question expected")
+		if err != nil {
+			panic(err)
+		}
 
 		msg.Answer = append(msg.Answer, test.A("example.org. IN A 127.0.0.1"))
 
 		pack, err := msg.Pack()
-		require.NoError(t, err, "error packing response")
+		if err != nil {
+			panic(err)
+		}
 
 		// wait some time to actually have some observable duration
 		time.Sleep(time.Millisecond * 500)
 
 		_, err = w.Write(pack)
-		require.NoError(t, err, "error writing response")
+		if err != nil {
+			panic(err)
+		}
 	}))
 	defer ts.Close()
 
@@ -108,26 +114,32 @@ func Test_do_doh_get(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		dnsQryParam := query.Get("dns")
-		require.NotEmpty(t, dnsQryParam, "expected dns query param not found")
 
 		bd, err := base64.StdEncoding.DecodeString(dnsQryParam)
-		require.NoError(t, err, "error decoding query param DNS")
+		if err != nil {
+			panic(err)
+		}
 
 		msg := dns.Msg{}
 		err = msg.Unpack(bd)
-		require.NoError(t, err, "error unpacking request body")
-		require.Len(t, msg.Question, 1, "single question expected")
+		if err != nil {
+			panic(err)
+		}
 
 		msg.Answer = append(msg.Answer, test.A("example.org. IN A 127.0.0.1"))
 
 		pack, err := msg.Pack()
-		require.NoError(t, err, "error packing response")
+		if err != nil {
+			panic(err)
+		}
 
 		// wait some time to actually have some observable duration
 		time.Sleep(time.Millisecond * 500)
 
 		_, err = w.Write(pack)
-		require.NoError(t, err, "error writing response")
+		if err != nil {
+			panic(err)
+		}
 	}))
 	defer ts.Close()
 
