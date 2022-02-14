@@ -39,34 +39,81 @@ type datapoint struct {
 	start    time.Time
 }
 
+type BenchmarkInput struct {
+	server      string
+	types       []string
+	count       int64
+	concurrency uint32
+
+	rate     int
+	qperConn int64
+
+	expect []string
+
+	recurse bool
+
+	probability float64
+
+	udpSize uint16
+	ednsOpt string
+
+	tcp bool
+	dot bool
+
+	writeTimeout time.Duration
+	readTimeout time.Duration
+
+	rcodes bool
+
+	histDisplay bool
+	histMin time.Duration
+	histMax time.Duration
+	histPre int
+
+	csv string
+
+	ioerrors bool
+
+	silent bool
+	color bool
+
+	plotDir string
+	plotFormat string
+
+	dohMethod string
+	dohProtocol string
+
+	queries []string
+}
+
 func (r *rstats) record(time time.Time, timing time.Duration) {
 	r.hist.RecordValue(timing.Nanoseconds())
 	r.timings = append(r.timings, datapoint{float64(timing.Milliseconds()), time})
 }
 
-func do(ctx context.Context) []*rstats {
-	questions := make([]string, len(*pQueries))
-	for i, q := range *pQueries {
+func do(ctx context.Context, input BenchmarkInput) []*rstats {
+	questions := make([]string, len(input.queries))
+	for i, q := range input.queries {
 		questions[i] = dns.Fqdn(q)
 	}
 
 	fmt.Printf("Using %d hostnames\n", len(questions))
 
 	var qTypes []uint16
-	for _, v := range *pTypes {
+	for _, v := range input.types {
 		qTypes = append(qTypes, dns.StringToType[v])
 	}
 
-	srv := *pServer
+	srv := input.server
 
-	useDoH := strings.HasPrefix(*pServer, "http")
+	useDoH := strings.HasPrefix(input.server, "http")
 
 	if !strings.Contains(srv, ":") && !useDoH {
 		srv += ":53"
 	}
 
 	network := "udp"
-	if *pTCP || *pDOT {
+	if input.tcp || input.dot {
 		network = "tcp"
 	}
 
@@ -75,7 +122,7 @@ func do(ctx context.Context) []*rstats {
 	if useDoH {
 		network = "https"
 		var tr http.RoundTripper
-		switch *pDoHProtocol {
+		switch input.dohProtocol {
 		case "1.1":
 			network = network + "/1.1"
 			tr = &http.Transport{}
@@ -86,10 +133,10 @@ func do(ctx context.Context) []*rstats {
 			network = network + "/1.1"
 			tr = &http.Transport{}
 		}
-		c := http.Client{Transport: tr, Timeout: *pReadTimeout}
+		c := http.Client{Transport: tr, Timeout: input.readTimeout}
 		dohClient = *doh.NewClient(&c)
 
-		switch *pDoHmethod {
+		switch input.dohMethod {
 		case "post":
 			network = network + " (POST)"
 			dohFunc = dohClient.SendViaPost
@@ -102,16 +149,16 @@ func do(ctx context.Context) []*rstats {
 		}
 	}
 
-	concurrent := *pConcurrency
+	concurrent := input.concurrency
 
 	limits := ""
 	var limit ratelimit.Limiter
-	if *pRate > 0 {
-		limit = ratelimit.New(*pRate)
-		limits = fmt.Sprintf("(limited to %d QPS)", *pRate)
+	if input.rate > 0 {
+		limit = ratelimit.New(input.rate)
+		limits = fmt.Sprintf("(limited to %d QPS)", input.rate)
 	}
 
-	if !*pSilent {
+	if !input.silent {
 		fmt.Printf("Benchmarking %s via %s with %d concurrent requests %s\n", srv, network, concurrent, limits)
 	}
 
@@ -120,9 +167,9 @@ func do(ctx context.Context) []*rstats {
 	var wg sync.WaitGroup
 	var w uint32
 	for w = 0; w < concurrent; w++ {
-		st := &rstats{hist: hdrhistogram.New(pHistMin.Nanoseconds(), pHistMax.Nanoseconds(), *pHistPre)}
+		st := &rstats{hist: hdrhistogram.New(input.histMin.Nanoseconds(), input.histMax.Nanoseconds(), input.histPre)}
 		stats[w] = st
-		if *pRCodes {
+		if input.rcodes {
 			st.codes = make(map[int]int64)
 		}
 		st.qtypes = make(map[string]int64)
@@ -142,15 +189,15 @@ func do(ctx context.Context) []*rstats {
 			rando := rand.New(rand.NewSource(time.Now().Unix()))
 
 			var i int64
-			for i = 0; i < *pCount; i++ {
+			for i = 0; i < input.count; i++ {
 				for _, qt := range qTypes {
 					for _, q := range questions {
-						if rando.Float64() > *pProbability {
+						if rando.Float64() > input.probability {
 							continue
 						}
 						var r *dns.Msg
 						m := dns.Msg{}
-						m.RecursionDesired = *pRecurse
+						m.RecursionDesired = input.recurse
 						m.Question = make([]dns.Question, 1)
 						question := dns.Question{Qtype: qt, Qclass: dns.ClassINET}
 						if ctx.Err() != nil {
@@ -168,29 +215,29 @@ func do(ctx context.Context) []*rstats {
 
 						start := time.Now()
 						if useDoH {
-							r, err = dohFunc(ctx, *pServer, &m)
+							r, err = dohFunc(ctx, input.server, &m)
 							if err != nil {
 								st.ecount++
 								continue
 							}
 						} else {
-							if co != nil && *pQperConn > 0 && i%*pQperConn == 0 {
+							if co != nil && input.qperConn > 0 && i%input.qperConn == 0 {
 								co.Close()
 								co = nil
 							}
 
 							if co == nil {
-								co, err = dialConnection(srv, network, &m, st)
+								co, err = dialConnection(srv, network, &m, st, input)
 								if err != nil {
 									continue
 								}
 							}
 
-							co.SetWriteDeadline(start.Add(*pWriteTimeout))
+							co.SetWriteDeadline(start.Add(input.writeTimeout))
 							if err = co.WriteMsg(&m); err != nil {
 								// error writing
 								st.ecount++
-								if *pIOErrors {
+								if input.ioerrors {
 									fmt.Fprintln(os.Stderr, "i/o error dialing: ", err)
 								}
 								co.Close()
@@ -198,13 +245,13 @@ func do(ctx context.Context) []*rstats {
 								continue
 							}
 
-							co.SetReadDeadline(time.Now().Add(*pReadTimeout))
+							co.SetReadDeadline(time.Now().Add(input.readTimeout))
 
 							r, err = co.ReadMsg()
 							if err != nil {
 								// error reading
 								st.ecount++
-								if *pIOErrors {
+								if input.ioerrors {
 									fmt.Fprintln(os.Stderr, "i/o error dialing: ", err)
 								}
 								co.Close()
@@ -214,7 +261,7 @@ func do(ctx context.Context) []*rstats {
 						}
 
 						st.record(start, time.Since(start))
-						evaluateResponse(r, &m, st)
+						evaluateResponse(r, &m, st, input)
 					}
 				}
 			}
@@ -226,7 +273,7 @@ func do(ctx context.Context) []*rstats {
 	return stats
 }
 
-func evaluateResponse(r *dns.Msg, q *dns.Msg, st *rstats) {
+func evaluateResponse(r *dns.Msg, q *dns.Msg, st *rstats, input BenchmarkInput) {
 	if r.Truncated {
 		st.truncated++
 	}
@@ -238,10 +285,10 @@ func evaluateResponse(r *dns.Msg, q *dns.Msg, st *rstats) {
 		}
 		st.success++
 
-		if expect := *pExpect; len(expect) > 0 {
+		if expect := input.expect; len(expect) > 0 {
 			for _, s := range r.Answer {
 				a := dns.TypeToString[s.Header().Rrtype]
-				ok := isExpected(a)
+				ok := isExpected(a, input)
 
 				if ok {
 					st.matched++
@@ -264,8 +311,8 @@ func evaluateResponse(r *dns.Msg, q *dns.Msg, st *rstats) {
 	}
 }
 
-func isExpected(a string) bool {
-	for _, b := range *pExpect {
+func isExpected(a string, input BenchmarkInput) bool {
+	for _, b := range input.expect {
 		if b == a {
 			return true
 		}

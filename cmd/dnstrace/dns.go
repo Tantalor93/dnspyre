@@ -11,21 +11,21 @@ import (
 	"github.com/miekg/dns"
 )
 
-func dialConnection(srv, network string, m *dns.Msg, st *rstats) (*dns.Conn, error) {
+func dialConnection(srv, network string, m *dns.Msg, st *rstats, benchmarkInput BenchmarkInput) (*dns.Conn, error) {
 	co, err := dial(srv, network)
 	if err != nil {
 		st.cerror++
 
-		if *pIOErrors {
+		if benchmarkInput.ioerrors {
 			fmt.Fprintln(os.Stderr, "i/o error dialing: ", err)
 		}
 		return nil, err
 	}
-	if udpSize := *pUDPSize; udpSize > 0 {
+	if udpSize := benchmarkInput.udpSize; udpSize > 0 {
 		m.SetEdns0(udpSize, true)
 		co.UDPSize = udpSize
 	}
-	if ednsOpt := *pEdnsOpt; len(ednsOpt) > 0 {
+	if ednsOpt := benchmarkInput.ednsOpt; len(ednsOpt) > 0 {
 		o := m.IsEdns0()
 		if o == nil {
 			m.SetEdns0(4096, true)
@@ -46,7 +46,7 @@ func dialConnection(srv, network string, m *dns.Msg, st *rstats) (*dns.Conn, err
 }
 
 func dial(srv string, network string) (*dns.Conn, error) {
-	if *pDOT {
+	if userInput.dot {
 		return dns.DialTimeoutWithTLS(network, srv, &tls.Config{}, dnsTimeout)
 	}
 	return dns.DialTimeout(network, srv, dnsTimeout)

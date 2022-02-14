@@ -58,11 +58,11 @@ func Test_do_classic_dns(t *testing.T) {
 			})
 			defer s.Close()
 
-			setupBenchmarkTest(s.Addr, tt.args.protocol == tcp)
+			benchmarkInput := prepareInput(s.Addr, tt.args.protocol == tcp)
 
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
-			rs := do(ctx)
+			rs := do(ctx, benchmarkInput)
 
 			assertResult(t, rs)
 		})
@@ -99,13 +99,12 @@ func Test_do_doh_post(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	*pDoHmethod = post
-
-	setupBenchmarkTest(ts.URL, true)
+	benchmarkInput := prepareInput(ts.URL, true)
+	benchmarkInput.dohMethod = post
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	rs := do(ctx)
+	rs := do(ctx, benchmarkInput)
 
 	assertResult(t, rs)
 }
@@ -142,13 +141,12 @@ func Test_do_doh_get(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	*pDoHmethod = get
-
-	setupBenchmarkTest(ts.URL, true)
+	benchmarkInput := prepareInput(ts.URL, true)
+	benchmarkInput.dohMethod = get
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	rs := do(ctx)
+	rs := do(ctx, benchmarkInput)
 
 	assertResult(t, rs)
 }
@@ -196,36 +194,19 @@ func assertTimings(t *testing.T, rs *rstats) {
 	}
 }
 
-func setupBenchmarkTest(server string, tcp bool) {
-	pQueries = &[]string{"example.org."}
-
-	typ := []string{"A", "AAAA"}
-	pTypes = &typ
-
-	pServer = &server
-	pTCP = &tcp
-
-	concurrency := uint32(2)
-	pConcurrency = &concurrency
-
-	c := int64(1)
-	pCount = &c
-
-	probability := float64(1)
-	pProbability = &probability
-
-	writeTimeout := 5 * time.Second
-	pWriteTimeout = &writeTimeout
-
-	readTimeout := 5 * time.Second
-	pReadTimeout = &readTimeout
-
-	rcodes := true
-	pRCodes = &rcodes
-
-	expect := []string{"A"}
-	pExpect = &expect
-
-	recurse := true
-	pRecurse = &recurse
+func prepareInput(server string, tcp bool) BenchmarkInput {
+	return BenchmarkInput{
+		queries:      []string{"example.org."},
+		types:        []string{"A", "AAAA"},
+		server:       server,
+		tcp:          tcp,
+		concurrency:  2,
+		count:        1,
+		probability:  1,
+		writeTimeout: 5 * time.Second,
+		readTimeout:  5 * time.Second,
+		rcodes:       true,
+		expect:       []string{"A"},
+		recurse:      true,
+	}
 }

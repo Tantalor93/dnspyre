@@ -8,9 +8,15 @@ import (
 )
 
 func Example_printReport() {
-	pExpect = &[]string{"A"}
+	input := BenchmarkInput{
+		expect:  []string{"A"},
+		histMin: time.Microsecond * 400,
+		histMax: time.Second * 4,
+		histPre: 1,
+		color: false,
+	}
 
-	h := hdrhistogram.New(pHistMin.Nanoseconds(), pHistMax.Nanoseconds(), 1)
+	h := hdrhistogram.New(input.histMin.Nanoseconds(), input.histMax.Nanoseconds(), 1)
 	h.RecordValue(5)
 	h.RecordValue(10)
 	d1 := datapoint{5, time.Unix(0, 0)}
@@ -33,7 +39,7 @@ func Example_printReport() {
 		truncated: 7,
 	}
 
-	printReport(time.Second, []*rstats{&rs}, nil)
+	printReport(time.Second, []*rstats{&rs}, nil, input)
 
 	//Output: Total requests:		1
 	//Connection errors:	2

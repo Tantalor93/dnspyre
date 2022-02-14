@@ -19,8 +19,8 @@ var (
 	successPrint = color.New(color.FgGreen).Fprint
 )
 
-func printProgress(totalCount, totalCerror, totalEcount, totalSuccess, totalMatched, totalMismatch, totalTruncated int64) {
-	if *pSilent {
+func printProgress(totalCount, totalCerror, totalEcount, totalSuccess, totalMatched, totalMismatch, totalTruncated int64, input BenchmarkInput) {
+	if input.silent {
 		return
 	}
 
@@ -43,7 +43,7 @@ func printProgress(totalCount, totalCerror, totalEcount, totalSuccess, totalMatc
 		successPrint(os.Stdout, "Truncated responses:\t", totalTruncated, "\n")
 	}
 
-	if len(*pExpect) > 0 {
+	if len(input.expect) > 0 {
 		expect := successPrint
 		if totalMatched != totalSuccess {
 			expect = errPrint
@@ -52,7 +52,7 @@ func printProgress(totalCount, totalCerror, totalEcount, totalSuccess, totalMatc
 	}
 }
 
-func printReport(t time.Duration, stats []*rstats, csv *os.File) {
+func printReport(t time.Duration, stats []*rstats, csv *os.File, input BenchmarkInput) {
 	defer func() {
 		if csv != nil {
 			csv.Close()
@@ -60,7 +60,7 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 	}()
 
 	// merge all the stats here
-	timings := hdrhistogram.New(pHistMin.Nanoseconds(), pHistMax.Nanoseconds(), *pHistPre)
+	timings := hdrhistogram.New(input.histMin.Nanoseconds(), input.histMax.Nanoseconds(), input.histPre)
 	codeTotals := make(map[int]int64)
 	qtypeTotals := make(map[string]int64)
 	times := make([]datapoint, 0)
@@ -100,14 +100,14 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 		return times[i].start.Before(times[j].start)
 	})
 
-	if len(*pPlotDir) != 0 {
+	if len(input.plotDir) != 0 {
 		now := time.Now()
 		unix := now.Unix()
-		plotHistogramLatency(getFileName("latency-hist", unix), times)
-		plotBoxPlotLatency(getFileName("latency-box", unix), *pServer, times)
-		plotLineLatency(getFileName("latency-line", unix), times)
-		plotResponses(getFileName("responses-bar", unix), codeTotals)
-		plotLineThroughput(getFileName("throughput-line", unix), times)
+		plotHistogramLatency(getFileName("latency-hist", unix, input), times)
+		plotBoxPlotLatency(getFileName("latency-box", unix, input), input.server, times)
+		plotLineLatency(getFileName("latency-line", unix, input), times)
+		plotResponses(getFileName("responses-bar", unix, input), codeTotals)
+		plotLineThroughput(getFileName("throughput-line", unix, input), times)
 	}
 
 	if csv != nil {
@@ -117,11 +117,11 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 		fmt.Println("DNS distribution written to", csv.Name())
 	}
 
-	if *pSilent {
+	if input.silent {
 		return
 	}
 
-	printProgress(totalCount, totalCerror, totalEcount, totalSuccess, totalMatched, totalMismatch, totalTruncated)
+	printProgress(totalCount, totalCerror, totalEcount, totalSuccess, totalMatched, totalMismatch, totalTruncated, input)
 
 	if len(codeTotals) > 0 {
 		fmt.Println()
@@ -174,7 +174,7 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 		fmt.Println("\t p50:\t\t", p50)
 
 		dist := timings.Distribution()
-		if *pHistDisplay && tc > 1 {
+		if input.histDisplay && tc > 1 {
 			fmt.Println()
 			fmt.Println("DNS distribution,", tc, "datapoints")
 
@@ -183,8 +183,8 @@ func printReport(t time.Duration, stats []*rstats, csv *os.File) {
 	}
 }
 
-func getFileName(filePrefix string, unix int64) string {
-	return *pPlotDir + "/" + filePrefix + "-" + strconv.FormatInt(unix, 10) + "." + *pPlotFormat
+func getFileName(filePrefix string, unix int64, benchmarkInput BenchmarkInput) string {
+	return benchmarkInput.plotDir + "/" + filePrefix + "-" + strconv.FormatInt(unix, 10) + "." + benchmarkInput.plotFormat
 }
 
 func writeBars(f *os.File, bars []hdrhistogram.Bar) {
