@@ -114,8 +114,7 @@ func Test_do_doh_get(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		dnsQryParam := query.Get("dns")
-
-		bd, err := base64.StdEncoding.DecodeString(dnsQryParam)
+		bd, err := base64.URLEncoding.DecodeString(dnsQryParam)
 		if err != nil {
 			panic(err)
 		}
