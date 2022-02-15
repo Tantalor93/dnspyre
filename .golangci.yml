@@ -13,7 +13,7 @@ linters:
   - unused
   - varcheck
   - gofmt
-  - golint
+  - revive
   - gci
   - gofumpt
   - whitespace

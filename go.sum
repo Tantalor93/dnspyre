@@ -401,8 +401,8 @@ github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5CcY=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
-github.com/tantalor93/doh-go v0.0.0-20210801173902-bd6f877f039b h1:viFiu3zx/s5CNo12TIVBM+rrI/cDqwoOz0QvAS/VyYk=
-github.com/tantalor93/doh-go v0.0.0-20210801173902-bd6f877f039b/go.mod h1:huQbBybJYCMipbDXgkk9qx8IBVBm1E//+PBOo8OBbmU=
+github.com/tantalor93/doh-go v0.0.0-20220215152137-f96c68034ae0 h1:3o9Tg33Y3l4pzvUCFgtk0n2cJjVhCm+RIZG+0brKm1M=
+github.com/tantalor93/doh-go v0.0.0-20220215152137-f96c68034ae0/go.mod h1:huQbBybJYCMipbDXgkk9qx8IBVBm1E//+PBOo8OBbmU=
 github.com/tinylib/msgp v1.1.2/go.mod h1:+d+yLhGm8mzTaHzB+wgMYrodPfmZrzkirds8fDWklFE=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=

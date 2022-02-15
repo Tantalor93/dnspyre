@@ -58,11 +58,11 @@ func Test_do_classic_dns(t *testing.T) {
 			})
 			defer s.Close()
 
-			benchmarkInput := prepareInput(s.Addr, tt.args.protocol == tcp)
+			bench := createBenchmark(s.Addr, tt.args.protocol == tcp)
 
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
-			rs := do(ctx, benchmarkInput)
+			rs := bench.Run(ctx)
 
 			assertResult(t, rs)
 		})
@@ -99,12 +99,12 @@ func Test_do_doh_post(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	benchmarkInput := prepareInput(ts.URL, true)
-	benchmarkInput.dohMethod = post
+	bench := createBenchmark(ts.URL, true)
+	bench.DohMethod = post
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	rs := do(ctx, benchmarkInput)
+	rs := bench.Run(ctx)
 
 	assertResult(t, rs)
 }
@@ -113,7 +113,7 @@ func Test_do_doh_get(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		dnsQryParam := query.Get("dns")
-		bd, err := base64.URLEncoding.DecodeString(dnsQryParam)
+		bd, err := base64.RawURLEncoding.DecodeString(dnsQryParam)
 		if err != nil {
 			panic(err)
 		}
@@ -141,18 +141,18 @@ func Test_do_doh_get(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	benchmarkInput := prepareInput(ts.URL, true)
-	benchmarkInput.dohMethod = get
+	bench := createBenchmark(ts.URL, true)
+	bench.DohMethod = get
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	rs := do(ctx, benchmarkInput)
+	rs := bench.Run(ctx)
 
 	assertResult(t, rs)
 }
 
-func assertResult(t *testing.T, rs []*rstats) {
-	if assert.Len(t, rs, 2, "do(ctx) rstats") {
+func assertResult(t *testing.T, rs []*ResultStats) {
+	if assert.Len(t, rs, 2, "Run(ctx) rstats") {
 		rs0 := rs[0]
 		rs1 := rs[1]
 		assertRstats(t, rs0)
@@ -162,51 +162,51 @@ func assertResult(t *testing.T, rs []*rstats) {
 	}
 }
 
-func assertRstats(t *testing.T, rs *rstats) {
-	assert.NotNil(t, rs.hist, "do(ctx) rstats histogram")
+func assertRstats(t *testing.T, rs *ResultStats) {
+	assert.NotNil(t, rs.Hist, "Run(ctx) rstats histogram")
 
-	if assert.NotNil(t, rs.codes, "do(ctx) rstats codes") {
-		assert.Equal(t, int64(2), rs.codes[0], "do(ctx) rstats codes NOERROR, state:"+fmt.Sprint(rs.codes))
+	if assert.NotNil(t, rs.Codes, "Run(ctx) rstats codes") {
+		assert.Equal(t, int64(2), rs.Codes[0], "Run(ctx) rstats codes NOERROR, state:"+fmt.Sprint(rs.Codes))
 	}
 
-	if assert.NotNil(t, rs.qtypes, "do(ctx) rstats qtypes") {
-		assert.Equal(t, int64(1), rs.qtypes[dns.TypeToString[dns.TypeA]], "do(ctx) rstats qtypes A, state:"+fmt.Sprint(rs.codes))
-		assert.Equal(t, int64(1), rs.qtypes[dns.TypeToString[dns.TypeAAAA]], "do(ctx) rstats qtypes AAAA, state:"+fmt.Sprint(rs.codes))
+	if assert.NotNil(t, rs.Qtypes, "Run(ctx) rstats qtypes") {
+		assert.Equal(t, int64(1), rs.Qtypes[dns.TypeToString[dns.TypeA]], "Run(ctx) rstats qtypes A, state:"+fmt.Sprint(rs.Codes))
+		assert.Equal(t, int64(1), rs.Qtypes[dns.TypeToString[dns.TypeAAAA]], "Run(ctx) rstats qtypes AAAA, state:"+fmt.Sprint(rs.Codes))
 	}
 
-	assert.Equal(t, int64(2), rs.count, "do(ctx) total counter")
-	assert.Zero(t, rs.cerror, "do(ctx) connection error counter")
-	assert.Zero(t, rs.ecount, "error counter")
-	assert.Equal(t, int64(2), rs.success, "do(ctx) success counter")
-	assert.Equal(t, int64(2), rs.matched, "do(ctx) matched counter")
-	assert.Zero(t, rs.mismatch, "do(ctx) mismatch counter")
-	assert.Zero(t, rs.truncated, "do(ctx) truncated counter")
+	assert.Equal(t, int64(2), rs.Count, "Run(ctx) total counter")
+	assert.Zero(t, rs.Cerror, "Run(ctx) connection error counter")
+	assert.Zero(t, rs.Ecount, "error counter")
+	assert.Equal(t, int64(2), rs.Success, "Run(ctx) success counter")
+	assert.Equal(t, int64(2), rs.Matched, "Run(ctx) matched counter")
+	assert.Zero(t, rs.Mismatch, "Run(ctx) mismatch counter")
+	assert.Zero(t, rs.Truncated, "Run(ctx) truncated counter")
 }
 
-func assertTimings(t *testing.T, rs *rstats) {
-	if assert.Len(t, rs.timings, 2, "do(ctx) rstats timings") {
-		t0 := rs.timings[0]
-		t1 := rs.timings[1]
-		assert.NotZero(t, t0.duration, "do(ctx) rstats timings duration")
-		assert.NotZero(t, t0.start, "do(ctx) rstats timings start")
-		assert.NotZero(t, t1.duration, "do(ctx) rstats timings duration")
-		assert.NotZero(t, t1.start, "do(ctx) rstats timings start")
+func assertTimings(t *testing.T, rs *ResultStats) {
+	if assert.Len(t, rs.Timings, 2, "Run(ctx) rstats timings") {
+		t0 := rs.Timings[0]
+		t1 := rs.Timings[1]
+		assert.NotZero(t, t0.Duration, "Run(ctx) rstats timings duration")
+		assert.NotZero(t, t0.Start, "Run(ctx) rstats timings start")
+		assert.NotZero(t, t1.Duration, "Run(ctx) rstats timings duration")
+		assert.NotZero(t, t1.Start, "Run(ctx) rstats timings start")
 	}
 }
 
-func prepareInput(server string, tcp bool) BenchmarkInput {
-	return BenchmarkInput{
-		queries:      []string{"example.org."},
-		types:        []string{"A", "AAAA"},
-		server:       server,
-		tcp:          tcp,
-		concurrency:  2,
-		count:        1,
-		probability:  1,
-		writeTimeout: 5 * time.Second,
-		readTimeout:  5 * time.Second,
-		rcodes:       true,
-		expect:       []string{"A"},
-		recurse:      true,
+func createBenchmark(server string, tcp bool) Benchmark {
+	return Benchmark{
+		Queries:            []string{"example.org"},
+		Types:              []string{"A", "AAAA"},
+		Server:             server,
+		TCP:                tcp,
+		Concurrency:        2,
+		Count:              1,
+		Probability:        1,
+		WriteTimeout:       5 * time.Second,
+		ReadTimeout:        5 * time.Second,
+		Rcodes:             true,
+		ExpectResponseType: []string{"A"},
+		Recurse:            true,
 	}
 }

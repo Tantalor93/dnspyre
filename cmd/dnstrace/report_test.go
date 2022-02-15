@@ -8,38 +8,35 @@ import (
 )
 
 func Example_printReport() {
-	input := BenchmarkInput{
-		expect:  []string{"A"},
-		histMin: time.Microsecond * 400,
-		histMax: time.Second * 4,
-		histPre: 1,
-		color: false,
+	b := Benchmark{
+		ExpectResponseType: []string{"A"},
+		HistPre:            1,
 	}
 
-	h := hdrhistogram.New(input.histMin.Nanoseconds(), input.histMax.Nanoseconds(), 1)
+	h := hdrhistogram.New(0, 0, 1)
 	h.RecordValue(5)
 	h.RecordValue(10)
-	d1 := datapoint{5, time.Unix(0, 0)}
-	d2 := datapoint{10, time.Unix(0, 0)}
-	rs := rstats{
-		codes: map[int]int64{
+	d1 := Datapoint{5, time.Unix(0, 0)}
+	d2 := Datapoint{10, time.Unix(0, 0)}
+	rs := ResultStats{
+		Codes: map[int]int64{
 			dns.RcodeSuccess: 2,
 		},
-		qtypes: map[string]int64{
+		Qtypes: map[string]int64{
 			"A": 2,
 		},
-		hist:      h,
-		timings:   []datapoint{d1, d2},
-		count:     1,
-		cerror:    2,
-		ecount:    3,
-		success:   4,
-		matched:   5,
-		mismatch:  6,
-		truncated: 7,
+		Hist:      h,
+		Timings:   []Datapoint{d1, d2},
+		Count:     1,
+		Cerror:    2,
+		Ecount:    3,
+		Success:   4,
+		Matched:   5,
+		Mismatch:  6,
+		Truncated: 7,
 	}
 
-	printReport(time.Second, []*rstats{&rs}, nil, input)
+	b.PrintReport([]*ResultStats{&rs}, time.Second)
 
 	//Output: Total requests:		1
 	//Connection errors:	2

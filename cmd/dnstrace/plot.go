@@ -12,10 +12,10 @@ import (
 	"gonum.org/v1/plot/vg"
 )
 
-func plotHistogramLatency(file string, times []datapoint) {
+func plotHistogramLatency(file string, times []Datapoint) {
 	var values plotter.Values
 	for _, v := range times {
-		values = append(values, v.duration)
+		values = append(values, v.Duration)
 	}
 	p := plot.New()
 	p.Title.Text = "Latencies distribution"
@@ -33,10 +33,10 @@ func plotHistogramLatency(file string, times []datapoint) {
 	}
 }
 
-func plotBoxPlotLatency(file, server string, times []datapoint) {
+func plotBoxPlotLatency(file, server string, times []Datapoint) {
 	var values plotter.Values
 	for _, v := range times {
-		values = append(values, v.duration)
+		values = append(values, v.Duration)
 	}
 	p := plot.New()
 	p.Title.Text = "Latencies distribution"
@@ -54,10 +54,10 @@ func plotBoxPlotLatency(file, server string, times []datapoint) {
 	}
 }
 
-func plotLineLatency(file string, times []datapoint) {
+func plotLineLatency(file string, times []Datapoint) {
 	var values plotter.XYs
 	for i, v := range times {
-		values = append(values, plotter.XY{X: float64(i), Y: v.duration})
+		values = append(values, plotter.XY{X: float64(i), Y: v.Duration})
 	}
 	p := plot.New()
 	p.Title.Text = "Latencies progression during benchmark test"
@@ -99,11 +99,11 @@ func plotResponses(file string, rcodes map[int]int64) {
 	}
 }
 
-func plotLineThroughput(file string, times []datapoint) {
+func plotLineThroughput(file string, times []Datapoint) {
 	var values plotter.XYs
 	m := make(map[int64]int64)
 	for _, v := range times {
-		unix := v.start.Unix()
+		unix := v.Start.Unix()
 		if _, ok := m[unix]; !ok {
 			m[unix] = 0
 		}
