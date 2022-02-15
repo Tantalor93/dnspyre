@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/alecthomas/kingpin"
-	"github.com/fatih/color"
 	"github.com/miekg/dns"
 	"github.com/tantalor93/dnstrace/internal/sysutil"
 )
@@ -81,30 +80,47 @@ const (
 func Execute() {
 	pApp.Version(Version)
 	kingpin.MustParse(pApp.Parse(os.Args[1:]))
-
-	// process args
-	color.NoColor = !*pColor
+	bench := Benchmark{
+		Server:             *pServer,
+		Types:              *pTypes,
+		Count:              *pCount,
+		Concurrency:        *pConcurrency,
+		Rate:               *pRate,
+		QperConn:           *pQperConn,
+		ExpectResponseType: *pExpect,
+		Recurse:            *pRecurse,
+		Probability:        *pProbability,
+		UDPSize:            *pUDPSize,
+		EdnsOpt:            *pEdnsOpt,
+		TCP:                *pTCP,
+		DOT:                *pDOT,
+		WriteTimeout:       *pWriteTimeout,
+		ReadTimeout:        *pReadTimeout,
+		Rcodes:             *pRCodes,
+		HistMin:            *pHistMin,
+		HistMax:            *pHistMax,
+		HistPre:            *pHistPre,
+		HistDisplay:        *pHistDisplay,
+		Csv:                *pCsv,
+		Ioerrors:           *pIOErrors,
+		Silent:             *pSilent,
+		Color:              *pColor,
+		PlotDir:            *pPlotDir,
+		PlotFormat:         *pPlotFormat,
+		DohMethod:          *pDoHmethod,
+		DohProtocol:        *pDoHProtocol,
+		Queries:            *pQueries,
+	}
 
 	lim, err := sysutil.RlimitStack()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Cannot check limit of number of files. Skipping check. Please make sure it is sufficient manually.", err)
 	} else {
-		needed := uint64(*pConcurrency) + uint64(fileNoBuffer)
+		needed := uint64(bench.Concurrency) + uint64(fileNoBuffer)
 		if lim < needed {
 			fmt.Fprintf(os.Stderr, "Current process limit for number of files is %d and insufficient for level of requested concurrency.", lim)
 			os.Exit(1)
 		}
-	}
-
-	var csv *os.File
-	if *pCsv != "" {
-		f, err := os.Create(*pCsv)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "Failed to create file for CSV export.", err)
-			os.Exit(1)
-		}
-
-		csv = f
 	}
 
 	sigsInt := make(chan os.Signal, 8)
@@ -130,10 +146,10 @@ func Execute() {
 	rand.Seed(time.Now().UnixNano())
 
 	start := time.Now()
-	res := do(ctx)
+	res := bench.Run(ctx)
 	end := time.Now()
 
-	printReport(end.Sub(start), res, csv)
+	bench.PrintReport(res, end.Sub(start))
 }
 
 func getSupportedDNSTypes() []string {
