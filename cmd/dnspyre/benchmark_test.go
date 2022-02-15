@@ -155,14 +155,14 @@ func assertResult(t *testing.T, rs []*ResultStats) {
 	if assert.Len(t, rs, 2, "Run(ctx) rstats") {
 		rs0 := rs[0]
 		rs1 := rs[1]
-		assertRstats(t, rs0)
-		assertRstats(t, rs1)
+		assertResultStats(t, rs0)
+		assertResultStats(t, rs1)
 		assertTimings(t, rs0)
 		assertTimings(t, rs1)
 	}
 }
 
-func assertRstats(t *testing.T, rs *ResultStats) {
+func assertResultStats(t *testing.T, rs *ResultStats) {
 	assert.NotNil(t, rs.Hist, "Run(ctx) rstats histogram")
 
 	if assert.NotNil(t, rs.Codes, "Run(ctx) rstats codes") {
@@ -174,13 +174,12 @@ func assertRstats(t *testing.T, rs *ResultStats) {
 		assert.Equal(t, int64(1), rs.Qtypes[dns.TypeToString[dns.TypeAAAA]], "Run(ctx) rstats qtypes AAAA, state:"+fmt.Sprint(rs.Codes))
 	}
 
-	assert.Equal(t, int64(2), rs.Count, "Run(ctx) total counter")
-	assert.Zero(t, rs.Cerror, "Run(ctx) connection error counter")
-	assert.Zero(t, rs.Ecount, "error counter")
-	assert.Equal(t, int64(2), rs.Success, "Run(ctx) success counter")
-	assert.Equal(t, int64(2), rs.Matched, "Run(ctx) matched counter")
-	assert.Zero(t, rs.Mismatch, "Run(ctx) mismatch counter")
-	assert.Zero(t, rs.Truncated, "Run(ctx) truncated counter")
+	assert.Equal(t, int64(2), rs.Counters.Total, "Run(ctx) total counter")
+	assert.Zero(t, rs.Counters.ConnError, "Run(ctx) connection error counter")
+	assert.Zero(t, rs.Counters.IOError, "error counter")
+	assert.Equal(t, int64(2), rs.Counters.Success, "Run(ctx) success counter")
+	assert.Zero(t, rs.Counters.IDmismatch, "Run(ctx) mismatch counter")
+	assert.Zero(t, rs.Counters.Truncated, "Run(ctx) truncated counter")
 }
 
 func assertTimings(t *testing.T, rs *ResultStats) {
@@ -196,17 +195,16 @@ func assertTimings(t *testing.T, rs *ResultStats) {
 
 func createBenchmark(server string, tcp bool) Benchmark {
 	return Benchmark{
-		Queries:            []string{"example.org"},
-		Types:              []string{"A", "AAAA"},
-		Server:             server,
-		TCP:                tcp,
-		Concurrency:        2,
-		Count:              1,
-		Probability:        1,
-		WriteTimeout:       5 * time.Second,
-		ReadTimeout:        5 * time.Second,
-		Rcodes:             true,
-		ExpectResponseType: []string{"A"},
-		Recurse:            true,
+		Queries:      []string{"example.org"},
+		Types:        []string{"A", "AAAA"},
+		Server:       server,
+		TCP:          tcp,
+		Concurrency:  2,
+		Count:        1,
+		Probability:  1,
+		WriteTimeout: 5 * time.Second,
+		ReadTimeout:  5 * time.Second,
+		Rcodes:       true,
+		Recurse:      true,
 	}
 }

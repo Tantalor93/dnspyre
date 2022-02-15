@@ -19,34 +19,26 @@ var (
 	successPrint = color.New(color.FgGreen).Fprint
 )
 
-func (b *Benchmark) printProgress(totalCount, totalCerror, totalEcount, totalSuccess, totalMatched, totalMismatch, totalTruncated int64) {
-	fmt.Printf("\nTotal requests:\t\t%d\n", totalCount)
+func (b *Benchmark) printProgress(c Counters) {
+	fmt.Printf("\nTotal requests:\t\t%d\n", c.Total)
 
-	if totalCerror > 0 {
-		errPrint(os.Stdout, "Connection errors:\t", totalCerror, "\n")
+	if c.ConnError > 0 {
+		errPrint(os.Stdout, "Connection errors:\t", c.ConnError, "\n")
 	}
-	if totalEcount > 0 {
-		errPrint(os.Stdout, "Read/Write errors:\t", totalEcount, "\n")
-	}
-
-	if totalMismatch > 0 {
-		errPrint(os.Stdout, "ID mismatch errors:\t", totalMismatch, "\n")
+	if c.IOError > 0 {
+		errPrint(os.Stdout, "Read/Write errors:\t", c.IOError, "\n")
 	}
 
-	if totalSuccess > 0 {
-		successPrint(os.Stdout, "DNS success codes:\t", totalSuccess, "\n")
+	if c.IDmismatch > 0 {
+		errPrint(os.Stdout, "ID mismatch errors:\t", c.IDmismatch, "\n")
 	}
 
-	if totalTruncated > 0 {
-		errPrint(os.Stdout, "Truncated responses:\t", totalTruncated, "\n")
+	if c.Success > 0 {
+		successPrint(os.Stdout, "DNS success codes:\t", c.Success, "\n")
 	}
 
-	if len(b.ExpectResponseType) > 0 {
-		expect := successPrint
-		if totalMatched != totalSuccess {
-			expect = errPrint
-		}
-		expect(os.Stdout, "Expected results:\t", totalMatched, "\n")
+	if c.Truncated > 0 {
+		errPrint(os.Stdout, "Truncated responses:\t", c.Truncated, "\n")
 	}
 }
 
@@ -75,13 +67,7 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) {
 	qtypeTotals := make(map[string]int64)
 	times := make([]Datapoint, 0)
 
-	var totalCount int64
-	var totalCerror int64
-	var totalEcount int64
-	var totalSuccess int64
-	var totalMatched int64
-	var totalMismatch int64
-	var totalTruncated int64
+	var totalCounters Counters
 
 	for _, s := range stats {
 		timings.Merge(s.Hist)
@@ -96,13 +82,16 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) {
 				qtypeTotals[k] = qtypeTotals[k] + v
 			}
 		}
-		totalCount += s.Count
-		totalCerror += s.Cerror
-		totalEcount += s.Ecount
-		totalSuccess += s.Success
-		totalMatched += s.Matched
-		totalMismatch += s.Mismatch
-		totalTruncated += s.Truncated
+		if s.Counters != nil {
+			totalCounters = Counters{
+				Total:      totalCounters.Total + s.Counters.Total,
+				ConnError:  totalCounters.ConnError + s.Counters.ConnError,
+				IOError:    totalCounters.IOError + s.Counters.IOError,
+				Success:    totalCounters.Success + s.Counters.Success,
+				IDmismatch: totalCounters.IDmismatch + s.Counters.IDmismatch,
+				Truncated:  totalCounters.Truncated + s.Counters.Truncated,
+			}
+		}
 	}
 
 	// sort data points from the oldest to the earliest so we can better plot time dependant graphs (like line)
@@ -133,7 +122,7 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) {
 		return
 	}
 
-	b.printProgress(totalCount, totalCerror, totalEcount, totalSuccess, totalMatched, totalMismatch, totalTruncated)
+	b.printProgress(totalCounters)
 
 	if len(codeTotals) > 0 {
 		fmt.Println()
@@ -160,7 +149,7 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) {
 	fmt.Println()
 
 	fmt.Println("Time taken for tests:\t", t.String())
-	fmt.Printf("Questions per second:\t %0.1f", float64(totalCount)/t.Seconds())
+	fmt.Printf("Questions per second:\t %0.1f", float64(totalCounters.Total)/t.Seconds())
 
 	min := time.Duration(timings.Min())
 	mean := time.Duration(timings.Mean())

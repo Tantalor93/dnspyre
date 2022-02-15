@@ -3,8 +3,6 @@ package dnspyre
 import (
 	"crypto/tls"
 	"encoding/hex"
-	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
@@ -14,11 +12,7 @@ import (
 func dialConnection(b *Benchmark, m *dns.Msg, st *ResultStats) (*dns.Conn, error) {
 	co, err := dial(b)
 	if err != nil {
-		st.Cerror++
-
-		if b.Ioerrors {
-			fmt.Fprintln(os.Stderr, "i/o error dialing: ", err)
-		}
+		st.Counters.ConnError++
 		return nil, err
 	}
 	if udpSize := b.UDPSize; udpSize > 0 {
