@@ -1,4 +1,4 @@
-package dnstrace
+package dnspyre
 
 import (
 	"time"

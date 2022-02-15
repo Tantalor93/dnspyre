@@ -1,19 +1,19 @@
-[![Release](https://img.shields.io/github/release/Tantalor93/dnstrace/all.svg)](https://github.com/Tantalor93/dnstrace/releases)
-[![Go Report Card](https://goreportcard.com/badge/github.com/Tantalor93/dnstrace)](https://goreportcard.com/report/github.com/Tantalor93/dnstrace)
-[![Tantalor93](https://circleci.com/gh/Tantalor93/dnstrace/tree/master.svg?style=svg)](https://circleci.com/gh/Tantalor93/dnstrace?branch=master)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Tantalor93/dnstrace/blob/master/LICENSE)
-[![codecov](https://codecov.io/gh/Tantalor93/dnstrace/branch/master/graph/badge.svg?token=MC6PK2OLMK)](https://codecov.io/gh/Tantalor93/dnstrace)
+[![Release](https://img.shields.io/github/release/Tantalor93/dnspyre/all.svg)](https://github.com/Tantalor93/dnspyre/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Tantalor93/dnspyre)](https://goreportcard.com/report/github.com/Tantalor93/dnspyre)
+[![Tantalor93](https://circleci.com/gh/Tantalor93/dnspyre/tree/master.svg?style=svg)](https://circleci.com/gh/Tantalor93/dnspyre?branch=master)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Tantalor93/dnspyre/blob/master/LICENSE)
+[![codecov](https://codecov.io/gh/Tantalor93/dnspyre/branch/master/graph/badge.svg?token=MC6PK2OLMK)](https://codecov.io/gh/Tantalor93/dnspyre)
 
 # Table of Contents
-- [DNStrace](#dnstrace)
+- [dnspyre](#dnspyre)
     * [Installation](#installation)
     * [Build](#build)
     * [Usage](#usage)
     * [Warning](#warning)
     * [Examples](#examples)
 
-# DNStrace
-forked https://github.com/redsift/dnstrace 
+# dnspyre
+This tool is based and originally forked from https://github.com/redsift/dnstrace, but was largely rewritten and enhanced with additional functionality.
 
 Command-line DNS benchmark tool built to stress test and measure the performance of DNS servers with commodity hardware.
 This tool typically consumes ~30kB per concurrent connection and can maintain ~30,000 QPS per modern core if your server, OS and network allows you to reach suitable levels of concurrency.
@@ -31,7 +31,7 @@ them via all kind of image formats (png, svg, pdf)
 
 ## Installation 
 ```
-go get github.com/tantalor93/dnstrace
+go get github.com/tantalor93/dnspyre
 ```
 will install the binary in your $GOPATH/bin
 
@@ -44,8 +44,8 @@ binaries will be in `bin/` folder
 ## Usage
 
 ```
-$ dnstrace --help
-usage: dnstrace [<flags>] <queries>...
+$ dnspyre --help
+usage: dnspyre [<flags>] <queries>...
 
 A high QPS DNS benchmark.
 
@@ -89,7 +89,7 @@ Args:
 
 ## Warning
 
-While `dnstrace` is helpful for testing round trip latency via public networks,
+While `dnspyre` is helpful for testing round trip latency via public networks,
 the code was primarily created to provide an [apachebench](https://en.wikipedia.org/wiki/ApacheBench)
 style tool for testing your own infrastructure.
 

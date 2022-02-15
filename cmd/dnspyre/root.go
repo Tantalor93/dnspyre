@@ -1,4 +1,4 @@
-package dnstrace
+package dnspyre
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 
 	"github.com/alecthomas/kingpin"
 	"github.com/miekg/dns"
-	"github.com/tantalor93/dnstrace/internal/sysutil"
+	"github.com/tantalor93/dnspyre/internal/sysutil"
 )
 
 var (
@@ -22,7 +22,7 @@ var (
 )
 
 var (
-	pApp = kingpin.New("dnstrace", "A high QPS DNS benchmark.").Author(author)
+	pApp = kingpin.New("dnspyre", "A high QPS DNS benchmark.").Author(author)
 
 	pServer = pApp.Flag("server", "DNS server IP:port to test. IPv6 is also supported, for example '[fddd:dddd::]:53'. "+
 		"Also DoH servers are supported such as `https://1.1.1.1/dns-query`, when such server is provided, the benchmark automatically switches to the use of DoH. "+

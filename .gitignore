@@ -34,4 +34,4 @@ vendor/
 *.iml
 bin/
 report/
-dnstrace
+dnspyre
