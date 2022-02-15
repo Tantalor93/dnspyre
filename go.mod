@@ -1,4 +1,4 @@
-module github.com/tantalor93/dnspyre
+module github.com/tantalor93/dnspyre/v2
 
 go 1.16
 

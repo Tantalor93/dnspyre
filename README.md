@@ -1,7 +1,7 @@
-[![Release](https://img.shields.io/github/release/Tantalor93/dnspyre/all.svg)](https://github.com/Tantalor93/dnspyre/releases)
-[![Go Report Card](https://goreportcard.com/badge/github.com/Tantalor93/dnspyre)](https://goreportcard.com/report/github.com/Tantalor93/dnspyre)
+[![Release](https://img.shields.io/github/release/Tantalor93/dnspyre/all.svg)](https://github.com/tantalor93/dnspyre/v2/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/tantalor93/dnspyre/v2)](https://goreportcard.com/report/github.com/tantalor93/dnspyre/v2)
 [![Tantalor93](https://circleci.com/gh/Tantalor93/dnspyre/tree/master.svg?style=svg)](https://circleci.com/gh/Tantalor93/dnspyre?branch=master)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Tantalor93/dnspyre/blob/master/LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/tantalor93/dnspyre/v2/blob/master/LICENSE)
 [![codecov](https://codecov.io/gh/Tantalor93/dnspyre/branch/master/graph/badge.svg?token=MC6PK2OLMK)](https://codecov.io/gh/Tantalor93/dnspyre)
 
 # Table of Contents
@@ -31,7 +31,7 @@ them via all kind of image formats (png, svg, pdf)
 
 ## Installation 
 ```
-go get github.com/tantalor93/dnspyre
+go get github.com/tantalor93/dnspyre/v2
 ```
 will install the binary in your $GOPATH/bin
 

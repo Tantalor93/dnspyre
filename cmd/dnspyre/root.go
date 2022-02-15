@@ -11,7 +11,7 @@ import (
 
 	"github.com/alecthomas/kingpin"
 	"github.com/miekg/dns"
-	"github.com/tantalor93/dnspyre/internal/sysutil"
+	"github.com/tantalor93/dnspyre/v2/internal/sysutil"
 )
 
 var (
