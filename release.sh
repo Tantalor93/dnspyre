@@ -17,4 +17,4 @@ if [ -z "${GITHUB_TOKEN}" ]; then
   exit 1
 fi
 
-make VERSION="$1" build && ghr "$1" bin/
+make VERSION="$1" release && ghr "$1" bin/
