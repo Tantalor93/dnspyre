@@ -30,10 +30,16 @@ This tool supports wide variety of options to customize DNS benchmark and benchm
 them via all kind of image formats (png, svg, pdf)
 
 ## Installation 
+using `brew`
+```
+brew tap tantalor93/dnspyre
+brew install dnspyre
+```
+
+or `go get`
 ```
 go get github.com/tantalor93/dnspyre/v2
 ```
-will install the binary in your $GOPATH/bin
 
 ## Build
 ```
