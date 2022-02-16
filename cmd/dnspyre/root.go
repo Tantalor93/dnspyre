@@ -18,7 +18,7 @@ var (
 	// Version is set during release of project during build process
 	Version = "development"
 
-	author = "Ondrej Benkovsky <obenky@gmail.com>, Rahul Powar <rahul@redsift.io>"
+	author = "Ondrej Benkovsky <obenky@gmail.com>"
 )
 
 var (
@@ -34,8 +34,6 @@ var (
 
 	pRate     = pApp.Flag("rate-limit", "Apply a global questions / second rate limit.").Short('l').Default("0").Int()
 	pQperConn = pApp.Flag("query-per-conn", "Queries on a connection before creating a new one. 0: unlimited").Default("0").Int64()
-
-	pExpect = pApp.Flag("expect", "Expect a specific response.").Short('e').Strings()
 
 	pRecurse = pApp.Flag("recurse", "Allow DNS recursion.").Short('r').Default("false").Bool()
 
@@ -56,9 +54,8 @@ var (
 	pHistMax     = pApp.Flag("max", "Maximum value for histogram.").Default(dnsTimeout.String()).Duration()
 	pHistPre     = pApp.Flag("precision", "Significant figure for histogram precision.").Default("1").PlaceHolder("[1-5]").Int()
 	pHistDisplay = pApp.Flag("distribution", "Display distribution histogram of timings to stdout.").Default("true").Bool()
-	pCsv         = pApp.Flag("csv", "Export distribution to CSV.").Default("").PlaceHolder("/path/to/file.csv").String()
 
-	pIOErrors = pApp.Flag("io-errors", "Log I/O errors to stderr.").Default("false").Bool()
+	pCsv = pApp.Flag("csv", "Export distribution to CSV.").Default("").PlaceHolder("/path/to/file.csv").String()
 
 	pSilent = pApp.Flag("silent", "Disable stdout.").Default("false").Bool()
 	pColor  = pApp.Flag("color", "ANSI Color output.").Default("true").Bool()
@@ -80,36 +77,35 @@ const (
 func Execute() {
 	pApp.Version(Version)
 	kingpin.MustParse(pApp.Parse(os.Args[1:]))
+
 	bench := Benchmark{
-		Server:             *pServer,
-		Types:              *pTypes,
-		Count:              *pCount,
-		Concurrency:        *pConcurrency,
-		Rate:               *pRate,
-		QperConn:           *pQperConn,
-		ExpectResponseType: *pExpect,
-		Recurse:            *pRecurse,
-		Probability:        *pProbability,
-		UDPSize:            *pUDPSize,
-		EdnsOpt:            *pEdnsOpt,
-		TCP:                *pTCP,
-		DOT:                *pDOT,
-		WriteTimeout:       *pWriteTimeout,
-		ReadTimeout:        *pReadTimeout,
-		Rcodes:             *pRCodes,
-		HistMin:            *pHistMin,
-		HistMax:            *pHistMax,
-		HistPre:            *pHistPre,
-		HistDisplay:        *pHistDisplay,
-		Csv:                *pCsv,
-		Ioerrors:           *pIOErrors,
-		Silent:             *pSilent,
-		Color:              *pColor,
-		PlotDir:            *pPlotDir,
-		PlotFormat:         *pPlotFormat,
-		DohMethod:          *pDoHmethod,
-		DohProtocol:        *pDoHProtocol,
-		Queries:            *pQueries,
+		Server:       *pServer,
+		Types:        *pTypes,
+		Count:        *pCount,
+		Concurrency:  *pConcurrency,
+		Rate:         *pRate,
+		QperConn:     *pQperConn,
+		Recurse:      *pRecurse,
+		Probability:  *pProbability,
+		UDPSize:      *pUDPSize,
+		EdnsOpt:      *pEdnsOpt,
+		TCP:          *pTCP,
+		DOT:          *pDOT,
+		WriteTimeout: *pWriteTimeout,
+		ReadTimeout:  *pReadTimeout,
+		Rcodes:       *pRCodes,
+		HistMin:      *pHistMin,
+		HistMax:      *pHistMax,
+		HistPre:      *pHistPre,
+		HistDisplay:  *pHistDisplay,
+		Csv:          *pCsv,
+		Silent:       *pSilent,
+		Color:        *pColor,
+		PlotDir:      *pPlotDir,
+		PlotFormat:   *pPlotFormat,
+		DohMethod:    *pDoHmethod,
+		DohProtocol:  *pDoHProtocol,
+		Queries:      *pQueries,
 	}
 
 	lim, err := sysutil.RlimitStack()

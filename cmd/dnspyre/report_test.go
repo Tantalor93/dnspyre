@@ -9,8 +9,7 @@ import (
 
 func Example_printReport() {
 	b := Benchmark{
-		ExpectResponseType: []string{"A"},
-		HistPre:            1,
+		HistPre: 1,
 	}
 
 	h := hdrhistogram.New(0, 0, 1)
@@ -25,36 +24,36 @@ func Example_printReport() {
 		Qtypes: map[string]int64{
 			"A": 2,
 		},
-		Hist:      h,
-		Timings:   []Datapoint{d1, d2},
-		Count:     1,
-		Cerror:    2,
-		Ecount:    3,
-		Success:   4,
-		Matched:   5,
-		Mismatch:  6,
-		Truncated: 7,
+		Hist:    h,
+		Timings: []Datapoint{d1, d2},
+		Counters: &Counters{
+			Total:      1,
+			ConnError:  2,
+			IOError:    3,
+			Success:    4,
+			IDmismatch: 6,
+			Truncated:  7,
+		},
 	}
 
 	b.PrintReport([]*ResultStats{&rs}, time.Second)
 
-	//Output: Total requests:		1
-	//Connection errors:	2
-	//Read/Write errors:	3
-	//ID mismatch errors:	6
-	//DNS success codes:	4
-	//Truncated responses:	7
-	//Expected results:	5
+	// Output: Total requests:		1
+	// Connection errors:	2
+	// Read/Write errors:	3
+	// ID mismatch errors:	6
+	// DNS success codes:	4
+	// Truncated responses:	7
 	//
-	//DNS response codes:
+	// DNS response codes:
 	//	NOERROR:	2
 	//
-	//DNS question types:
+	// DNS question types:
 	//	A:	2
 	//
-	//Time taken for tests:	 1s
-	//Questions per second:	 1.0
-	//DNS timings, 2 datapoints
+	// Time taken for tests:	 1s
+	// Questions per second:	 1.0
+	// DNS timings, 2 datapoints
 	//	 min:		 5ns
 	//	 mean:		 7ns
 	//	 [+/-sd]:	 2ns

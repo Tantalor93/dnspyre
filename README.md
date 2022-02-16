@@ -58,7 +58,6 @@ Flags:
   -c, --concurrency=1          Number of concurrent queries to issue.
   -l, --rate-limit=0           Apply a global questions / second rate limit.
       --query-per-conn=0       Queries on a connection before creating a new one. 0: unlimited
-  -e, --expect=EXPECT ...      Expect a specific response.
   -r, --recurse                Allow DNS recursion.
       --probability=1          Each hostname from file will be used with provided probability. Value 1 and above means that each hostname from file will be used by each concurrent benchmark goroutine. Useful for randomizing queries across benchmark
                                goroutines.
@@ -74,7 +73,6 @@ Flags:
       --precision=[1-5]        Significant figure for histogram precision.
       --distribution           Display distribution histogram of timings to stdout.
       --csv=/path/to/file.csv  Export distribution to CSV.
-      --io-errors              Log I/O errors to stderr.
       --silent                 Disable stdout.
       --color                  ANSI Color output.
       --plot=/path/to/folder   Plot benchmark results and export them to directory.

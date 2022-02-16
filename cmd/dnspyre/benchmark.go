@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -22,18 +21,21 @@ const dnsTimeout = time.Second * 4
 
 // ResultStats representation of benchmark results of single concurrent thread
 type ResultStats struct {
-	Codes   map[int]int64
-	Qtypes  map[string]int64
-	Hist    *hdrhistogram.Histogram
-	Timings []Datapoint
+	Codes    map[int]int64
+	Qtypes   map[string]int64
+	Hist     *hdrhistogram.Histogram
+	Timings  []Datapoint
+	Counters *Counters
+}
 
-	Count     int64
-	Cerror    int64
-	Ecount    int64
-	Success   int64
-	Matched   int64
-	Mismatch  int64
-	Truncated int64
+// Counters represents various counters of benchmark results
+type Counters struct {
+	Total      int64
+	ConnError  int64
+	IOError    int64
+	Success    int64
+	IDmismatch int64
+	Truncated  int64
 }
 
 func (r *ResultStats) record(time time.Time, timing time.Duration) {
@@ -57,8 +59,6 @@ type Benchmark struct {
 	Rate     int
 	QperConn int64
 
-	ExpectResponseType []string
-
 	Recurse bool
 
 	Probability float64
@@ -80,8 +80,6 @@ type Benchmark struct {
 	HistPre     int
 
 	Csv string
-
-	Ioerrors bool
 
 	Silent bool
 	Color  bool
@@ -185,6 +183,7 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 			st.Codes = make(map[int]int64)
 		}
 		st.Qtypes = make(map[string]int64)
+		st.Counters = &Counters{}
 
 		var co *dns.Conn
 		var err error
@@ -215,7 +214,7 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 						if ctx.Err() != nil {
 							return
 						}
-						st.Count++
+						st.Counters.Total++
 
 						// instead of setting the question, do this manually for lower overhead and lock free access to id
 						question.Name = q
@@ -229,7 +228,7 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 						if b.useDoH {
 							r, err = dohFunc(ctx, b.Server, &m)
 							if err != nil {
-								st.Ecount++
+								st.Counters.IOError++
 								continue
 							}
 						} else {
@@ -248,10 +247,7 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 							co.SetWriteDeadline(start.Add(b.WriteTimeout))
 							if err = co.WriteMsg(&m); err != nil {
 								// error writing
-								st.Ecount++
-								if b.Ioerrors {
-									fmt.Fprintln(os.Stderr, "i/o error dialing: ", err)
-								}
+								st.Counters.IOError++
 								co.Close()
 								co = nil
 								continue
@@ -262,10 +258,7 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 							r, err = co.ReadMsg()
 							if err != nil {
 								// error reading
-								st.Ecount++
-								if b.Ioerrors {
-									fmt.Fprintln(os.Stderr, "i/o error dialing: ", err)
-								}
+								st.Counters.IOError++
 								co.Close()
 								co = nil
 								continue
@@ -287,27 +280,15 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 
 func (b *Benchmark) evaluateResponse(r *dns.Msg, q *dns.Msg, st *ResultStats) {
 	if r.Truncated {
-		st.Truncated++
+		st.Counters.Truncated++
 	}
 
 	if r.Rcode == dns.RcodeSuccess {
 		if r.Id != q.Id {
-			st.Mismatch++
+			st.Counters.IDmismatch++
 			return
 		}
-		st.Success++
-
-		if expect := b.ExpectResponseType; len(expect) > 0 {
-			for _, s := range r.Answer {
-				dnsType := dns.TypeToString[s.Header().Rrtype]
-				ok := b.isExpected(dnsType)
-
-				if ok {
-					st.Matched++
-					break
-				}
-			}
-		}
+		st.Counters.Success++
 	}
 
 	if st.Codes != nil {
@@ -321,13 +302,4 @@ func (b *Benchmark) evaluateResponse(r *dns.Msg, q *dns.Msg, st *ResultStats) {
 	if st.Qtypes != nil {
 		st.Qtypes[dns.TypeToString[q.Question[0].Qtype]]++
 	}
-}
-
-func (b *Benchmark) isExpected(dnsType string) bool {
-	for _, exp := range b.ExpectResponseType {
-		if exp == dnsType {
-			return true
-		}
-	}
-	return false
 }
