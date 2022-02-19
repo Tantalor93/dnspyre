@@ -3,7 +3,7 @@ module github.com/tantalor93/dnspyre/v2
 go 1.17
 
 require (
-	github.com/HdrHistogram/hdrhistogram-go v1.1.0
+	github.com/HdrHistogram/hdrhistogram-go v1.1.2
 	github.com/alecthomas/kingpin v2.2.6+incompatible
 	github.com/coredns/coredns v1.8.6
 	github.com/fatih/color v1.12.0
