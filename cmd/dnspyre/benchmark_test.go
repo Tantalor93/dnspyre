@@ -58,7 +58,7 @@ func Test_do_classic_dns(t *testing.T) {
 			})
 			defer s.Close()
 
-			bench := createBenchmark(s.Addr, tt.args.protocol == tcp)
+			bench := createBenchmark(s.Addr, tt.args.protocol == tcp, 1)
 
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
@@ -99,7 +99,7 @@ func Test_do_doh_post(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	bench := createBenchmark(ts.URL, true)
+	bench := createBenchmark(ts.URL, true, 1)
 	bench.DohMethod = post
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -141,7 +141,7 @@ func Test_do_doh_get(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	bench := createBenchmark(ts.URL, true)
+	bench := createBenchmark(ts.URL, true, 1)
 	bench.DohMethod = get
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -149,6 +149,32 @@ func Test_do_doh_get(t *testing.T) {
 	rs := bench.Run(ctx)
 
 	assertResult(t, rs)
+}
+
+func Test_do_probability(t *testing.T) {
+	s := NewServer(udp, func(w dns.ResponseWriter, r *dns.Msg) {
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.Answer = append(ret.Answer, test.A("example.org. IN A 127.0.0.1"))
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 500)
+
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	bench := createBenchmark(s.Addr, false, 0)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs := bench.Run(ctx)
+
+	assert.Len(t, rs, 2, "Run(ctx) rstats")
+	rs0 := rs[0]
+	rs1 := rs[1]
+	assert.Equal(t, int64(0), rs0.Counters.Total, "Run(ctx) total counter")
+	assert.Equal(t, int64(0), rs1.Counters.Total, "Run(ctx) total counter")
 }
 
 func assertResult(t *testing.T, rs []*ResultStats) {
@@ -193,7 +219,7 @@ func assertTimings(t *testing.T, rs *ResultStats) {
 	}
 }
 
-func createBenchmark(server string, tcp bool) Benchmark {
+func createBenchmark(server string, tcp bool, prob float64) Benchmark {
 	return Benchmark{
 		Queries:      []string{"example.org"},
 		Types:        []string{"A", "AAAA"},
@@ -201,7 +227,7 @@ func createBenchmark(server string, tcp bool) Benchmark {
 		TCP:          tcp,
 		Concurrency:  2,
 		Count:        1,
-		Probability:  1,
+		Probability:  prob,
 		WriteTimeout: 5 * time.Second,
 		ReadTimeout:  5 * time.Second,
 		Rcodes:       true,
