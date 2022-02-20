@@ -6,10 +6,10 @@
 
 # Table of Contents
 - [dnspyre](#dnspyre)
-    * [Installation](#installation)
-    * [Build](#build)
-    * [Usage](#usage)
     * [Warning](#warning)
+    * [Installation](#installation)
+    * [Bash/ZSH Shell completion](#Bash/ZSH-Shell-completion)
+    * [Usage](#usage)
     * [Examples](#examples)
 
 # dnspyre
@@ -29,6 +29,15 @@ This tool supports wide variety of options to customize DNS benchmark and benchm
 * plot benchmark results via CLI histogram or plot the benchmark results as boxplot, histogram, line graphs and export
 them via all kind of image formats (png, svg, pdf)
 
+## Warning
+
+While `dnspyre` is helpful for testing round trip latency via public networks,
+the code was primarily created to provide an [apachebench](https://en.wikipedia.org/wiki/ApacheBench)
+style tool for testing your own infrastructure.
+
+It is thus very easy to create significant DNS load with non default settings.
+**Do not do this to public DNS services**. You will most likely flag your IP.
+
 ## Installation 
 using `brew`
 ```
@@ -41,11 +50,16 @@ or `go get`
 go get github.com/tantalor93/dnspyre/v2
 ```
 
-## Build
+## Bash/ZSH Shell completion
+For **ZSH**, add to your `~/.zprofile` (or equivalent ZSH configuration file)
 ```
-make build
+eval "$(dnspyre --completion-script-zsh)"
 ```
-binaries will be in `bin/` folder
+
+For **Bash**, add to your `~/.bash_profile` (or equivalent Bash configuration file)
+```
+eval "$(dnspyre --completion-script-bash)"
+```
 
 ## Usage
 
@@ -90,15 +104,6 @@ Flags:
 Args:
   <queries>  Queries to issue. Can be file referenced using @<file-path>, for example @data/2-domains
 ```
-
-## Warning
-
-While `dnspyre` is helpful for testing round trip latency via public networks,
-the code was primarily created to provide an [apachebench](https://en.wikipedia.org/wiki/ApacheBench)
-style tool for testing your own infrastructure.
-
-It is thus very easy to create significant DNS load with non default settings.
-**Do not do this to public DNS services**. You will most likely flag your IP.
 
 ## Examples
 
