@@ -6,7 +6,7 @@ require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2
 	github.com/alecthomas/kingpin v2.2.6+incompatible
 	github.com/coredns/coredns v1.8.6
-	github.com/fatih/color v1.12.0
+	github.com/fatih/color v1.13.0
 	github.com/mattn/go-runewidth v0.0.2 // indirect
 	github.com/miekg/dns v1.1.46
 	github.com/olekukonko/tablewriter v0.0.0-20170719101040-be5337e7b39e
@@ -29,8 +29,8 @@ require (
 	github.com/go-latex/latex v0.0.0-20210118124228-b3d85cf34e07 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/mattn/go-colorable v0.1.8 // indirect
-	github.com/mattn/go-isatty v0.0.12 // indirect
+	github.com/mattn/go-colorable v0.1.9 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/phpdave11/gofpdf v1.4.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
