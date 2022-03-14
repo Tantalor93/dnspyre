@@ -8,7 +8,7 @@ require (
 	github.com/coredns/coredns v1.8.6
 	github.com/fatih/color v1.13.0
 	github.com/mattn/go-runewidth v0.0.2 // indirect
-	github.com/miekg/dns v1.1.46
+	github.com/miekg/dns v1.1.47
 	github.com/olekukonko/tablewriter v0.0.0-20170719101040-be5337e7b39e
 	github.com/stretchr/testify v1.7.0
 	github.com/tantalor93/doh-go v0.0.0-20220215152137-f96c68034ae0
