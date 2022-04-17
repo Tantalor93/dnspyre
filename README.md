@@ -13,10 +13,10 @@
     * [Examples](#examples)
 
 # dnspyre
-This tool is based and originally forked from https://github.com/redsift/dnstrace, but was largely rewritten and enhanced with additional functionality.
 
-Command-line DNS benchmark tool built to stress test and measure the performance of DNS servers with commodity hardware.
-This tool typically consumes ~30kB per concurrent connection and can maintain ~30,000 QPS per modern core if your server, OS and network allows you to reach suitable levels of concurrency.
+Command-line DNS benchmark tool built to stress test and measure the performance of DNS servers.
+
+This tool is based and originally forked from https://github.com/redsift/dnstrace, but was largely rewritten and enhanced with additional functionality.
 
 This tool supports wide variety of options to customize DNS benchmark and benchmark output. For example you can:
 * benchmark DNS servers with IPv4 and IPv6 addresses (for example GoogleDNS `8.8.8.8` and `2001:4860:4860::8888`)
