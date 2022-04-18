@@ -13,11 +13,21 @@ linters:
   - unused
   - varcheck
   - gofmt
-  - golint
+  - revive
   - gci
   - gofumpt
   - whitespace
+  - godot
+  - unparam
+  - gocritic
 
 issues:
   include:
-  - EXC0002 # disable excluding of issues about comments from golint
+  - EXC0012 # disable excluding of issues about comments from revive
+
+linters-settings:
+  godot:
+    # list of regexps for excluding particular comment lines from check
+    exclude:
+    - '^ @.*' # swaggo comments like // @title
+    - '^ (\d+)(\.|\)).*' # enumeration comments like // 1. or // 1)

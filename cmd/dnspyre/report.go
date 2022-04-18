@@ -42,7 +42,7 @@ func (b *Benchmark) printProgress(c Counters) {
 	}
 }
 
-// PrintReport print formatted benchmark results to stdout based
+// PrintReport print formatted benchmark results to stdout based.
 func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) {
 	var csv *os.File
 	if b.Csv != "" {
@@ -74,12 +74,12 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) {
 		times = append(times, s.Timings...)
 		if s.Codes != nil {
 			for k, v := range s.Codes {
-				codeTotals[k] = codeTotals[k] + v
+				codeTotals[k] += v
 			}
 		}
 		if s.Qtypes != nil {
 			for k, v := range s.Qtypes {
-				qtypeTotals[k] = qtypeTotals[k] + v
+				qtypeTotals[k] += v
 			}
 		}
 		if s.Counters != nil {
