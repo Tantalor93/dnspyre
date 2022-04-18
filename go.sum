@@ -87,6 +87,8 @@ github.com/stretchr/testify v1.7.1 h1:5TQK59W5E3v0r2duFAb7P95B6hEeOyEnHRa8MjYSMT
 github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/tantalor93/doh-go v0.0.0-20220215152137-f96c68034ae0 h1:3o9Tg33Y3l4pzvUCFgtk0n2cJjVhCm+RIZG+0brKm1M=
 github.com/tantalor93/doh-go v0.0.0-20220215152137-f96c68034ae0/go.mod h1:huQbBybJYCMipbDXgkk9qx8IBVBm1E//+PBOo8OBbmU=
+github.com/tantalor93/doh-go v0.1.0 h1:GpC7qH2ciRFPIpfiFJ0FMmp1Q4dR1zNIhV16+yByciA=
+github.com/tantalor93/doh-go v0.1.0/go.mod h1:GvJN2FOEuFGO0STTCbggTgGsAYkL8b04xQY+vf72IV0=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 go.uber.org/atomic v1.7.0 h1:ADUqmZGgLDDfbSL9ZmPxKTybcoEYHgpYfELNoN+7hsw=
