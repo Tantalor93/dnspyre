@@ -19,7 +19,7 @@ import (
 
 const dnsTimeout = time.Second * 4
 
-// ResultStats representation of benchmark results of single concurrent thread
+// ResultStats is a representation of benchmark results of single concurrent thread.
 type ResultStats struct {
 	Codes    map[int]int64
 	Qtypes   map[string]int64
@@ -28,7 +28,7 @@ type ResultStats struct {
 	Counters *Counters
 }
 
-// Counters represents various counters of benchmark results
+// Counters represents various counters of benchmark results.
 type Counters struct {
 	Total      int64
 	ConnError  int64
@@ -43,13 +43,13 @@ func (r *ResultStats) record(time time.Time, timing time.Duration) {
 	r.Timings = append(r.Timings, Datapoint{float64(timing.Milliseconds()), time})
 }
 
-// Datapoint one datapoint of benchmark (single DNS request)
+// Datapoint one datapoint of benchmark (single DNS request).
 type Datapoint struct {
 	Duration float64
 	Start    time.Time
 }
 
-// Benchmark is representation of benchmark scenario
+// Benchmark is representation of benchmark scenario.
 type Benchmark struct {
 	Server      string
 	Types       []string
@@ -92,7 +92,7 @@ type Benchmark struct {
 
 	Queries []string
 
-	// internal variable so we do not have to parse the address with each request
+	// internal variable so we do not have to parse the address with each request.
 	useDoH bool
 }
 
@@ -104,7 +104,7 @@ func (b *Benchmark) normalize() {
 	}
 }
 
-// Run executes benchmark
+// Run executes benchmark.
 func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 	b.normalize()
 
@@ -136,13 +136,13 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 		var tr http.RoundTripper
 		switch b.DohProtocol {
 		case "1.1":
-			network = network + "/1.1"
+			network += "/1.1"
 			tr = &http.Transport{}
 		case "2":
-			network = network + "/2"
+			network += "/2"
 			tr = &http2.Transport{}
 		default:
-			network = network + "/1.1"
+			network += "/1.1"
 			tr = &http.Transport{}
 		}
 		c := http.Client{Transport: tr, Timeout: b.ReadTimeout}
@@ -150,13 +150,13 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 
 		switch b.DohMethod {
 		case "post":
-			network = network + " (POST)"
+			network += " (POST)"
 			dohFunc = dohClient.SendViaPost
 		case "get":
-			network = network + " (GET)"
+			network += " (GET)"
 			dohFunc = dohClient.SendViaGet
 		default:
-			network = network + " (POST)"
+			network += " (POST)"
 			dohFunc = dohClient.SendViaPost
 		}
 	}

@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	// Version is set during release of project during build process
+	// Version is set during release of project during build process.
 	Version = "development"
 
 	author = "Ondrej Benkovsky <obenky@gmail.com>"
@@ -73,7 +73,7 @@ const (
 	fileNoBuffer = 9 // app itself needs about 9 for libs
 )
 
-// Execute starts main logic of command
+// Execute starts main logic of command.
 func Execute() {
 	pApp.Version(Version)
 	kingpin.MustParse(pApp.Parse(os.Args[1:]))

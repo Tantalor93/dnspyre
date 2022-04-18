@@ -10,31 +10,17 @@ all: check test build
 
 MAKEFLAGS += --no-print-directory
 
-prepare:
-	@echo "Downloading tools"
-ifeq (, $(shell which go-junit-report))
-	go get github.com/jstemmer/go-junit-report
-endif
-ifeq (, $(shell which gocov))
-	go get github.com/axw/gocov/gocov
-endif
-ifeq (, $(shell which gocov-xml))
-	go get github.com/AlekSi/gocov-xml
-endif
-
 check:
 ifeq (, $(shell which golangci-lint))
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH)/bin v1.30.0
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH)/bin v1.45.2
 endif
 	golangci-lint run
-	go mod tidy
+	go mod tidy -compat=1.17
 
 test:
 	@echo "Running tests"
-	mkdir -p report
-	go test -race -v ./... -coverprofile=report/coverage.txt | tee report/report.txt
-	gocov convert report/coverage.txt | gocov-xml > report/coverage.xml
-	go mod tidy
+	go test -race -v ./...
+	go mod tidy -compat=1.17
 
 generate:
 	@echo "Running generate"

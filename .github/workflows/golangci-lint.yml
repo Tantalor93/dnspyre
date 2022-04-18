@@ -6,8 +6,13 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: golangci-lint
-      uses: golangci/golangci-lint-action@v2.5.2
+    - uses: actions/setup-go@v3
       with:
-        version: v1.30
+        go-version: 1.17.x
+    - uses: actions/checkout@v3
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v3
+      env:
+        GOPROXY: proxy.golang.org,direct
+      with:
+        version: v1.45.2
