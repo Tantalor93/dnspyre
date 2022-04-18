@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/coredns/coredns/plugin/test"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
@@ -49,7 +48,7 @@ func Test_do_classic_dns(t *testing.T) {
 			s := NewServer(tt.args.protocol, func(w dns.ResponseWriter, r *dns.Msg) {
 				ret := new(dns.Msg)
 				ret.SetReply(r)
-				ret.Answer = append(ret.Answer, test.A("example.org. IN A 127.0.0.1"))
+				ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
 
 				// wait some time to actually have some observable duration
 				time.Sleep(time.Millisecond * 500)
@@ -82,7 +81,7 @@ func Test_do_doh_post(t *testing.T) {
 			panic(err)
 		}
 
-		msg.Answer = append(msg.Answer, test.A("example.org. IN A 127.0.0.1"))
+		msg.Answer = append(msg.Answer, A("example.org. IN A 127.0.0.1"))
 
 		pack, err := msg.Pack()
 		if err != nil {
@@ -124,7 +123,7 @@ func Test_do_doh_get(t *testing.T) {
 			panic(err)
 		}
 
-		msg.Answer = append(msg.Answer, test.A("example.org. IN A 127.0.0.1"))
+		msg.Answer = append(msg.Answer, A("example.org. IN A 127.0.0.1"))
 
 		pack, err := msg.Pack()
 		if err != nil {
@@ -155,7 +154,7 @@ func Test_do_probability(t *testing.T) {
 	s := NewServer(udp, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
-		ret.Answer = append(ret.Answer, test.A("example.org. IN A 127.0.0.1"))
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
 
 		// wait some time to actually have some observable duration
 		time.Sleep(time.Millisecond * 500)
@@ -234,3 +233,6 @@ func createBenchmark(server string, tcp bool, prob float64) Benchmark {
 		Recurse:      true,
 	}
 }
+
+// A returns an A record from rr. It panics on errors.
+func A(rr string) *dns.A { r, _ := dns.NewRR(rr); return r.(*dns.A) }
