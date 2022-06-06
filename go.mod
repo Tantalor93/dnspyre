@@ -9,7 +9,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.2 // indirect
 	github.com/miekg/dns v1.1.48
 	github.com/olekukonko/tablewriter v0.0.0-20170719101040-be5337e7b39e
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.7.2
 	github.com/tantalor93/doh-go v0.1.0
 	go.uber.org/ratelimit v0.2.0
 	golang.org/x/net v0.0.0-20210917221730-978cfadd31cf
@@ -38,5 +38,5 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.6-0.20210726203631-07bc1bf47fb2 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
