@@ -66,7 +66,9 @@ var (
 	pDoHmethod   = pApp.Flag("doh-method", "HTTP method to use for DoH requests").Default("post").Enum("get", "post")
 	pDoHProtocol = pApp.Flag("doh-protocol", "HTTP protocol to use for DoH requests").Default("1.1").Enum("1.1", "2")
 
-	pQueries = pApp.Arg("queries", "Queries to issue. Can be file referenced using @<file-path>, for example @data/2-domains").Required().Strings()
+	pQueries = pApp.Arg("queries", "Queries to issue. Can be local file referenced using @<file-path>, for example @data/2-domains."+
+		"Can also be resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that "+
+		"case the file will be downloaded and saved inmemory.").Required().Strings()
 )
 
 const (

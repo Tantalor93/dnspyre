@@ -38,6 +38,11 @@ loads hostnames from given data source file
 dnspyre -n 10 -c 10 --server 8.8.8.8 --recurse @data/2-domains
 ```
 
+### hostnames provided using HTTP
+```
+dnspyre -n 10 -c 10 --server 8.8.8.8 --recurse https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/2-domains
+```
+
 ### sending queries of multiple different query types
 this can be achieved by repeating type `-t`, all queries will be made by each specified query type
 ```
@@ -101,4 +106,3 @@ generates graphs like these:
 ![latency line](graphs/latency-line-1627558867.png)
 ![respones bar](graphs/responses-bar-1627558867.png)
 ![throughput line](graphs/throughput-line-1627558867.png)
-
