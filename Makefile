@@ -12,15 +12,15 @@ MAKEFLAGS += --no-print-directory
 
 check:
 ifeq (, $(shell which golangci-lint))
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH)/bin v1.45.2
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH)/bin v1.46.2
 endif
 	golangci-lint run
-	go mod tidy -compat=1.17
+	go mod tidy
 
 test:
 	@echo "Running tests"
 	go test -race -v ./...
-	go mod tidy -compat=1.17
+	go mod tidy
 
 generate:
 	@echo "Running generate"

@@ -176,6 +176,48 @@ func Test_do_probability(t *testing.T) {
 	assert.Equal(t, int64(0), rs1.Counters.Total, "Run(ctx) total counter")
 }
 
+func Test_download_external_datasource_using_http(t *testing.T) {
+	s := NewServer("udp", func(w dns.ResponseWriter, r *dns.Msg) {
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 500)
+
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := w.Write([]byte(`example.org`))
+		if err != nil {
+			panic(err)
+		}
+	}))
+	defer ts.Close()
+
+	bench := Benchmark{
+		Queries:      []string{ts.URL},
+		Types:        []string{"A", "AAAA"},
+		Server:       s.Addr,
+		TCP:          false,
+		Concurrency:  2,
+		Count:        1,
+		Probability:  1,
+		WriteTimeout: 5 * time.Second,
+		ReadTimeout:  5 * time.Second,
+		Rcodes:       true,
+		Recurse:      true,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs := bench.Run(ctx)
+
+	assertResult(t, rs)
+}
+
 func assertResult(t *testing.T, rs []*ResultStats) {
 	if assert.Len(t, rs, 2, "Run(ctx) rstats") {
 		rs0 := rs[0]

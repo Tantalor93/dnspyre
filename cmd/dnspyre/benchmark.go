@@ -1,10 +1,12 @@
 package dnspyre
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"math/rand"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -18,6 +20,10 @@ import (
 )
 
 const dnsTimeout = time.Second * 4
+
+var client = http.Client{
+	Timeout: 120 * time.Second,
+}
 
 // ResultStats is a representation of benchmark results of single concurrent thread.
 type ResultStats struct {
@@ -110,13 +116,29 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 
 	color.NoColor = !b.Color
 
-	questions := make([]string, len(b.Queries))
-	for i, q := range b.Queries {
-		questions[i] = dns.Fqdn(q)
+	var questions []string
+	for _, q := range b.Queries {
+		if strings.HasPrefix(q, "http://") || strings.HasPrefix(q, "https://") {
+			resp, err := client.Get(q)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to download file '%s' with error '%v'", q, err)
+				os.Exit(1)
+			}
+			if resp.StatusCode < 200 || resp.StatusCode > 299 {
+				fmt.Fprintf(os.Stderr, "Failed to download file '%s' with status '%s'", q, resp.Status)
+				os.Exit(1)
+			}
+			scanner := bufio.NewScanner(resp.Body)
+			for scanner.Scan() {
+				questions = append(questions, dns.Fqdn(scanner.Text()))
+			}
+		} else {
+			questions = append(questions, dns.Fqdn(q))
+		}
 	}
 
 	if !b.Silent {
-		fmt.Printf("Using %d hostnames\n", len(b.Queries))
+		fmt.Printf("Using %d hostnames\n", len(questions))
 	}
 
 	var qTypes []uint16
