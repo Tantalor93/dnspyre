@@ -16,8 +16,8 @@
 
 
 ### parallel benchmark with repeating queries
-this example will execute the benchmark in 2 parallel threads, where each thread will
-send 10 `A example.com.` DNS queries serially
+this example will execute the benchmark in 10 parallel threads, where each thread will
+send 2 `A example.com.` DNS queries serially
 ```
 dnspyre -n 2 -c 10 --server 8.8.8.8 --recurse example.com
 ```
