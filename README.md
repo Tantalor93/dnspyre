@@ -14,9 +14,9 @@
 
 # dnspyre
 
-Command-line DNS benchmark tool built to stress test and measure the performance of DNS servers.
+Command-line DNS benchmark tool built to stress test and measure the performance of DNS servers. You can easily run benchmark from MacOS, Linux or Windows systems.
 
-This tool is based and originally forked from https://github.com/redsift/dnstrace, but was largely rewritten and enhanced with additional functionality.
+This tool is based and originally forked from [dnstrace](https://github.com/redsift/dnstrace), but was largely rewritten and enhanced with additional functionality.
 
 This tool supports wide variety of options to customize DNS benchmark and benchmark output. For example you can:
 * benchmark DNS servers with IPv4 and IPv6 addresses (for example GoogleDNS `8.8.8.8` and `2001:4860:4860::8888`)
