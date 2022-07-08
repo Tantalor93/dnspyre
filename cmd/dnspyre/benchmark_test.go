@@ -218,6 +218,35 @@ func Test_download_external_datasource_using_http(t *testing.T) {
 	assertResult(t, rs)
 }
 
+func Test_do_classic_dns_with_duration(t *testing.T) {
+	s := NewServer("udp", func(w dns.ResponseWriter, r *dns.Msg) {
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	bench := Benchmark{
+		Queries:      []string{"example.org"},
+		Types:        []string{"A"},
+		Server:       s.Addr,
+		Concurrency:  1,
+		Duration:     2 * time.Second,
+		Probability:  1,
+		WriteTimeout: 5 * time.Second,
+		ReadTimeout:  5 * time.Second,
+		Rcodes:       true,
+		Recurse:      true,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs := bench.Run(ctx)
+
+	assert.GreaterOrEqual(t, rs[0].Counters.Total, int64(1), "there should be atleast one execution")
+}
+
 func assertResult(t *testing.T, rs []*ResultStats) {
 	if assert.Len(t, rs, 2, "Run(ctx) rstats") {
 		rs0 := rs[0]
