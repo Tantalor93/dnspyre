@@ -22,6 +22,7 @@ This tool supports wide variety of options to customize DNS benchmark and benchm
 * benchmark DNS servers with IPv4 and IPv6 addresses (for example GoogleDNS `8.8.8.8` and `2001:4860:4860::8888`)
 * benchmark DNS servers with all kinds of query types (A, AAAA, CNAME, HTTPS, ...)
 * benchmark DNS servers with a lot of parallel queries and connections (`--number`, `--concurrency` options)
+* benchmark DNS servers for a specified duration (`--duration` option)
 * benchmark DNS servers using DNS queries over UDP or TCP
 * benchmark DNS servers with DoT
 * benchmark DNS servers using DoH  
@@ -74,7 +75,7 @@ Flags:
   -s, --server="127.0.0.1"     DNS server IP:port to test. IPv6 is also supported, for example '[fddd:dddd::]:53'. Also DoH servers are supported such as `https://1.1.1.1/dns-query`, when such server is provided, the benchmark automatically switches to
                                the use of DoH. Note that path on which DoH server handles requests (like `/dns-query`) has to be provided as well.
   -t, --type=A ...             Query type. Repeatable flag. If multiple query types are specified then each query will be duplicated for each type.
-  -n, --number=1               How many times the provided queries are repeated. Note that the total number of queries issued = types*number*concurrency*len(queries).
+  -n, --number=NUMBER          How many times the provided queries are repeated. Note that the total number of queries issued = types*number*concurrency*len(queries).
   -c, --concurrency=1          Number of concurrent queries to issue.
   -l, --rate-limit=0           Apply a global questions / second rate limit.
       --query-per-conn=0       Queries on a connection before creating a new one. 0: unlimited
@@ -99,11 +100,13 @@ Flags:
       --plotf=png              Format of graphs. Supported formats png, svg, pdf.
       --doh-method=post        HTTP method to use for DoH requests
       --doh-protocol=1.1       HTTP protocol to use for DoH requests
+  -d, --duration=1m            Specifies for how long the benchmark should be executing, the benchmark will run for the specified time while sending DNS requests in infinite loop based on data source. After running for specified duration, the benchmark
+                               is cancelled. This option is exclusive with --number option. The duration is specified in GO duration format e.g. 10s, 15m, 1h.
       --version                Show application version.
 
 Args:
-  <queries>   Queries to issue. Can be local file referenced using @<file-path>, for example @data/2-domains.Can also be resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that case the
-              file will be downloaded and saved inmemory.
+  <queries>  Queries to issue. Can be local file referenced using @<file-path>, for example @data/2-domains.Can also be resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that case the
+             file will be downloaded and saved inmemory.
 ```
 
 ## Examples

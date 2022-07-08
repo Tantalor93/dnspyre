@@ -29,7 +29,7 @@ var (
 		"Note that path on which DoH server handles requests (like `/dns-query`) has to be provided as well.").Short('s').Default("127.0.0.1").String()
 
 	pTypes       = pApp.Flag("type", "Query type. Repeatable flag. If multiple query types are specified then each query will be duplicated for each type.").Short('t').Default("A").Enums(getSupportedDNSTypes()...)
-	pCount       = pApp.Flag("number", "How many times the provided queries are repeated. Note that the total number of queries issued = types*number*concurrency*len(queries).").Short('n').Default("1").Int64()
+	pCount       = pApp.Flag("number", "How many times the provided queries are repeated. Note that the total number of queries issued = types*number*concurrency*len(queries).").Short('n').Int64()
 	pConcurrency = pApp.Flag("concurrency", "Number of concurrent queries to issue.").Short('c').Default("1").Uint32()
 
 	pRate     = pApp.Flag("rate-limit", "Apply a global questions / second rate limit.").Short('l').Default("0").Int()
@@ -65,6 +65,11 @@ var (
 
 	pDoHmethod   = pApp.Flag("doh-method", "HTTP method to use for DoH requests").Default("post").Enum("get", "post")
 	pDoHProtocol = pApp.Flag("doh-protocol", "HTTP protocol to use for DoH requests").Default("1.1").Enum("1.1", "2")
+
+	pDuration = pApp.Flag("duration", "Specifies for how long the benchmark should be executing, the benchmark will run for the specified time "+
+		"while sending DNS requests in infinite loop based on data source. After running for specified duration, the benchmark is cancelled. "+
+		"This option is exclusive with --number option. The duration is specified in GO duration format e.g. 10s, 15m, 1h.").
+		PlaceHolder("1m").Short('d').Duration()
 
 	pQueries = pApp.Arg("queries", "Queries to issue. Can be local file referenced using @<file-path>, for example @data/2-domains."+
 		"Can also be resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that "+
@@ -107,6 +112,7 @@ func Execute() {
 		PlotFormat:   *pPlotFormat,
 		DohMethod:    *pDoHmethod,
 		DohProtocol:  *pDoHProtocol,
+		Duration:     *pDuration,
 		Queries:      *pQueries,
 	}
 

@@ -1,5 +1,6 @@
 ## Examples
 + [parallel benchmark with repeating queries](#parallel-benchmark-with-repeating-queries)
++ [run benchmark over specified time](#run-benchmark-over-specified-time)
 + [sending AAAA DNS queries](#sending-AAAA-DNS-queries)
 + [hostnames provided directly](#multiple-hostnames-provided-directly)
 + [hostnames provided using file](#hostnames-provided-using-file)
@@ -17,9 +18,16 @@
 
 ### parallel benchmark with repeating queries
 this example will execute the benchmark in 10 parallel threads, where each thread will
-send 2 `A example.com.` DNS queries serially
+send 2 `A example.com.` DNS queries serially to the `8.8.8.8` server
 ```
 dnspyre -n 2 -c 10 --server 8.8.8.8 --recurse example.com
+```
+
+### run benchmark over specified time
+this example will execute the benchmark in 10 parallel threads for a duration of 30 seconds while sending `A example.com` DNS queries
+to the `8.8.8.8` server
+```
+dnspyre --duration 30s -c 10 --server 8.8.8.8 google.com
 ```
 
 ### sending AAAA DNS queries
@@ -72,6 +80,7 @@ coming from the local/experimental range with payload `fddddddd10000000000000000
 ```
 dnspyre -n 10 -c 10  --recurse idnes.cz --server 127.0.0.1 --ednsopt=65518:fddddddd100000000000000000000001
 ```
+
 ### DoT
 benchmarking DoT server
 ```

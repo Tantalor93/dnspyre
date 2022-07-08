@@ -98,6 +98,8 @@ type Benchmark struct {
 
 	Queries []string
 
+	Duration time.Duration
+
 	// internal variable so we do not have to parse the address with each request.
 	useDoH bool
 }
@@ -107,6 +109,15 @@ func (b *Benchmark) normalize() {
 
 	if !strings.Contains(b.Server, ":") && !b.useDoH {
 		b.Server += ":53"
+	}
+
+	if b.Count == 0 && b.Duration == 0 {
+		b.Count = 1
+	}
+
+	if b.Duration > 0 && b.Count > 0 {
+		fmt.Fprintln(os.Stderr, "--number and --duration is specified at once, only one can be used")
+		os.Exit(1)
 	}
 }
 
@@ -135,6 +146,12 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 		} else {
 			questions = append(questions, dns.Fqdn(q))
 		}
+	}
+
+	if b.Duration != 0 {
+		timeoutCtx, cancel := context.WithTimeout(ctx, b.Duration)
+		ctx = timeoutCtx
+		defer cancel()
 	}
 
 	if !b.Silent {
@@ -222,7 +239,7 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 			rando := rand.New(rand.NewSource(time.Now().Unix()))
 
 			var i int64
-			for i = 0; i < b.Count; i++ {
+			for i = 0; i < b.Count || b.Duration != 0; i++ {
 				for _, qt := range qTypes {
 					for _, q := range questions {
 						if rando.Float64() > b.Probability {
