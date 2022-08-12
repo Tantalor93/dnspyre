@@ -63,8 +63,8 @@ var (
 	pPlotDir    = pApp.Flag("plot", "Plot benchmark results and export them to directory.").Default("").PlaceHolder("/path/to/folder").String()
 	pPlotFormat = pApp.Flag("plotf", "Format of graphs. Supported formats png, svg, pdf.").Default("png").Enum("png", "svg", "pdf")
 
-	pDoHmethod   = pApp.Flag("doh-method", "HTTP method to use for DoH requests").Default("post").Enum("get", "post")
-	pDoHProtocol = pApp.Flag("doh-protocol", "HTTP protocol to use for DoH requests").Default("1.1").Enum("1.1", "2")
+	pDoHmethod   = pApp.Flag("doh-method", "HTTP method to use for DoH requests. Supported values: get, post.").Default("post").Enum("get", "post")
+	pDoHProtocol = pApp.Flag("doh-protocol", "HTTP protocol to use for DoH requests. Supported values: 1.1, 2.").Default("1.1").Enum("1.1", "2")
 
 	pDuration = pApp.Flag("duration", "Specifies for how long the benchmark should be executing, the benchmark will run for the specified time "+
 		"while sending DNS requests in infinite loop based on data source. After running for specified duration, the benchmark is cancelled. "+
