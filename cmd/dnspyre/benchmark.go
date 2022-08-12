@@ -25,36 +25,6 @@ var client = http.Client{
 	Timeout: 120 * time.Second,
 }
 
-// ResultStats is a representation of benchmark results of single concurrent thread.
-type ResultStats struct {
-	Codes    map[int]int64
-	Qtypes   map[string]int64
-	Hist     *hdrhistogram.Histogram
-	Timings  []Datapoint
-	Counters *Counters
-}
-
-// Counters represents various counters of benchmark results.
-type Counters struct {
-	Total      int64
-	ConnError  int64
-	IOError    int64
-	Success    int64
-	IDmismatch int64
-	Truncated  int64
-}
-
-func (r *ResultStats) record(time time.Time, timing time.Duration) {
-	r.Hist.RecordValue(timing.Nanoseconds())
-	r.Timings = append(r.Timings, Datapoint{float64(timing.Milliseconds()), time})
-}
-
-// Datapoint one datapoint of benchmark (single DNS request).
-type Datapoint struct {
-	Duration float64
-	Start    time.Time
-}
-
 // Benchmark is representation of benchmark scenario.
 type Benchmark struct {
 	Server      string
@@ -304,8 +274,7 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 							}
 						}
 
-						st.record(start, time.Since(start))
-						b.evaluateResponse(r, &m, st)
+						st.record(&m, r, start, time.Since(start))
 					}
 				}
 			}
@@ -315,30 +284,4 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 	wg.Wait()
 
 	return stats
-}
-
-func (b *Benchmark) evaluateResponse(r *dns.Msg, q *dns.Msg, st *ResultStats) {
-	if r.Truncated {
-		st.Counters.Truncated++
-	}
-
-	if r.Rcode == dns.RcodeSuccess {
-		if r.Id != q.Id {
-			st.Counters.IDmismatch++
-			return
-		}
-		st.Counters.Success++
-	}
-
-	if st.Codes != nil {
-		var c int64
-		if v, ok := st.Codes[r.Rcode]; ok {
-			c = v
-		}
-		c++
-		st.Codes[r.Rcode] = c
-	}
-	if st.Qtypes != nil {
-		st.Qtypes[dns.TypeToString[q.Question[0].Qtype]]++
-	}
 }
