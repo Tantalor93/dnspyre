@@ -104,7 +104,6 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) {
 		unix := now.Unix()
 		plotHistogramLatency(b.getFileName("latency-hist", unix), times)
 		plotBoxPlotLatency(b.getFileName("latency-box", unix), b.Server, times)
-		plotLineLatency(b.getFileName("latency-line", unix), times)
 		plotResponses(b.getFileName("responses-bar", unix), codeTotals)
 		plotLineThroughput(b.getFileName("throughput-line", unix), times)
 	}
