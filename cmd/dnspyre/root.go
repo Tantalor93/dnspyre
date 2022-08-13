@@ -61,7 +61,7 @@ var (
 	pColor  = pApp.Flag("color", "ANSI Color output.").Default("true").Bool()
 
 	pPlotDir    = pApp.Flag("plot", "Plot benchmark results and export them to directory.").Default("").PlaceHolder("/path/to/folder").String()
-	pPlotFormat = pApp.Flag("plotf", "Format of graphs. Supported formats png, svg, pdf.").Default("png").Enum("png", "svg", "pdf")
+	pPlotFormat = pApp.Flag("plotf", "Format of graphs. Supported formats: png, jpg.").Default("png").Enum("png", "jpg")
 
 	pDoHmethod   = pApp.Flag("doh-method", "HTTP method to use for DoH requests. Supported values: get, post.").Default("post").Enum("get", "post")
 	pDoHProtocol = pApp.Flag("doh-protocol", "HTTP protocol to use for DoH requests. Supported values: 1.1, 2.").Default("1.1").Enum("1.1", "2")

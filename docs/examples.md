@@ -106,12 +106,12 @@ dnspyre -c 2 --server 'https://1.1.1.1/dns-query' --doh-protocol 2 --recurse goo
 ```
 
 ### Plotting graphs
-plots benchmark results as histograms, boxplots and line graphs to the current directory
+plots benchmark results as histograms, boxplots and line graphs to the new subdirectory `graphs-<current unix timestamp>` in the current directory
 ```
 dnspyre -d 30s -c 2 --server 8.8.8.8 --plot . --recurse https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains
 ```
 generates graphs like these:
-![latency histogram](graphs/latency-hist-1660333390.png)
-![latency boxplot](graphs/latency-box-1660333390.png)
-![respones bar](graphs/responses-bar-1660333390.png)
-![throughput line](graphs/throughput-line-1660333390.png)
+![latency histogram](graphs/latency-histogram.png)
+![latency boxplot](graphs/latency-boxplot.png)
+![respones bar](graphs/responses-barchart.png)
+![throughput line](graphs/throughput-lineplot.png)
