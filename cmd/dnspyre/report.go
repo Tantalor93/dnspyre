@@ -102,10 +102,14 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) {
 	if len(b.PlotDir) != 0 {
 		now := time.Now()
 		unix := now.Unix()
-		plotHistogramLatency(b.getFileName("latency-hist", unix), times)
-		plotBoxPlotLatency(b.getFileName("latency-box", unix), b.Server, times)
-		plotResponses(b.getFileName("responses-bar", unix), codeTotals)
-		plotLineThroughput(b.getFileName("throughput-line", unix), times)
+		dir := fmt.Sprintf("%s/graphs-%d", b.PlotDir, unix)
+		if err := os.Mkdir(dir, os.ModePerm); err != nil {
+			panic(err)
+		}
+		plotHistogramLatency(b.fileName(dir, "latency-histogram"), times)
+		plotBoxPlotLatency(b.fileName(dir, "latency-boxplot"), b.Server, times)
+		plotResponses(b.fileName(dir, "responses-barchart"), codeTotals)
+		plotLineThroughput(b.fileName(dir, "throughput-lineplot"), times)
 	}
 
 	if csv != nil {
@@ -183,8 +187,8 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) {
 	}
 }
 
-func (b *Benchmark) getFileName(filePrefix string, unix int64) string {
-	return b.PlotDir + "/" + filePrefix + "-" + strconv.FormatInt(unix, 10) + "." + b.PlotFormat
+func (b *Benchmark) fileName(dir, name string) string {
+	return dir + "/" + name + "." + b.PlotFormat
 }
 
 func writeBars(f *os.File, bars []hdrhistogram.Bar) {
