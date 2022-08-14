@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/miekg/dns"
+	"github.com/montanaflynn/stats"
 	"go-hep.org/x/hep/hplot"
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
@@ -152,4 +153,105 @@ func plotLineThroughput(file string, times []Datapoint) {
 	if err := p.Save(6*vg.Inch, 6*vg.Inch, file); err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to save plot.", err)
 	}
+}
+
+type latencyMeasurements struct {
+	p99 float64
+	p95 float64
+	p90 float64
+	p50 float64
+}
+
+func plotLineLatencies(file string, times []Datapoint) {
+	m := make(map[int64]latencyMeasurements)
+
+	timings := make([]float64, 0)
+	if len(times) != 0 {
+		first := times[0].Start.Unix()
+		last := int64(0)
+
+		for _, v := range times {
+			unix := v.Start.Unix() - first
+			if _, ok := m[unix]; !ok {
+				m[unix] = latencyMeasurements{}
+			}
+			if unix != last {
+				p99, err := stats.Percentile(timings, 99)
+				if err != nil {
+					panic(err)
+				}
+				p95, err := stats.Percentile(timings, 95)
+				if err != nil {
+					panic(err)
+				}
+				p90, err := stats.Percentile(timings, 90)
+				if err != nil {
+					panic(err)
+				}
+				p50, err := stats.Percentile(timings, 50)
+				if err != nil {
+					panic(err)
+				}
+				measure := m[unix]
+				measure.p99 = p99
+				measure.p95 = p95
+				measure.p90 = p90
+				measure.p50 = p50
+				m[unix] = measure
+				last = unix
+			}
+			timings = append(timings, v.Duration)
+		}
+	}
+
+	var p99values plotter.XYs
+	var p95values plotter.XYs
+	var p90values plotter.XYs
+	var p50values plotter.XYs
+
+	for k, v := range m {
+		p99values = append(p99values, plotter.XY{X: float64(k), Y: v.p99})
+		p95values = append(p95values, plotter.XY{X: float64(k), Y: v.p95})
+		p90values = append(p90values, plotter.XY{X: float64(k), Y: v.p90})
+		p50values = append(p50values, plotter.XY{X: float64(k), Y: v.p50})
+	}
+
+	less := func(xys plotter.XYs) func(i, j int) bool {
+		return func(i, j int) bool {
+			return xys[i].X < xys[j].X
+		}
+	}
+
+	sort.SliceStable(p99values, less(p99values))
+	sort.SliceStable(p95values, less(p95values))
+	sort.SliceStable(p90values, less(p90values))
+	sort.SliceStable(p50values, less(p50values))
+
+	p := plot.New()
+	p.Title.Text = "Response latencies"
+	p.X.Label.Text = "Time of test (s)"
+	p.X.Tick.Marker = hplot.Ticks{N: 10, Format: "%.0f"}
+	p.Y.Label.Text = "Latency (ms)"
+	p.Y.Tick.Marker = hplot.Ticks{N: 10, Format: "%.0f"}
+
+	plotLine(p, p99values, plotutil.Color(0), "p99")
+	plotLine(p, p95values, plotutil.Color(1), "p95")
+	plotLine(p, p90values, plotutil.Color(2), "p90")
+	plotLine(p, p50values, plotutil.Color(3), "p50")
+
+	p.Legend.Top = true
+
+	if err := p.Save(6*vg.Inch, 6*vg.Inch, file); err != nil {
+		fmt.Fprintln(os.Stderr, "Failed to save plot.", err)
+	}
+}
+
+func plotLine(p *plot.Plot, values plotter.XYs, color color.Color, name string) {
+	l, err := plotter.NewLine(values)
+	l.Color = color
+	if err != nil {
+		panic(err)
+	}
+	p.Add(l)
+	p.Legend.Add(name, l)
 }

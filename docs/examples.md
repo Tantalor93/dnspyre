@@ -115,3 +115,4 @@ generates graphs like these:
 ![latency boxplot](graphs/latency-boxplot.png)
 ![respones bar](graphs/responses-barchart.png)
 ![throughput line](graphs/throughput-lineplot.png)
+![latency line](graphs/latency-lineplot.png)
