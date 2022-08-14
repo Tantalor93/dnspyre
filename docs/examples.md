@@ -111,6 +111,7 @@ plots benchmark results as histograms, boxplots and line graphs to the new subdi
 dnspyre -d 30s -c 2 --server 8.8.8.8 --plot . --recurse https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains
 ```
 generates graphs like these:
+
 ![latency histogram](graphs/latency-histogram.png)
 ![latency boxplot](graphs/latency-boxplot.png)
 ![respones bar](graphs/responses-barchart.png)
