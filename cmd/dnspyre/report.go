@@ -110,6 +110,7 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) {
 		plotBoxPlotLatency(b.fileName(dir, "latency-boxplot"), b.Server, times)
 		plotResponses(b.fileName(dir, "responses-barchart"), codeTotals)
 		plotLineThroughput(b.fileName(dir, "throughput-lineplot"), times)
+		plotLineLatencies(b.fileName(dir, "latency-lineplot"), times)
 	}
 
 	if csv != nil {

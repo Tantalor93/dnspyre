@@ -8,16 +8,16 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/miekg/dns v1.1.50
+	github.com/montanaflynn/stats v0.6.6
 	github.com/olekukonko/tablewriter v0.0.0-20170719101040-be5337e7b39e
 	github.com/stretchr/testify v1.8.0
 	github.com/tantalor93/doh-go v0.1.0
+	go-hep.org/x/hep v0.31.1
 	go.uber.org/ratelimit v0.2.0
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
 	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8
 	gonum.org/v1/plot v0.11.0
 )
-
-require go-hep.org/x/hep v0.31.1
 
 require (
 	git.sr.ht/~sbinet/gg v0.3.1 // indirect
