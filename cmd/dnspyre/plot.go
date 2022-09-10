@@ -88,9 +88,7 @@ func plotResponses(file string, rcodes map[int]int64) {
 
 	c := 0
 	off := -vg.Length(len(rcodes)/2) * width
-	fmt.Println(sortedKeys)
 	for _, v := range sortedKeys {
-		fmt.Println(v)
 		bar, err := plotter.NewBarChart(plotter.Values{float64(rcodes[v])}, width)
 		if err != nil {
 			panic(err)
