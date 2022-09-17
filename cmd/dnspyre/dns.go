@@ -46,7 +46,7 @@ func dial(b *Benchmark) (*dns.Conn, error) {
 	}
 
 	if b.DOT {
-		return dns.DialTimeoutWithTLS(network, b.Server, &tls.Config{}, dnsTimeout)
+		return dns.DialTimeoutWithTLS(network, b.Server, &tls.Config{MinVersion: tls.VersionTLS12}, dnsTimeout)
 	}
 	return dns.DialTimeout(network, b.Server, dnsTimeout)
 }

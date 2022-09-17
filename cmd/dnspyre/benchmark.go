@@ -206,6 +206,7 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 			}()
 
 			// create a new lock free rand source for this goroutine
+			// #nosec
 			rando := rand.New(rand.NewSource(time.Now().Unix()))
 
 			var i int64
