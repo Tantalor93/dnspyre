@@ -1,9 +1,9 @@
-name: golangci-lint
+name: lint
 on:
   pull_request:
 jobs:
   golangci:
-    name: lint
+    name: golangci-lint
     runs-on: ubuntu-latest
     steps:
     - uses: actions/setup-go@v3
@@ -15,4 +15,15 @@ jobs:
       env:
         GOPROXY: proxy.golang.org,direct
       with:
-        version: v1.46.2
+        version: v1.49.0
+  gosec:
+    name: gosec
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: gosec
+      uses: securego/gosec@master
+      env:
+        GOPROXY: proxy.golang.org,direct
+      with:
+        args: -exclude=G104 ./...

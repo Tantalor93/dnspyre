@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -70,7 +70,7 @@ func Test_do_classic_dns(t *testing.T) {
 
 func Test_do_doh_post(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		bd, err := ioutil.ReadAll(r.Body)
+		bd, err := io.ReadAll(r.Body)
 		if err != nil {
 			panic(err)
 		}
