@@ -97,8 +97,8 @@ github.com/tantalor93/doh-go v0.1.0 h1:GpC7qH2ciRFPIpfiFJ0FMmp1Q4dR1zNIhV16+yByc
 github.com/tantalor93/doh-go v0.1.0/go.mod h1:GvJN2FOEuFGO0STTCbggTgGsAYkL8b04xQY+vf72IV0=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
-go-hep.org/x/hep v0.32.0 h1:mZo5sAOK8X7KzWOD1Zx5Hj4ZEoMcR92MY3MOv/WdJwk=
-go-hep.org/x/hep v0.32.0/go.mod h1:VX3IVUv0Ku5bgWhE+LxRQ1aT7BmWWxSxQu02hfsoeRI=
+go-hep.org/x/hep v0.32.1 h1:O96fOyMP+4ET8X+Uu38VFdegQb7rL0rjmFqXMCSm4VM=
+go-hep.org/x/hep v0.32.1/go.mod h1:VX3IVUv0Ku5bgWhE+LxRQ1aT7BmWWxSxQu02hfsoeRI=
 go.uber.org/atomic v1.7.0 h1:ADUqmZGgLDDfbSL9ZmPxKTybcoEYHgpYfELNoN+7hsw=
 go.uber.org/atomic v1.7.0/go.mod h1:fEN4uk6kAWBTFdckzkM89CLk9XfWZrxpCo0nPH17wJc=
 go.uber.org/ratelimit v0.2.0 h1:UQE2Bgi7p2B85uP5dC2bbRtig0C+OeNRnNEafLjsLPA=

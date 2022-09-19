@@ -12,7 +12,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.0-20170719101040-be5337e7b39e
 	github.com/stretchr/testify v1.8.0
 	github.com/tantalor93/doh-go v0.1.0
-	go-hep.org/x/hep v0.32.0
+	go-hep.org/x/hep v0.32.1
 	go.uber.org/ratelimit v0.2.0
 	golang.org/x/net v0.0.0-20220725212005-46097bf591d3
 	golang.org/x/sys v0.0.0-20220829200755-d48e67d00261
