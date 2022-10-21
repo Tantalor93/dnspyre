@@ -46,9 +46,9 @@ brew tap tantalor93/dnspyre
 brew install dnspyre
 ```
 
-or `go get`
+or `go install`
 ```
-go get github.com/tantalor93/dnspyre/v2
+go install github.com/tantalor93/dnspyre/v2@latest
 ```
 
 ## Bash/ZSH Shell completion
