@@ -10,7 +10,7 @@ require (
 	github.com/miekg/dns v1.1.50
 	github.com/montanaflynn/stats v0.6.6
 	github.com/olekukonko/tablewriter v0.0.0-20170719101040-be5337e7b39e
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.1
 	github.com/tantalor93/doh-go v0.1.0
 	go-hep.org/x/hep v0.32.1
 	go.uber.org/ratelimit v0.2.0
