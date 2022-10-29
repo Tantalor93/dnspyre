@@ -10,6 +10,8 @@
 + [using probability to randomize concurrent queries](#using-probability-to-randomize-concurrent-queries)
 + [EDNSOPT usage](#ednsopt-usage)
 + [DoT](#dot)
+  + [DoT with self-signed certificates](#dot-with-self-signed-certificates)
+
 + [DoH](#doh)
   + [DoH via GET/POST](#doh-via-getpost)
   + [DoH/1.1, DoH/2](#doh11-doh2)
