@@ -75,7 +75,7 @@ type Benchmark struct {
 }
 
 func (b *Benchmark) normalize() {
-	b.useDoH = strings.HasPrefix(b.Server, "http")
+	b.useDoH, _ = isHttpUrl(b.Server)
 
 	if !strings.Contains(b.Server, ":") && !b.useDoH {
 		b.Server += ":53"
@@ -99,7 +99,7 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 
 	var questions []string
 	for _, q := range b.Queries {
-		if strings.HasPrefix(q, "http://") || strings.HasPrefix(q, "https://") {
+		if ok, _ := isHttpUrl(q); ok {
 			resp, err := client.Get(q)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to download file '%s' with error '%v'", q, err)
@@ -141,7 +141,7 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 	var dohClient doh.Client
 	var dohFunc func(context.Context, string, *dns.Msg) (*dns.Msg, error)
 	if b.useDoH {
-		network = "https"
+		_, network = isHttpUrl(b.Server)
 		var tr http.RoundTripper
 		switch b.DohProtocol {
 		case "1.1":
@@ -285,4 +285,14 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 	wg.Wait()
 
 	return stats
+}
+
+func isHttpUrl(s string) (ok bool, network string) {
+	if strings.HasPrefix(s, "http://") {
+		return true, "http"
+	}
+	if strings.HasPrefix(s, "https://") {
+		return true, "https"
+	}
+	return false, ""
 }

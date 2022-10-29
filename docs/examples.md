@@ -13,6 +13,7 @@
 + [DoH](#doh)
   + [DoH via GET/POST](#doh-via-getpost)
   + [DoH/1.1, DoH/2](#doh11-doh2)
+  + [DoH via plain HTTP](#doh-via-plain-http)
 + [Plotting graphs](#plotting-graphs)
 
 
@@ -1055,6 +1056,43 @@ DNS distribution, 2 datapoints
   73.400319ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |     1
 ```
 
+</details>
+
+#### DoH via plain HTTP
+even plain HTTP without TLS can be used as transport for DoH requests, this is configured based on server URL containing either `https://` or `http://`
+```
+dnspyre --server http://127.0.0.1/dns-query google.com
+```
+
+<details>
+<summary>output</summary>
+
+```
+Using 1 hostnames
+Benchmarking http://127.0.0.1/dns-query via http/1.1 (POST) with 1 concurrent requests
+
+Total requests:		1
+DNS success codes:	1
+
+DNS response codes:
+	NOERROR:	1
+
+DNS question types:
+	A:	1
+
+Time taken for tests:	 75.145149ms
+Questions per second:	 13.3
+DNS timings, 1 datapoints
+	 min:		 71.303168ms
+	 mean:		 73.40032ms
+	 [+/-sd]:	 0s
+	 max:		 75.497471ms
+	 p99:		 75.497471ms
+	 p95:		 75.497471ms
+	 p90:		 75.497471ms
+	 p75:		 75.497471ms
+	 p50:		 75.497471ms
+```
 </details>
 
 ### Plotting graphs
