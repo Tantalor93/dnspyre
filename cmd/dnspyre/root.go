@@ -66,6 +66,8 @@ var (
 	pDoHmethod   = pApp.Flag("doh-method", "HTTP method to use for DoH requests. Supported values: get, post.").Default("post").Enum("get", "post")
 	pDoHProtocol = pApp.Flag("doh-protocol", "HTTP protocol to use for DoH requests. Supported values: 1.1, 2.").Default("1.1").Enum("1.1", "2")
 
+	pInsecure = pApp.Flag("insecure", "disables server TLS certificate validation").Default("false").Bool()
+
 	pDuration = pApp.Flag("duration", "Specifies for how long the benchmark should be executing, the benchmark will run for the specified time "+
 		"while sending DNS requests in infinite loop based on data source. After running for specified duration, the benchmark is cancelled. "+
 		"This option is exclusive with --number option. The duration is specified in GO duration format e.g. 10s, 15m, 1h.").
@@ -112,6 +114,7 @@ func Execute() {
 		PlotFormat:   *pPlotFormat,
 		DohMethod:    *pDoHmethod,
 		DohProtocol:  *pDoHProtocol,
+		Insecure:     *pInsecure,
 		Duration:     *pDuration,
 		Queries:      *pQueries,
 	}

@@ -14,6 +14,7 @@
   + [DoH via GET/POST](#doh-via-getpost)
   + [DoH/1.1, DoH/2](#doh11-doh2)
   + [DoH via plain HTTP](#doh-via-plain-http)
+  + [DoH with self-signed certificates](#doh-with-self-signed-certificates)
 + [Plotting graphs](#plotting-graphs)
 
 
@@ -880,6 +881,13 @@ DNS distribution, 100 datapoints
 
 </details>
 
+#### DoT with self-signed certificates
+In some cases you might want to skip invalid and self-signed certificates, this can be achieved by using `--insecure` argument
+
+```
+dnspyre --server 127.0.0.1:5553 --dot --insecure google.com
+```
+
 ### DoH
 benchmarking DoH server via DoH over POST method
 ```
@@ -1094,6 +1102,14 @@ DNS timings, 1 datapoints
 	 p50:		 75.497471ms
 ```
 </details>
+
+#### DoH with self-signed certificates
+In some cases you might want to skip invalid and self-signed certificates, this can be achieved by using `--insecure` argument
+
+```
+dnspyre --server https://127.0.0.1/dns-query  --insecure google.com
+```
+
 
 ### Plotting graphs
 plots benchmark results as histograms, boxplots and line graphs to the new subdirectory `graphs-<current unix timestamp>` in the current directory
