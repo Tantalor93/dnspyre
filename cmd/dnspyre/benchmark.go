@@ -3,6 +3,7 @@ package dnspyre
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -66,6 +67,8 @@ type Benchmark struct {
 	DohMethod   string
 	DohProtocol string
 
+	Insecure bool
+
 	Queries []string
 
 	Duration time.Duration
@@ -75,7 +78,7 @@ type Benchmark struct {
 }
 
 func (b *Benchmark) normalize() {
-	b.useDoH, _ = isHttpUrl(b.Server)
+	b.useDoH, _ = isHTTPUrl(b.Server)
 
 	if !strings.Contains(b.Server, ":") && !b.useDoH {
 		b.Server += ":53"
@@ -99,7 +102,7 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 
 	var questions []string
 	for _, q := range b.Queries {
-		if ok, _ := isHttpUrl(q); ok {
+		if ok, _ := isHTTPUrl(q); ok {
 			resp, err := client.Get(q)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to download file '%s' with error '%v'", q, err)
@@ -141,18 +144,21 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 	var dohClient doh.Client
 	var dohFunc func(context.Context, string, *dns.Msg) (*dns.Msg, error)
 	if b.useDoH {
-		_, network = isHttpUrl(b.Server)
+		_, network = isHTTPUrl(b.Server)
 		var tr http.RoundTripper
 		switch b.DohProtocol {
 		case "1.1":
 			network += "/1.1"
-			tr = &http.Transport{}
+			// #nosec
+			tr = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
 		case "2":
 			network += "/2"
-			tr = &http2.Transport{}
+			// #nosec
+			tr = &http2.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
 		default:
 			network += "/1.1"
-			tr = &http.Transport{}
+			// #nosec
+			tr = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
 		}
 		c := http.Client{Transport: tr, Timeout: b.ReadTimeout}
 		dohClient = *doh.NewClient(&c)
@@ -287,7 +293,7 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 	return stats
 }
 
-func isHttpUrl(s string) (ok bool, network string) {
+func isHTTPUrl(s string) (ok bool, network string) {
 	if strings.HasPrefix(s, "http://") {
 		return true, "http"
 	}
