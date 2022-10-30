@@ -80,9 +80,7 @@ type Benchmark struct {
 func (b *Benchmark) normalize() {
 	b.useDoH, _ = isHTTPUrl(b.Server)
 
-	if !strings.Contains(b.Server, ":") && !b.useDoH {
-		b.Server += ":53"
-	}
+	b.addPortIfMissing()
 
 	if b.Count == 0 && b.Duration == 0 {
 		b.Count = 1
@@ -291,6 +289,21 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 	wg.Wait()
 
 	return stats
+}
+
+func (b *Benchmark) addPortIfMissing() {
+	if b.useDoH {
+		// both HTTPS and HTTP are using default ports 443 and 80 if no other port is specified
+		return
+	}
+	if !strings.Contains(b.Server, ":") {
+		if b.DOT {
+			// https://www.rfc-editor.org/rfc/rfc7858
+			b.Server += ":853"
+		} else {
+			b.Server += ":53"
+		}
+	}
 }
 
 func isHTTPUrl(s string) (ok bool, network string) {
