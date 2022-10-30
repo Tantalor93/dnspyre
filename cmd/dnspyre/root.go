@@ -25,7 +25,7 @@ var (
 	pApp = kingpin.New("dnspyre", "A high QPS DNS benchmark.").Author(author)
 
 	pServer = pApp.Flag("server", "DNS server IP:port to test. IPv6 is also supported, for example '[fddd:dddd::]:53'. "+
-		"Also DoH servers are supported such as `https://1.1.1.1/dns-query`, when such server is provided, the benchmark automatically switches to the use of DoH. "+
+		"Also DoH (DNS over HTTPS) servers are supported such as `https://1.1.1.1/dns-query`, when such server is provided, the benchmark automatically switches to the use of DoH. "+
 		"Note that path on which DoH server handles requests (like `/dns-query`) has to be provided as well.").Short('s').Default("127.0.0.1").String()
 
 	pTypes       = pApp.Flag("type", "Query type. Repeatable flag. If multiple query types are specified then each query will be duplicated for each type.").Short('t').Default("A").Enums(getSupportedDNSTypes()...)
@@ -33,7 +33,7 @@ var (
 	pConcurrency = pApp.Flag("concurrency", "Number of concurrent queries to issue.").Short('c').Default("1").Uint32()
 
 	pRate     = pApp.Flag("rate-limit", "Apply a global questions / second rate limit.").Short('l').Default("0").Int()
-	pQperConn = pApp.Flag("query-per-conn", "Queries on a connection before creating a new one. 0: unlimited").Default("0").Int64()
+	pQperConn = pApp.Flag("query-per-conn", "Queries on a connection before creating a new one. 0: unlimited. Applicable for plain DNS and DoT, this option is not considered for DoH.").Default("0").Int64()
 
 	pRecurse = pApp.Flag("recurse", "Allow DNS recursion.").Short('r').Default("false").Bool()
 
@@ -43,22 +43,22 @@ var (
 	pEdnsOpt = pApp.Flag("ednsopt", "code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal string. code must be arbitrary numeric value.").Default("").String()
 
 	pTCP = pApp.Flag("tcp", "Use TCP fot DNS requests.").Default("false").Bool()
-	pDOT = pApp.Flag("dot", "Use DoT for DNS requests.").Default("false").Bool()
+	pDOT = pApp.Flag("dot", "Use DoT (DNS over TLS) for DNS requests.").Default("false").Bool()
 
 	pWriteTimeout = pApp.Flag("write", "DNS write timeout.").Default("1s").Duration()
 	pReadTimeout  = pApp.Flag("read", "DNS read timeout.").Default(dnsTimeout.String()).Duration()
 
-	pRCodes = pApp.Flag("codes", "Enable counting DNS return codes.").Default("true").Bool()
+	pRCodes = pApp.Flag("codes", "Enable counting DNS return codes. Enabled by default. By specifying --no-codes disables code counting.").Default("true").Bool()
 
 	pHistMin     = pApp.Flag("min", "Minimum value for timing histogram.").Default((time.Microsecond * 400).String()).Duration()
 	pHistMax     = pApp.Flag("max", "Maximum value for histogram.").Default(dnsTimeout.String()).Duration()
 	pHistPre     = pApp.Flag("precision", "Significant figure for histogram precision.").Default("1").PlaceHolder("[1-5]").Int()
-	pHistDisplay = pApp.Flag("distribution", "Display distribution histogram of timings to stdout.").Default("true").Bool()
+	pHistDisplay = pApp.Flag("distribution", "Display distribution histogram of timings to stdout. Enabled by default. By specifying --no-distribution disables histogram display.").Default("true").Bool()
 
 	pCsv = pApp.Flag("csv", "Export distribution to CSV.").Default("").PlaceHolder("/path/to/file.csv").String()
 
 	pSilent = pApp.Flag("silent", "Disable stdout.").Default("false").Bool()
-	pColor  = pApp.Flag("color", "ANSI Color output.").Default("true").Bool()
+	pColor  = pApp.Flag("color", "ANSI Color output. Enabled by default. By specifying --no-color disables coloring.").Default("true").Bool()
 
 	pPlotDir    = pApp.Flag("plot", "Plot benchmark results and export them to directory.").Default("").PlaceHolder("/path/to/folder").String()
 	pPlotFormat = pApp.Flag("plotf", "Format of graphs. Supported formats: png, jpg.").Default("png").Enum("png", "jpg")
@@ -66,7 +66,7 @@ var (
 	pDoHmethod   = pApp.Flag("doh-method", "HTTP method to use for DoH requests. Supported values: get, post.").Default("post").Enum("get", "post")
 	pDoHProtocol = pApp.Flag("doh-protocol", "HTTP protocol to use for DoH requests. Supported values: 1.1, 2.").Default("1.1").Enum("1.1", "2")
 
-	pInsecure = pApp.Flag("insecure", "disables server TLS certificate validation").Default("false").Bool()
+	pInsecure = pApp.Flag("insecure", "Disables server TLS certificate validation. Applicable both for DoT and DoH.").Default("false").Bool()
 
 	pDuration = pApp.Flag("duration", "Specifies for how long the benchmark should be executing, the benchmark will run for the specified time "+
 		"while sending DNS requests in infinite loop based on data source. After running for specified duration, the benchmark is cancelled. "+
