@@ -1,0 +1,6 @@
+{
+  "global": {
+    "audit": "enabled",
+    "exclude": "G104"
+  }
+}

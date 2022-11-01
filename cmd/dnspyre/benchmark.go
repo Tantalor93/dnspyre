@@ -243,6 +243,7 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 							r, err = dohFunc(ctx, b.Server, &m)
 							if err != nil {
 								st.Counters.IOError++
+								st.Errors = append(st.Errors, err)
 								continue
 							}
 						} else {
@@ -254,6 +255,7 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 							if co == nil {
 								co, err = dialConnection(b, &m, st)
 								if err != nil {
+									st.Errors = append(st.Errors, err)
 									continue
 								}
 							}
@@ -261,6 +263,7 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 							co.SetWriteDeadline(start.Add(b.WriteTimeout))
 							if err = co.WriteMsg(&m); err != nil {
 								// error writing
+								st.Errors = append(st.Errors, err)
 								st.Counters.IOError++
 								co.Close()
 								co = nil
@@ -272,6 +275,7 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 							r, err = co.ReadMsg()
 							if err != nil {
 								// error reading
+								st.Errors = append(st.Errors, err)
 								st.Counters.IOError++
 								co.Close()
 								co = nil

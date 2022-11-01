@@ -67,9 +67,23 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) {
 	qtypeTotals := make(map[string]int64)
 	times := make([]Datapoint, 0)
 
+	errs := make(map[string]float64, 0)
+	top3errs := make(map[string]float64)
+	top3errorsInOrder := make([]string, 0)
+	sumerrs := 0.0
+
 	var totalCounters Counters
 
 	for _, s := range stats {
+		for _, err := range s.Errors {
+			if v, ok := errs[err.Error()]; ok {
+				errs[err.Error()] = v + 1
+			} else {
+				errs[err.Error()] = 1
+			}
+			sumerrs++
+		}
+
 		timings.Merge(s.Hist)
 		times = append(times, s.Timings...)
 		if s.Codes != nil {
@@ -91,6 +105,21 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) {
 				IDmismatch: totalCounters.IDmismatch + s.Counters.IDmismatch,
 				Truncated:  totalCounters.Truncated + s.Counters.Truncated,
 			}
+		}
+	}
+
+	for i := 0; i < 3; i++ {
+		max := 0.0
+		maxerr := ""
+		for k, v := range errs {
+			if _, ok := top3errs[k]; v > max && !ok {
+				maxerr = k
+				max = v
+			}
+		}
+		if max != 0 {
+			top3errs[maxerr] = max
+			top3errorsInOrder = append(top3errorsInOrder, maxerr)
 		}
 	}
 
@@ -184,6 +213,13 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) {
 			fmt.Println("DNS distribution,", tc, "datapoints")
 
 			printBars(dist)
+		}
+	}
+
+	if len(top3errs) > 0 {
+		errPrint(os.Stdout, "\nTop errors:\n")
+		for _, err := range top3errorsInOrder {
+			errPrint(os.Stdout, err, "\t", top3errs[err], fmt.Sprintf(" (%.2f)", (top3errs[err]/sumerrs)*100), "%", "\n")
 		}
 	}
 }

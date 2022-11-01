@@ -30,6 +30,7 @@ type ResultStats struct {
 	Hist     *hdrhistogram.Histogram
 	Timings  []Datapoint
 	Counters *Counters
+	Errors   []error
 }
 
 func (rs *ResultStats) record(req *dns.Msg, resp *dns.Msg, time time.Time, timing time.Duration) {
