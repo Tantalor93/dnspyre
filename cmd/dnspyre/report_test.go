@@ -1,6 +1,7 @@
 package dnspyre
 
 import (
+	"errors"
 	"time"
 
 	"github.com/HdrHistogram/hdrhistogram-go"
@@ -34,6 +35,11 @@ func Example_printReport() {
 			IDmismatch: 6,
 			Truncated:  7,
 		},
+		Errors: []error{
+			errors.New("test"),
+			errors.New("test2"),
+			errors.New("test"),
+		},
 	}
 
 	b.PrintReport([]*ResultStats{&rs}, time.Second)
@@ -63,4 +69,8 @@ func Example_printReport() {
 	//	 p90:		 10ns
 	//	 p75:		 10ns
 	//	 p50:		 5ns
+	//
+	// Top errors:
+	// test	2 (66.67)%
+	// test2	1 (33.33)%
 }
