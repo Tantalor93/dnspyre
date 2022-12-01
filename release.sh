@@ -1,20 +1,11 @@
 #!/bin/sh
 
-if [ "$#" -ne 1 ]; then
-  echo "tag argument missing" >&2
-  exit 1
-fi
-
-if ! command -v ghr &> /dev/null
-  then echo "ghr tool is not installed" >&2
+if [ "$#" -ne 2 ]; then
+  echo "release version and message is required, 'sh release.sh <version> <message>'" >&2
   exit 1
 fi
 
 echo "releasing tag $1"
-
-if [ -z "${GITHUB_TOKEN}" ]; then
-  echo "GITHUB_TOKEN variable is not set" >&2
-  exit 1
-fi
-
-make VERSION="$1" release && ghr "$1" bin/
+git tag -a $1
+git push origin $1
+goreleaser release --rm-dist
