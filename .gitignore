@@ -33,6 +33,7 @@ vendor/
 
 *.iml
 bin/
+dist/
 report/
 dnspyre
 
