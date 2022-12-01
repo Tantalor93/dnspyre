@@ -16,6 +16,6 @@ if ! command -v goreleaser &> /dev/null
 fi
 
 echo "releasing tag $1"
-git tag -a "$1"
+git tag -a "$1" -m "release $1"
 git push origin "$1"
 goreleaser release --rm-dist
