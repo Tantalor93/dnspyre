@@ -25,8 +25,8 @@ var (
 	pApp = kingpin.New("dnspyre", "A high QPS DNS benchmark.").Author(author)
 
 	pServer = pApp.Flag("server", "DNS server IP:port to test. IPv6 is also supported, for example '[fddd:dddd::]:53'. "+
-		"Also DoH (DNS over HTTPS) servers are supported such as `https://1.1.1.1/dns-query`, when such server is provided, the benchmark automatically switches to the use of DoH. "+
-		"Note that path on which DoH server handles requests (like `/dns-query`) has to be provided as well.").Short('s').Default("127.0.0.1").String()
+		"Also, DoH (DNS over HTTPS) servers are supported such as `https://1.1.1.1/dns-query`, when such server is provided, the benchmark automatically switches to the use of DoH. "+
+		"Note that path on which the DoH server handles requests (like `/dns-query`) has to be provided as well.").Short('s').Default("127.0.0.1").String()
 
 	pTypes       = pApp.Flag("type", "Query type. Repeatable flag. If multiple query types are specified then each query will be duplicated for each type.").Short('t').Default("A").Enums(getSupportedDNSTypes()...)
 	pCount       = pApp.Flag("number", "How many times the provided queries are repeated. Note that the total number of queries issued = types*number*concurrency*len(queries).").Short('n').Int64()
@@ -37,30 +37,30 @@ var (
 
 	pRecurse = pApp.Flag("recurse", "Allow DNS recursion.").Short('r').Default("false").Bool()
 
-	pProbability = pApp.Flag("probability", "Each hostname from file will be used with provided probability. Value 1 and above means that each hostname from file will be used by each concurrent benchmark goroutine. Useful for randomizing queries across benchmark goroutines.").Default("1").Float64()
+	pProbability = pApp.Flag("probability", "Each provided hostname will be used with provided probability. Value 1 and above means that each hostname will be used by each concurrent benchmark goroutine. Useful for randomizing queries across benchmark goroutines.").Default("1").Float64()
 
 	pUDPSize = pApp.Flag("edns0", "Enable EDNS0 with specified size.").Default("0").Uint16()
-	pEdnsOpt = pApp.Flag("ednsopt", "code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal string. code must be arbitrary numeric value.").Default("").String()
+	pEdnsOpt = pApp.Flag("ednsopt", "code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal string. code must be an arbitrary numeric value.").Default("").String()
 
-	pTCP = pApp.Flag("tcp", "Use TCP fot DNS requests.").Default("false").Bool()
+	pTCP = pApp.Flag("tcp", "Use TCP for DNS requests.").Default("false").Bool()
 	pDOT = pApp.Flag("dot", "Use DoT (DNS over TLS) for DNS requests.").Default("false").Bool()
 
 	pWriteTimeout = pApp.Flag("write", "DNS write timeout.").Default("1s").Duration()
 	pReadTimeout  = pApp.Flag("read", "DNS read timeout.").Default(dnsTimeout.String()).Duration()
 
-	pRCodes = pApp.Flag("codes", "Enable counting DNS return codes. Enabled by default. By specifying --no-codes disables code counting.").Default("true").Bool()
+	pRCodes = pApp.Flag("codes", "Enable counting DNS return codes. Enabled by default. Specifying --no-codes disables code counting.").Default("true").Bool()
 
 	pHistMin     = pApp.Flag("min", "Minimum value for timing histogram.").Default((time.Microsecond * 400).String()).Duration()
-	pHistMax     = pApp.Flag("max", "Maximum value for histogram.").Default(dnsTimeout.String()).Duration()
+	pHistMax     = pApp.Flag("max", "Maximum value for timing histogram.").Default(dnsTimeout.String()).Duration()
 	pHistPre     = pApp.Flag("precision", "Significant figure for histogram precision.").Default("1").PlaceHolder("[1-5]").Int()
-	pHistDisplay = pApp.Flag("distribution", "Display distribution histogram of timings to stdout. Enabled by default. By specifying --no-distribution disables histogram display.").Default("true").Bool()
+	pHistDisplay = pApp.Flag("distribution", "Display distribution histogram of timings to stdout. Enabled by default. Specifying --no-distribution disables histogram display.").Default("true").Bool()
 
 	pCsv = pApp.Flag("csv", "Export distribution to CSV.").Default("").PlaceHolder("/path/to/file.csv").String()
 
 	pSilent = pApp.Flag("silent", "Disable stdout.").Default("false").Bool()
 	pColor  = pApp.Flag("color", "ANSI Color output. Enabled by default. By specifying --no-color disables coloring.").Default("true").Bool()
 
-	pPlotDir    = pApp.Flag("plot", "Plot benchmark results and export them to directory.").Default("").PlaceHolder("/path/to/folder").String()
+	pPlotDir    = pApp.Flag("plot", "Plot benchmark results and export them to the directory.").Default("").PlaceHolder("/path/to/folder").String()
 	pPlotFormat = pApp.Flag("plotf", "Format of graphs. Supported formats: png, jpg.").Default("png").Enum("png", "jpg")
 
 	pDoHmethod   = pApp.Flag("doh-method", "HTTP method to use for DoH requests. Supported values: get, post.").Default("post").Enum("get", "post")
@@ -69,13 +69,13 @@ var (
 	pInsecure = pApp.Flag("insecure", "Disables server TLS certificate validation. Applicable both for DoT and DoH.").Default("false").Bool()
 
 	pDuration = pApp.Flag("duration", "Specifies for how long the benchmark should be executing, the benchmark will run for the specified time "+
-		"while sending DNS requests in infinite loop based on data source. After running for specified duration, the benchmark is cancelled. "+
+		"while sending DNS requests in an infinite loop based on the data source. After running for the specified duration, the benchmark is canceled. "+
 		"This option is exclusive with --number option. The duration is specified in GO duration format e.g. 10s, 15m, 1h.").
 		PlaceHolder("1m").Short('d').Duration()
 
-	pQueries = pApp.Arg("queries", "Queries to issue. Can be local file referenced using @<file-path>, for example @data/2-domains."+
-		"Can also be resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that "+
-		"case the file will be downloaded and saved inmemory.").Required().Strings()
+	pQueries = pApp.Arg("queries", "Queries to issue. It can be a local file referenced using @<file-path>, for example @data/2-domains. "+
+		"It can also be resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that "+
+		"case, the file will be downloaded and saved in-memory.").Required().Strings()
 )
 
 const (
