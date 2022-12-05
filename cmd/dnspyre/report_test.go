@@ -70,6 +70,7 @@ func Example_printReport() {
 	//	 p75:		 10ns
 	//	 p50:		 5ns
 	//
+	// Total Errors: 3
 	// Top errors:
 	// test	2 (66.67)%
 	// test2	1 (33.33)%

@@ -15,41 +15,41 @@ import (
 )
 
 var (
-	errPrint     = color.New(color.FgRed).Fprint
-	successPrint = color.New(color.FgGreen).Fprint
+	errPrint     = color.New(color.FgRed).FprintfFunc()
+	successPrint = color.New(color.FgGreen).FprintfFunc()
+	highlightStr = color.New(color.FgYellow).SprintFunc()
 )
 
 func (b *Benchmark) printProgress(c Counters) {
-	fmt.Printf("\nTotal requests:\t\t%d\n", c.Total)
+	fmt.Printf("\nTotal requests:\t\t%s\n", highlightStr(c.Total))
 
 	if c.ConnError > 0 {
-		errPrint(os.Stdout, "Connection errors:\t", c.ConnError, "\n")
+		errPrint(os.Stdout, "Connection errors:\t%d\n", c.ConnError)
 	}
 	if c.IOError > 0 {
-		errPrint(os.Stdout, "Read/Write errors:\t", c.IOError, "\n")
+		errPrint(os.Stdout, "Read/Write errors:\t%d\n", c.IOError)
 	}
 
 	if c.IDmismatch > 0 {
-		errPrint(os.Stdout, "ID mismatch errors:\t", c.IDmismatch, "\n")
+		errPrint(os.Stdout, "ID mismatch errors:\t%d\n", c.IDmismatch)
 	}
 
 	if c.Success > 0 {
-		successPrint(os.Stdout, "DNS success codes:\t", c.Success, "\n")
+		successPrint(os.Stdout, "DNS success codes:\t%d\n", c.Success)
 	}
 
 	if c.Truncated > 0 {
-		errPrint(os.Stdout, "Truncated responses:\t", c.Truncated, "\n")
+		errPrint(os.Stdout, "Truncated responses:\t%d\n", c.Truncated)
 	}
 }
 
-// PrintReport print formatted benchmark results to stdout based.
-func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) {
+// PrintReport print formatted benchmark results to stdout. If there is a fatal error while printing report, an error is returned.
+func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) error {
 	var csv *os.File
 	if b.Csv != "" {
 		f, err := os.Create(b.Csv)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Failed to create file for CSV export.", err)
-			os.Exit(1)
+			return fmt.Errorf("failed to create file for CSV export due to '%v'", err)
 		}
 
 		csv = f
@@ -67,10 +67,10 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) {
 	qtypeTotals := make(map[string]int64)
 	times := make([]Datapoint, 0)
 
-	errs := make(map[string]float64, 0)
-	top3errs := make(map[string]float64)
+	errs := make(map[string]int, 0)
+	top3errs := make(map[string]int)
 	top3errorsInOrder := make([]string, 0)
-	sumerrs := 0.0
+	sumerrs := 0
 
 	var totalCounters Counters
 
@@ -109,7 +109,7 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) {
 	}
 
 	for i := 0; i < 3; i++ {
-		max := 0.0
+		max := 0
 		maxerr := ""
 		for k, v := range errs {
 			if _, ok := top3errs[k]; v > max && !ok {
@@ -152,7 +152,7 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) {
 	}
 
 	if b.Silent {
-		return
+		return nil
 	}
 
 	b.printProgress(totalCounters)
@@ -166,7 +166,7 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) {
 				printFn = successPrint
 			}
 			if c, ok := codeTotals[i]; ok {
-				printFn(os.Stdout, "\t", dns.RcodeToString[i]+":\t", c, "\n")
+				printFn(os.Stdout, "\t%s:\t%d\n", dns.RcodeToString[i], c)
 			}
 		}
 	}
@@ -175,14 +175,14 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) {
 		fmt.Println()
 		fmt.Println("DNS question types:")
 		for k, v := range qtypeTotals {
-			successPrint(os.Stdout, "\t", k+":\t", v, "\n")
+			successPrint(os.Stdout, "\t%s:\t%d\n", k, v)
 		}
 	}
 
 	fmt.Println()
 
-	fmt.Println("Time taken for tests:\t", t.String())
-	fmt.Printf("Questions per second:\t %0.1f", float64(totalCounters.Total)/t.Seconds())
+	fmt.Println("Time taken for tests:\t", highlightStr(roundDuration(t).String()))
+	fmt.Printf("Questions per second:\t %s", highlightStr(fmt.Sprintf("%0.1f", float64(totalCounters.Total)/t.Seconds())))
 
 	min := time.Duration(timings.Min())
 	mean := time.Duration(timings.Mean())
@@ -196,16 +196,16 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) {
 
 	if tc := timings.TotalCount(); tc > 0 {
 		fmt.Println()
-		fmt.Println("DNS timings,", tc, "datapoints")
-		fmt.Println("\t min:\t\t", min)
-		fmt.Println("\t mean:\t\t", mean)
-		fmt.Println("\t [+/-sd]:\t", sd)
-		fmt.Println("\t max:\t\t", max)
-		fmt.Println("\t p99:\t\t", p99)
-		fmt.Println("\t p95:\t\t", p95)
-		fmt.Println("\t p90:\t\t", p90)
-		fmt.Println("\t p75:\t\t", p75)
-		fmt.Println("\t p50:\t\t", p50)
+		fmt.Println("DNS timings,", highlightStr(tc), "datapoints")
+		fmt.Println("\t min:\t\t", highlightStr(roundDuration(min)))
+		fmt.Println("\t mean:\t\t", highlightStr(roundDuration(mean)))
+		fmt.Println("\t [+/-sd]:\t", highlightStr(roundDuration(sd)))
+		fmt.Println("\t max:\t\t", highlightStr(roundDuration(max)))
+		fmt.Println("\t p99:\t\t", highlightStr(roundDuration(p99)))
+		fmt.Println("\t p95:\t\t", highlightStr(roundDuration(p95)))
+		fmt.Println("\t p90:\t\t", highlightStr(roundDuration(p90)))
+		fmt.Println("\t p75:\t\t", highlightStr(roundDuration(p75)))
+		fmt.Println("\t p50:\t\t", highlightStr(roundDuration(p50)))
 
 		dist := timings.Distribution()
 		if b.HistDisplay && tc > 1 {
@@ -217,11 +217,13 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) {
 	}
 
 	if len(top3errs) > 0 {
-		errPrint(os.Stdout, "\nTop errors:\n")
+		errPrint(os.Stdout, "\nTotal Errors: %d\n", sumerrs)
+		errPrint(os.Stdout, "Top errors:\n")
 		for _, err := range top3errorsInOrder {
-			errPrint(os.Stdout, err, "\t", top3errs[err], fmt.Sprintf(" (%.2f)", (top3errs[err]/sumerrs)*100), "%", "\n")
+			errPrint(os.Stdout, "%s\t%d (%.2f)%%\n", err, top3errs[err], (float64(top3errs[err])/float64(sumerrs))*100)
 		}
 	}
+	return nil
 }
 
 func (b *Benchmark) fileName(dir, name string) string {
@@ -257,7 +259,7 @@ func printBars(bars []hdrhistogram.Bar) {
 		lines = append(lines, line)
 		counts = append(counts, b.Count)
 
-		line[0] = time.Duration(b.To/2 + b.From/2).String()
+		line[0] = roundDuration(time.Duration(b.To/2 + b.From/2)).String()
 		line[2] = strconv.FormatInt(b.Count, 10)
 	}
 
@@ -278,4 +280,20 @@ func makeBar(c int64, max int64) string {
 	}
 	t := int((43 * float64(c) / float64(max)) + 0.5)
 	return strings.Repeat("▄", t)
+}
+
+func roundDuration(dur time.Duration) time.Duration {
+	if dur > time.Minute {
+		return dur.Round(100 * time.Second)
+	}
+	if dur > time.Second {
+		return dur.Round(10 * time.Millisecond)
+	}
+	if dur > time.Millisecond {
+		return dur.Round(10 * time.Microsecond)
+	}
+	if dur > time.Microsecond {
+		return dur.Round(10 * time.Nanosecond)
+	}
+	return dur
 }

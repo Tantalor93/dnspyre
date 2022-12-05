@@ -153,10 +153,16 @@ func Execute() {
 	rand.Seed(time.Now().UnixNano())
 
 	start := time.Now()
-	res := bench.Run(ctx)
+	res, err := bench.Run(ctx)
 	end := time.Now()
 
-	bench.PrintReport(res, end.Sub(start))
+	if err != nil {
+		errPrint(os.Stderr, fmt.Sprintf("There was an error while starting benchmark: %s\n", err.Error()))
+	} else {
+		if err := bench.PrintReport(res, end.Sub(start)); err != nil {
+			errPrint(os.Stderr, fmt.Sprintf("There was an error while printing report: %s\n", err.Error()))
+		}
+	}
 }
 
 func getSupportedDNSTypes() []string {

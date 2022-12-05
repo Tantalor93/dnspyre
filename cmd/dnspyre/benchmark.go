@@ -4,10 +4,11 @@ import (
 	"bufio"
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"math/rand"
+	"net"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -77,7 +78,7 @@ type Benchmark struct {
 	useDoH bool
 }
 
-func (b *Benchmark) normalize() {
+func (b *Benchmark) normalize() error {
 	b.useDoH, _ = isHTTPUrl(b.Server)
 
 	b.addPortIfMissing()
@@ -87,14 +88,16 @@ func (b *Benchmark) normalize() {
 	}
 
 	if b.Duration > 0 && b.Count > 0 {
-		fmt.Fprintln(os.Stderr, "--number and --duration is specified at once, only one can be used")
-		os.Exit(1)
+		return errors.New("--number and --duration is specified at once, only one can be used")
 	}
+	return nil
 }
 
-// Run executes benchmark.
-func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
-	b.normalize()
+// Run executes benchmark, if benchmark is unable to start the error is returned, otherwise array of results from parallel benchmark goroutines is returned.
+func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
+	if err := b.normalize(); err != nil {
+		return nil, err
+	}
 
 	color.NoColor = !b.Color
 
@@ -103,12 +106,10 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 		if ok, _ := isHTTPUrl(q); ok {
 			resp, err := client.Get(q)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to download file '%s' with error '%v'", q, err)
-				os.Exit(1)
+				return nil, fmt.Errorf("failed to download file '%s' with error '%v'", q, err)
 			}
 			if resp.StatusCode < 200 || resp.StatusCode > 299 {
-				fmt.Fprintf(os.Stderr, "Failed to download file '%s' with status '%s'", q, resp.Status)
-				os.Exit(1)
+				return nil, fmt.Errorf("failed to download file '%s' with status '%s'", q, resp.Status)
 			}
 			scanner := bufio.NewScanner(resp.Body)
 			for scanner.Scan() {
@@ -126,7 +127,7 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 	}
 
 	if !b.Silent {
-		fmt.Printf("Using %d hostnames\n", len(questions))
+		fmt.Printf("Using %s hostnames\n", highlightStr(len(questions)))
 	}
 
 	var qTypes []uint16
@@ -178,11 +179,11 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 	var limit ratelimit.Limiter
 	if b.Rate > 0 {
 		limit = ratelimit.New(b.Rate)
-		limits = fmt.Sprintf("(limited to %d QPS)", b.Rate)
+		limits = fmt.Sprintf("(limited to %s QPS)", highlightStr(b.Rate))
 	}
 
 	if !b.Silent {
-		fmt.Printf("Benchmarking %s via %s with %d concurrent requests %s\n", b.Server, network, b.Concurrency, limits)
+		fmt.Printf("Benchmarking %s via %s with %s concurrent requests %s\n", highlightStr(b.Server), highlightStr(network), highlightStr(b.Concurrency), limits)
 	}
 
 	stats := make([]*ResultStats, b.Concurrency)
@@ -292,7 +293,7 @@ func (b *Benchmark) Run(ctx context.Context) []*ResultStats {
 
 	wg.Wait()
 
-	return stats
+	return stats, nil
 }
 
 func (b *Benchmark) addPortIfMissing() {
@@ -300,13 +301,18 @@ func (b *Benchmark) addPortIfMissing() {
 		// both HTTPS and HTTP are using default ports 443 and 80 if no other port is specified
 		return
 	}
-	if !strings.Contains(b.Server, ":") {
+	if _, _, err := net.SplitHostPort(b.Server); err != nil {
 		if b.DOT {
 			// https://www.rfc-editor.org/rfc/rfc7858
-			b.Server += ":853"
-		} else {
-			b.Server += ":53"
+			b.Server = net.JoinHostPort(b.Server, "853")
+			return
 		}
+		b.Server = net.JoinHostPort(b.Server, "53")
+		return
+	}
+	if ip := net.ParseIP(b.Server); ip != nil {
+		b.Server = net.JoinHostPort(ip.String(), "53")
+		return
 	}
 }
 
