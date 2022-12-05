@@ -12,6 +12,7 @@ import (
 
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -61,8 +62,9 @@ func Test_do_classic_dns(t *testing.T) {
 
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
-			rs := bench.Run(ctx)
+			rs, err := bench.Run(ctx)
 
+			assert.NoError(t, err, "expected no error from benchmark run")
 			assertResult(t, rs)
 		})
 	}
@@ -103,8 +105,9 @@ func Test_do_doh_post(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	rs := bench.Run(ctx)
+	rs, err := bench.Run(ctx)
 
+	assert.NoError(t, err, "expected no error from benchmark run")
 	assertResult(t, rs)
 }
 
@@ -145,8 +148,9 @@ func Test_do_doh_get(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	rs := bench.Run(ctx)
+	rs, err := bench.Run(ctx)
 
+	assert.NoError(t, err, "expected no error from benchmark run")
 	assertResult(t, rs)
 }
 
@@ -167,8 +171,9 @@ func Test_do_probability(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	rs := bench.Run(ctx)
+	rs, err := bench.Run(ctx)
 
+	assert.NoError(t, err, "expected no error from benchmark run")
 	assert.Len(t, rs, 2, "Run(ctx) rstats")
 	rs0 := rs[0]
 	rs1 := rs[1]
@@ -213,9 +218,64 @@ func Test_download_external_datasource_using_http(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	rs := bench.Run(ctx)
+	rs, err := bench.Run(ctx)
 
+	assert.NoError(t, err, "expected no error from benchmark run")
 	assertResult(t, rs)
+}
+
+func Test_download_external_datasource_using_http_not_available(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	}))
+	// close right away to get dead port
+	ts.Close()
+
+	bench := Benchmark{
+		Queries:      []string{ts.URL},
+		Types:        []string{"A", "AAAA"},
+		Server:       "8.8.8.8",
+		TCP:          false,
+		Concurrency:  2,
+		Count:        1,
+		Probability:  1,
+		WriteTimeout: 5 * time.Second,
+		ReadTimeout:  5 * time.Second,
+		Rcodes:       true,
+		Recurse:      true,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	_, err := bench.Run(ctx)
+
+	assert.Error(t, err, "expected error from benchmark run")
+}
+
+func Test_download_external_datasource_using_http_wrong_response(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+	}))
+	defer ts.Close()
+
+	bench := Benchmark{
+		Queries:      []string{ts.URL},
+		Types:        []string{"A", "AAAA"},
+		Server:       "8.8.8.8",
+		TCP:          false,
+		Concurrency:  2,
+		Count:        1,
+		Probability:  1,
+		WriteTimeout: 5 * time.Second,
+		ReadTimeout:  5 * time.Second,
+		Rcodes:       true,
+		Recurse:      true,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	_, err := bench.Run(ctx)
+
+	assert.Error(t, err, "expected error from benchmark run")
 }
 
 func Test_do_classic_dns_with_duration(t *testing.T) {
@@ -242,9 +302,67 @@ func Test_do_classic_dns_with_duration(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	rs := bench.Run(ctx)
+	rs, err := bench.Run(ctx)
 
+	assert.NoError(t, err, "expected no error from benchmark run")
 	assert.GreaterOrEqual(t, rs[0].Counters.Total, int64(1), "there should be atleast one execution")
+}
+
+func Test_duration_and_count_specified_at_once(t *testing.T) {
+	bench := Benchmark{
+		Queries:      []string{"example.org"},
+		Types:        []string{"A"},
+		Server:       "8.8.8.8",
+		TCP:          false,
+		Count:        1,
+		Duration:     time.Second,
+		Concurrency:  1,
+		Probability:  1,
+		WriteTimeout: 5 * time.Second,
+		ReadTimeout:  5 * time.Second,
+		Rcodes:       true,
+		Recurse:      true,
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	_, err := bench.Run(ctx)
+
+	assert.Error(t, err, "expected error from benchmark run")
+}
+
+func Test_do_classic_dns_default_count(t *testing.T) {
+	s := NewServer("udp", func(w dns.ResponseWriter, r *dns.Msg) {
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 500)
+
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	bench := Benchmark{
+		Queries:      []string{"example.org"},
+		Types:        []string{"A"},
+		Server:       s.Addr,
+		TCP:          false,
+		Concurrency:  1,
+		Probability:  1,
+		WriteTimeout: 5 * time.Second,
+		ReadTimeout:  5 * time.Second,
+		Rcodes:       true,
+		Recurse:      true,
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	assert.NoError(t, err, "expected no error from benchmark run")
+	assert.Len(t, rs, 1, "Run(ctx) rstats")
+	assert.Equal(t, int64(1), rs[0].Counters.Total)
+	assert.Equal(t, int64(1), rs[0].Counters.Success)
 }
 
 func assertResult(t *testing.T, rs []*ResultStats) {
@@ -307,3 +425,56 @@ func createBenchmark(server string, tcp bool, prob float64) Benchmark {
 
 // A returns an A record from rr. It panics on errors.
 func A(rr string) *dns.A { r, _ := dns.NewRR(rr); return r.(*dns.A) }
+
+func TestBenchmark_normalize(t *testing.T) {
+	tests := []struct {
+		name       string
+		benchmark  Benchmark
+		wantServer string
+		wantErr    bool
+	}{
+		{
+			name:       "server - IPv4",
+			benchmark:  Benchmark{Server: "8.8.8.8"},
+			wantServer: "8.8.8.8:53",
+		},
+		{
+			name:       "server - IPv4 with port",
+			benchmark:  Benchmark{Server: "8.8.8.8:53"},
+			wantServer: "8.8.8.8:53",
+		},
+		{
+			name:       "server - IPv6",
+			benchmark:  Benchmark{Server: "fddd:dddd::"},
+			wantServer: "[fddd:dddd::]:53",
+		},
+		{
+			name:       "server - IPv6",
+			benchmark:  Benchmark{Server: "fddd:dddd::"},
+			wantServer: "[fddd:dddd::]:53",
+		},
+		{
+			name:       "server - IPv6 with port",
+			benchmark:  Benchmark{Server: "fddd:dddd::"},
+			wantServer: "[fddd:dddd::]:53",
+		},
+		{
+			name:       "server - HTTPS url",
+			benchmark:  Benchmark{Server: "https://1.1.1.1/dns-query"},
+			wantServer: "https://1.1.1.1/dns-query",
+		},
+		{
+			name:       "server - HTTP url",
+			benchmark:  Benchmark{Server: "http://127.0.0.1/dns-query"},
+			wantServer: "http://127.0.0.1/dns-query",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.benchmark.normalize()
+
+			require.Equal(t, tt.wantErr, err != nil)
+			assert.Equal(t, tt.wantServer, tt.benchmark.Server)
+		})
+	}
+}

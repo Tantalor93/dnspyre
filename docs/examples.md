@@ -515,8 +515,15 @@ DNS distribution, 190 datapoints
 </details>
 
 ### IPv6 DNS server benchmarking
+note the brackets format
 ```
 dnspyre -n 10 -c 10 --server '[fddd:dddd::]:53' --recurse idnes.cz
+```
+
+or 
+
+```
+dnspyre -n 10 -c 10 --server 'fddd:dddd::' --recurse idnes.cz
 ```
 
 <details>
