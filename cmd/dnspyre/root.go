@@ -11,7 +11,6 @@ import (
 
 	"github.com/alecthomas/kingpin"
 	"github.com/miekg/dns"
-	"github.com/tantalor93/dnspyre/v2/internal/sysutil"
 )
 
 var (
@@ -117,17 +116,6 @@ func Execute() {
 		Insecure:     *pInsecure,
 		Duration:     *pDuration,
 		Queries:      *pQueries,
-	}
-
-	lim, err := sysutil.RlimitStack()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Cannot check limit of number of files. Skipping check. Please make sure it is sufficient manually.", err)
-	} else {
-		needed := uint64(bench.Concurrency) + uint64(fileNoBuffer)
-		if lim < needed {
-			fmt.Fprintf(os.Stderr, "Current process limit for number of files is %d and insufficient for level of requested concurrency.", lim)
-			os.Exit(1)
-		}
 	}
 
 	sigsInt := make(chan os.Signal, 8)
