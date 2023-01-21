@@ -24,7 +24,7 @@ func NewServer(network string, f dns.HandlerFunc) *Server {
 	s.Handler = f
 
 	for i := 0; i < 10; i++ {
-		s.Listener, _ = net.Listen("tcp", ":0")
+		s.Listener, _ = net.Listen("tcp", "127.0.0.1:0")
 		if network == "udp" {
 			if s.Listener == nil {
 				continue

@@ -77,10 +77,6 @@ var (
 		"case, the file will be downloaded and saved in-memory.").Required().Strings()
 )
 
-const (
-	fileNoBuffer = 9 // app itself needs about 9 for libs
-)
-
 // Execute starts main logic of command.
 func Execute() {
 	pApp.Version(Version)

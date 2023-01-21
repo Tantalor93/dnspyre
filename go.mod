@@ -15,7 +15,7 @@ require (
 	go-hep.org/x/hep v0.32.1
 	go.uber.org/ratelimit v0.2.0
 	golang.org/x/net v0.0.0-20220725212005-46097bf591d3
-	golang.org/x/sys v0.0.0-20220829200755-d48e67d00261
+	golang.org/x/sys v0.0.0-20220829200755-d48e67d00261 // indirect
 	gonum.org/v1/plot v0.12.0
 )
 

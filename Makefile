@@ -10,11 +10,7 @@ check:
 ifeq (, $(shell which golangci-lint))
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH)/bin v1.49.0
 endif
-ifeq (, $(shell which gosec))
-	go install github.com/securego/gosec/v2/cmd/gosec@latest
-endif
 	golangci-lint run
-	gosec -conf=.gosec-conf.json ./...
 	go mod tidy
 
 test:
