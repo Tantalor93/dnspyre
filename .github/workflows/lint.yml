@@ -16,14 +16,3 @@ jobs:
         GOPROXY: proxy.golang.org,direct
       with:
         version: v1.49.0
-  gosec:
-    name: gosec
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: gosec
-      uses: securego/gosec@master
-      env:
-        GOPROXY: proxy.golang.org,direct
-      with:
-        args: -conf=.gosec-conf.json ./...

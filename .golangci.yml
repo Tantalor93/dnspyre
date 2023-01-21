@@ -18,6 +18,7 @@ linters:
   - unparam
   - gocritic
   - unconvert
+  - gosec
 
 issues:
   include:
@@ -29,3 +30,8 @@ linters-settings:
     exclude:
     - '^ @.*' # swaggo comments like // @title
     - '^ (\d+)(\.|\)).*' # enumeration comments like // 1. or // 1)
+  gosec:
+    global:
+      audit: true
+    excludes:
+    - G104
