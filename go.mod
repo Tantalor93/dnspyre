@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2
 	github.com/alecthomas/kingpin v2.2.6+incompatible
-	github.com/fatih/color v1.13.0
+	github.com/fatih/color v1.14.1
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/miekg/dns v1.1.50
 	github.com/montanaflynn/stats v0.7.0
@@ -15,7 +15,7 @@ require (
 	go-hep.org/x/hep v0.32.1
 	go.uber.org/ratelimit v0.2.0
 	golang.org/x/net v0.0.0-20220725212005-46097bf591d3
-	golang.org/x/sys v0.0.0-20220829200755-d48e67d00261 // indirect
+	golang.org/x/sys v0.3.0 // indirect
 	gonum.org/v1/plot v0.12.0
 )
 
@@ -32,8 +32,8 @@ require (
 	github.com/go-pdf/fpdf v0.6.0 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/gonuts/binary v0.2.0 // indirect
-	github.com/mattn/go-colorable v0.1.9 // indirect
-	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.3.4 // indirect
 	golang.org/x/exp v0.0.0-20220827204233-334a2380cb91 // indirect
