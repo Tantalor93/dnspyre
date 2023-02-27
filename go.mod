@@ -14,8 +14,8 @@ require (
 	github.com/tantalor93/doh-go v0.1.0
 	go-hep.org/x/hep v0.32.1
 	go.uber.org/ratelimit v0.2.0
-	golang.org/x/net v0.0.0-20220725212005-46097bf591d3
-	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/net v0.7.0
+	golang.org/x/sys v0.5.0 // indirect
 	gonum.org/v1/plot v0.12.0
 )
 
@@ -40,7 +40,7 @@ require (
 	golang.org/x/image v0.0.0-20220902085622-e7cb96979f69 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	gonum.org/v1/gonum v0.12.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
