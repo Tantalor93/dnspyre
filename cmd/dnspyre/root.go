@@ -141,10 +141,10 @@ func Execute() {
 	end := time.Now()
 
 	if err != nil {
-		errPrint(os.Stderr, fmt.Sprintf("There was an error while starting benchmark: %s\n", err.Error()))
+		errPrint(os.Stderr, "There was an error while starting benchmark: %s\n", err.Error())
 	} else {
 		if err := bench.PrintReport(res, end.Sub(start)); err != nil {
-			errPrint(os.Stderr, fmt.Sprintf("There was an error while printing report: %s\n", err.Error()))
+			errPrint(os.Stderr, "There was an error while printing report: %s\n", err.Error())
 		}
 	}
 }
