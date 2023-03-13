@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2
 	github.com/alecthomas/kingpin v2.2.6+incompatible
-	github.com/fatih/color v1.14.1
+	github.com/fatih/color v1.15.0
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/miekg/dns v1.1.51
 	github.com/montanaflynn/stats v0.7.0
