@@ -122,8 +122,16 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) error {
 		writeBars(csv, timings.Distribution())
 	}
 
+	if b.Silent {
+		return nil
+	}
+	topErrs := orderedMap{m: top3errs, order: top3errorsInOrder}
+	if b.JSON {
+		j := jsonReporter{}
+		return j.print(b, timings, codeTotals, totalCounters, qtypeTotals, topErrs, t)
+	}
 	s := standardReporter{}
-	return s.print(b, timings, codeTotals, totalCounters, qtypeTotals, orderedMap{m: top3errs, order: top3errorsInOrder}, t)
+	return s.print(b, timings, codeTotals, totalCounters, qtypeTotals, topErrs, t)
 }
 
 func (b *Benchmark) fileName(dir, name string) string {

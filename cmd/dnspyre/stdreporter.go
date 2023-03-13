@@ -15,10 +15,6 @@ import (
 type standardReporter struct{}
 
 func (s *standardReporter) print(b *Benchmark, timings *hdrhistogram.Histogram, codeTotals map[int]int64, totalCounters Counters, qtypeTotals map[string]int64, topErrs orderedMap, t time.Duration) error {
-	if b.Silent {
-		return nil
-	}
-
 	b.printProgress(totalCounters)
 
 	if len(codeTotals) > 0 {
