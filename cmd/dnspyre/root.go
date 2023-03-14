@@ -54,7 +54,8 @@ var (
 	pHistPre     = pApp.Flag("precision", "Significant figure for histogram precision.").Default("1").PlaceHolder("[1-5]").Int()
 	pHistDisplay = pApp.Flag("distribution", "Display distribution histogram of timings to stdout. Enabled by default. Specifying --no-distribution disables histogram display.").Default("true").Bool()
 
-	pCsv = pApp.Flag("csv", "Export distribution to CSV.").Default("").PlaceHolder("/path/to/file.csv").String()
+	pCsv  = pApp.Flag("csv", "Export distribution to CSV.").Default("").PlaceHolder("/path/to/file.csv").String()
+	pJSON = pApp.Flag("json", "Report benchmark results as JSON.").Bool()
 
 	pSilent = pApp.Flag("silent", "Disable stdout.").Default("false").Bool()
 	pColor  = pApp.Flag("color", "ANSI Color output. Enabled by default. By specifying --no-color disables coloring.").Default("true").Bool()
@@ -103,6 +104,7 @@ func Execute() {
 		HistPre:      *pHistPre,
 		HistDisplay:  *pHistDisplay,
 		Csv:          *pCsv,
+		JSON:         *pJSON,
 		Silent:       *pSilent,
 		Color:        *pColor,
 		PlotDir:      *pPlotDir,

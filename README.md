@@ -91,6 +91,7 @@ Flags:
       --precision=[1-5]        Significant figure for histogram precision.
       --distribution           Display distribution histogram of timings to stdout. Enabled by default. Specifying --no-distribution disables histogram display.
       --csv=/path/to/file.csv  Export distribution to CSV.
+      --json                   Report benchmark results as JSON.
       --silent                 Disable stdout.
       --color                  ANSI Color output. Enabled by default. By specifying --no-color disables coloring.
       --plot=/path/to/folder   Plot benchmark results and export them to the directory.

@@ -57,7 +57,8 @@ type Benchmark struct {
 	HistMax     time.Duration
 	HistPre     int
 
-	Csv string
+	Csv  string
+	JSON bool
 
 	Silent bool
 	Color  bool
@@ -126,7 +127,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		defer cancel()
 	}
 
-	if !b.Silent {
+	if !b.Silent && !b.JSON {
 		fmt.Printf("Using %s hostnames\n", highlightStr(len(questions)))
 	}
 
@@ -182,7 +183,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		limits = fmt.Sprintf("(limited to %s QPS)", highlightStr(b.Rate))
 	}
 
-	if !b.Silent {
+	if !b.Silent && !b.JSON {
 		fmt.Printf("Benchmarking %s via %s with %s concurrent requests %s\n", highlightStr(b.Server), highlightStr(network), highlightStr(b.Concurrency), limits)
 	}
 

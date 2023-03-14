@@ -1296,3 +1296,23 @@ generates graphs like these:
 ![latency line](graphs/latency-lineplot.png)
 
 </details>
+
+### Output benchmark results as JSON
+By specifying `--json` flag, dnspyre can output benchmark results in a JSON format, which is better for further automatic processing
+```
+dnspyre --duration 5s --server 8.8.8.8 google.com  --recurse --json
+```
+
+<details>
+<summary>output</summary>
+
+```
+{"totalRequests":792,"totalSuccessCodes":792,"totalErrors":0,"TotalIDmismatch":0,"totalTruncatedResponses":0,"responseRcodes":{"NOERROR":792},"questionTypes":{"A":792},"queriesPerSecond":158.19,"benchmarkDurationSeconds":5.01,"latencyStats":{"minMs":4,"meanMs":6,"stdMs":1,"maxMs":15,"p99Ms":13,"p95Ms":8,"p90Ms":7,"p75Ms":6,"p50Ms":6},"latencyDistribution":[{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":1,"count":0},{"latencyMs":1,"count":0},{"latencyMs":1,"count":0},{"latencyMs":1,"count":0},{"latencyMs":2,"count":0},{"latencyMs":2,"count":0},{"latencyMs":2,"count":0},{"latencyMs":3,"count":0},{"latencyMs":3,"count":0},{"latencyMs":3,"count":0},{"latencyMs":3,"count":0},{"latencyMs":4,"count":0},{"latencyMs":4,"count":0},{"latencyMs":4,"count":0},{"latencyMs":4,"count":10},{"latencyMs":5,"count":9},{"latencyMs":5,"count":16},{"latencyMs":5,"count":60},{"latencyMs":5,"count":311},{"latencyMs":6,"count":225},{"latencyMs":6,"count":40},{"latencyMs":6,"count":13},{"latencyMs":6,"count":22},{"latencyMs":7,"count":14},{"latencyMs":7,"count":17},{"latencyMs":7,"count":9},{"latencyMs":7,"count":12},{"latencyMs":8,"count":9},{"latencyMs":8,"count":3},{"latencyMs":9,"count":4},{"latencyMs":9,"count":2},{"latencyMs":10,"count":1},{"latencyMs":10,"count":1},{"latencyMs":11,"count":0},{"latencyMs":11,"count":0},{"latencyMs":12,"count":0},{"latencyMs":12,"count":0},{"latencyMs":13,"count":6},{"latencyMs":13,"count":4},{"latencyMs":14,"count":1},{"latencyMs":14,"count":2},{"latencyMs":15,"count":1}]}
+```
+
+</details>
+
+example of chaining of dnspyre with [jq](https://stedolan.github.io/jq/) for getting pretty JSON
+```
+dnspyre --duration 5s --server 8.8.8.8 google.com --no-distribution --recurse --json | jq '.'
+```
