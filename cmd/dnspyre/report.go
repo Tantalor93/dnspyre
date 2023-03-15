@@ -89,9 +89,8 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) error {
 	})
 
 	if len(b.PlotDir) != 0 {
-		now := time.Now()
-		unix := now.Unix()
-		dir := fmt.Sprintf("%s/graphs-%d", b.PlotDir, unix)
+		now := time.Now().Format(time.RFC3339)
+		dir := fmt.Sprintf("%s/graphs-%s", b.PlotDir, now)
 		if err := os.Mkdir(dir, os.ModePerm); err != nil {
 			panic(err)
 		}

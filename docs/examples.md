@@ -18,6 +18,7 @@
   + [DoH via plain HTTP](#doh-via-plain-http)
   + [DoH with self-signed certificates](#doh-with-self-signed-certificates)
 + [Plotting graphs](#plotting-graphs)
++ [Output benchmark results as JSON](#Output-benchmark-results-as-JSON)
 
 
 ### parallel benchmark with repeating queries
@@ -1121,7 +1122,7 @@ dnspyre --server https://127.0.0.1/dns-query  --insecure google.com
 
 
 ### Plotting graphs
-plots benchmark results as histograms, boxplots and line graphs to the new subdirectory `graphs-<current unix timestamp>` in the current directory
+plots benchmark results as histograms, boxplots and line graphs to the new subdirectory `graphs-<RFC3339 timestamp>` in the current directory
 ```
 dnspyre -d 30s -c 2 --server 8.8.8.8 --plot . --recurse https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains
 ```
