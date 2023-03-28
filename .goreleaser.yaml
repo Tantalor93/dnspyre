@@ -32,3 +32,12 @@ brews:
     name: homebrew-dnspyre
   folder: Formula
   homepage: https://github.com/Tantalor93/dnspyre
+dockers:
+- use: buildx
+  id: dnspyre
+  dockerfile: "Dockerfile-goreleaser"
+  image_templates:
+  - "tantalor93/dnspyre:{{ .Tag }}"
+  - "tantalor93/dnspyre:v{{ .Major }}"
+  - "tantalor93/dnspyre:v{{ .Major }}.{{ .Minor }}"
+  - "tantalor93/dnspyre:latest"

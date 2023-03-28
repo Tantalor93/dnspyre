@@ -1,0 +1,3 @@
+FROM scratch
+COPY dnspyre /dnspyre
+ENTRYPOINT ["/dnspyre"]
