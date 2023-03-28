@@ -1,4 +1,5 @@
 [![Release](https://img.shields.io/github/release/Tantalor93/dnspyre/all.svg)](https://github.com/tantalor93/dnspyre/releases)
+[![Docker Pulls](https://img.shields.io/docker/pulls/tantalor93/dnspyre.svg)](https://hub.docker.com/r/tantalor93/dnspyre)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tantalor93/dnspyre/v2)](https://goreportcard.com/report/github.com/tantalor93/dnspyre/v2)
 [![Tantalor93](https://circleci.com/gh/Tantalor93/dnspyre/tree/master.svg?style=svg)](https://circleci.com/gh/Tantalor93/dnspyre?branch=master)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/tantalor93/dnspyre/v2/blob/master/LICENSE)
