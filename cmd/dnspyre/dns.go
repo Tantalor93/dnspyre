@@ -46,7 +46,7 @@ func dial(b *Benchmark) (*dns.Conn, error) {
 	}
 
 	if b.DOT {
-		// #nosec
+		// nolint:gosec
 		return dns.DialTimeoutWithTLS(network, b.Server, &tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: b.Insecure}, dnsTimeout)
 	}
 	return dns.DialTimeout(network, b.Server, dnsTimeout)

@@ -16,6 +16,7 @@ import (
 	"github.com/HdrHistogram/hdrhistogram-go"
 	"github.com/fatih/color"
 	"github.com/miekg/dns"
+	"github.com/quic-go/quic-go/http3"
 	"github.com/tantalor93/doh-go/doh"
 	"go.uber.org/ratelimit"
 	"golang.org/x/net/http2"
@@ -147,17 +148,19 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		_, network = isHTTPUrl(b.Server)
 		var tr http.RoundTripper
 		switch b.DohProtocol {
-		case "1.1":
-			network += "/1.1"
-			// #nosec
-			tr = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
+		case "3":
+			network += "/3"
+			// nolint:gosec
+			tr = &http3.RoundTripper{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
 		case "2":
 			network += "/2"
-			// #nosec
+			// nolint:gosec
 			tr = &http2.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
+		case "1.1":
+			fallthrough
 		default:
 			network += "/1.1"
-			// #nosec
+			// nolint:gosec
 			tr = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
 		}
 		c := http.Client{Transport: tr, Timeout: b.ReadTimeout}
@@ -212,7 +215,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 			}()
 
 			// create a new lock free rand source for this goroutine
-			// #nosec
+			// nolint:gosec
 			rando := rand.New(rand.NewSource(time.Now().Unix()))
 
 			var i int64
