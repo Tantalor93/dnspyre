@@ -108,9 +108,5 @@ func (s *jsonReporter) print(b *Benchmark, timings *hdrhistogram.Histogram, code
 		LatencyDistribution: res,
 	}
 
-	if err := json.NewEncoder(os.Stdout).Encode(result); err != nil {
-		return err
-	}
-
-	return nil
+	return json.NewEncoder(os.Stdout).Encode(result)
 }

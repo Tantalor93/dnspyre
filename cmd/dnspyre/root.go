@@ -64,7 +64,7 @@ var (
 	pPlotFormat = pApp.Flag("plotf", "Format of graphs. Supported formats: png, jpg.").Default("png").Enum("png", "jpg")
 
 	pDoHmethod   = pApp.Flag("doh-method", "HTTP method to use for DoH requests. Supported values: get, post.").Default("post").Enum("get", "post")
-	pDoHProtocol = pApp.Flag("doh-protocol", "HTTP protocol to use for DoH requests. Supported values: 1.1, 2.").Default("1.1").Enum("1.1", "2")
+	pDoHProtocol = pApp.Flag("doh-protocol", "HTTP protocol to use for DoH requests. Supported values: 1.1, 2 and 3.").Default("1.1").Enum("1.1", "2", "3")
 
 	pInsecure = pApp.Flag("insecure", "Disables server TLS certificate validation. Applicable both for DoT and DoH.").Default("false").Bool()
 
