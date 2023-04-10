@@ -29,15 +29,6 @@ This tool supports wide variety of options to customize DNS benchmark and benchm
 * benchmark DNS servers with uneven random load from provided high volume resources (see `/data` resources and `--probability` option)  
 * plot benchmark results via CLI histogram or plot the benchmark results as boxplot, histogram, line graphs and export them via all kind of image formats (png, svg, pdf)
 
-## Warning
-
-While `dnspyre` is helpful for testing round trip latency via public networks,
-the code was primarily created to provide an [apachebench](https://en.wikipedia.org/wiki/ApacheBench)
-style tool for testing your own infrastructure.
-
-It is thus very easy to create significant DNS load with non default settings.
-**Do not do this to public DNS services**. You will most likely flag your IP.
-
 ## Installation 
 using `brew`
 ```
