@@ -11,10 +11,9 @@
 + [EDNSOPT usage](#ednsopt-usage)
 + [DoT](#dot)
   + [DoT with self-signed certificates](#dot-with-self-signed-certificates)
-
 + [DoH](#doh)
   + [DoH via GET/POST](#doh-via-getpost)
-  + [DoH/1.1, DoH/2](#doh11-doh2)
+  + [DoH/1.1, DoH/2, DoH/3](#doh/1.1,-doh/2,-doh/3)
   + [DoH via plain HTTP](#doh-via-plain-http)
   + [DoH with self-signed certificates](#doh-with-self-signed-certificates)
 + [Plotting graphs](#plotting-graphs)
@@ -1031,8 +1030,8 @@ DNS distribution, 2 datapoints
 
 </details>
 
-#### DoH/1.1, DoH/2
-you can also specify whether the DoH is done over HTTP/1.1 or HTTP/2 using `--doh-protocol`
+#### DoH/1.1, DoH/2, DoH/3
+you can also specify whether the DoH is done over HTTP/1.1, HTTP/2, HTTP/3 using `--doh-protocol`, for example:
 ```
 dnspyre -c 2 --server 'https://1.1.1.1/dns-query' --doh-protocol 2 --recurse google.com
 ```
