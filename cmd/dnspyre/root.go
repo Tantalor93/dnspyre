@@ -24,8 +24,9 @@ var (
 	pApp = kingpin.New("dnspyre", "A high QPS DNS benchmark.").Author(author)
 
 	pServer = pApp.Flag("server", "DNS server IP:port to test. IPv6 is also supported, for example '[fddd:dddd::]:53'. "+
-		"Also, DoH (DNS over HTTPS) servers are supported such as `https://1.1.1.1/dns-query`, when such server is provided, the benchmark automatically switches to the use of DoH. "+
-		"Note that path on which the DoH server handles requests (like `/dns-query`) has to be provided as well.").Short('s').Default("127.0.0.1").String()
+		"DoH (DNS over HTTPS) servers are supported such as `https://1.1.1.1/dns-query`, when such server is provided, the benchmark automatically switches to the use of DoH. "+
+		"Note that path on which the DoH server handles requests (like `/dns-query`) has to be provided as well. DoQ (DNS over QUIC) servers are also supported, such as `quic://dns.adguard-dns.com`, "+
+		"when such server is provided the benchmark switches to the use of DoQ.").Short('s').Default("127.0.0.1").String()
 
 	pTypes       = pApp.Flag("type", "Query type. Repeatable flag. If multiple query types are specified then each query will be duplicated for each type.").Short('t').Default("A").Enums(getSupportedDNSTypes()...)
 	pCount       = pApp.Flag("number", "How many times the provided queries are repeated. Note that the total number of queries issued = types*number*concurrency*len(queries).").Short('n').Int64()

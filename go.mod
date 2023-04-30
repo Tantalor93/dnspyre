@@ -10,7 +10,7 @@ require (
 	github.com/miekg/dns v1.1.53
 	github.com/montanaflynn/stats v0.7.0
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/quic-go/quic-go v0.33.0
+	github.com/quic-go/quic-go v0.34.0
 	github.com/stretchr/testify v1.8.2
 	github.com/tantalor93/doh-go v0.1.0
 	go-hep.org/x/hep v0.32.1
@@ -19,6 +19,8 @@ require (
 	golang.org/x/sys v0.7.0 // indirect
 	gonum.org/v1/plot v0.12.0
 )
+
+require github.com/tantalor93/doq-go v0.1.1
 
 require (
 	git.sr.ht/~sbinet/gg v0.3.1 // indirect
@@ -41,8 +43,8 @@ require (
 	github.com/onsi/ginkgo/v2 v2.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
-	github.com/quic-go/qtls-go1-19 v0.2.1 // indirect
-	github.com/quic-go/qtls-go1-20 v0.1.1 // indirect
+	github.com/quic-go/qtls-go1-19 v0.3.2 // indirect
+	github.com/quic-go/qtls-go1-20 v0.2.2 // indirect
 	github.com/rivo/uniseg v0.3.4 // indirect
 	golang.org/x/crypto v0.4.0 // indirect
 	golang.org/x/exp v0.0.0-20221205204356-47842c84f3db // indirect

@@ -16,6 +16,7 @@
   + [DoH/1.1, DoH/2, DoH/3](#doh/1.1,-doh/2,-doh/3)
   + [DoH via plain HTTP](#doh-via-plain-http)
   + [DoH with self-signed certificates](#doh-with-self-signed-certificates)
++ [DoQ](#doq) 
 + [Plotting graphs](#plotting-graphs)
 + [Output benchmark results as JSON](#Output-benchmark-results-as-JSON)
 
@@ -1119,6 +1120,152 @@ In some cases you might want to skip invalid and self-signed certificates, this 
 dnspyre --server https://127.0.0.1/dns-query  --insecure google.com
 ```
 
+### DoQ
+benchmarking DoQ server (DNS over QUIC)
+```
+dnspyre --duration 10s --server quic://dns.adguard-dns.com --recurse  https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains
+```
+
+<details>
+<summary>output</summary>
+```
+Using 1000 hostnames
+Benchmarking dns.adguard-dns.com:853 via quic with 1 concurrent requests
+
+Total requests:		59
+DNS success codes:	57
+
+DNS response codes:
+NOERROR:	57
+SERVFAIL:	2
+
+DNS question types:
+A:	59
+
+Time taken for tests:	 10.5s
+Questions per second:	 5.6
+DNS timings, 59 datapoints
+min:		 14.68ms
+mean:		 172.64ms
+[+/-sd]:	 312.13ms
+max:		 1.48s
+p99:		 1.14s
+p95:		 973.08ms
+p90:		 637.53ms
+p75:		 96.47ms
+p50:		 46.14ms
+
+DNS distribution, 59 datapoints
+LATENCY  |                                             | COUNT
+-----------+---------------------------------------------+--------
+14.94ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄        |     5
+15.47ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ |     6
+15.99ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                              |     2
+16.52ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                              |     2
+17.3ms   | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                              |     2
+18.35ms  | ▄▄▄▄▄▄▄                                     |     1
+19.4ms   | ▄▄▄▄▄▄▄                                     |     1
+20.45ms  |                                             |     0
+21.5ms   |                                             |     0
+22.54ms  | ▄▄▄▄▄▄▄                                     |     1
+23.59ms  |                                             |     0
+24.64ms  |                                             |     0
+25.69ms  |                                             |     0
+26.74ms  |                                             |     0
+27.79ms  |                                             |     0
+28.84ms  |                                             |     0
+29.88ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                              |     2
+30.93ms  | ▄▄▄▄▄▄▄                                     |     1
+31.98ms  |                                             |     0
+33.03ms  |                                             |     0
+34.6ms   | ▄▄▄▄▄▄▄                                     |     1
+36.7ms   |                                             |     0
+38.8ms   | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                              |     2
+40.89ms  |                                             |     0
+42.99ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                              |     2
+45.09ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                              |     2
+47.19ms  | ▄▄▄▄▄▄▄                                     |     1
+49.28ms  |                                             |     0
+51.38ms  | ▄▄▄▄▄▄▄                                     |     1
+53.48ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                      |     3
+55.57ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                              |     2
+57.67ms  |                                             |     0
+59.77ms  |                                             |     0
+61.87ms  | ▄▄▄▄▄▄▄                                     |     1
+63.96ms  |                                             |     0
+66.06ms  |                                             |     0
+69.21ms  | ▄▄▄▄▄▄▄                                     |     1
+73.4ms   |                                             |     0
+77.59ms  | ▄▄▄▄▄▄▄                                     |     1
+81.79ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                              |     2
+85.98ms  |                                             |     0
+90.18ms  |                                             |     0
+94.37ms  | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                              |     2
+98.57ms  | ▄▄▄▄▄▄▄                                     |     1
+102.76ms |                                             |     0
+106.95ms |                                             |     0
+111.15ms |                                             |     0
+115.34ms |                                             |     0
+119.54ms |                                             |     0
+123.73ms | ▄▄▄▄▄▄▄                                     |     1
+127.93ms |                                             |     0
+132.12ms |                                             |     0
+138.41ms | ▄▄▄▄▄▄▄                                     |     1
+146.8ms  |                                             |     0
+155.19ms |                                             |     0
+163.58ms |                                             |     0
+171.97ms |                                             |     0
+180.36ms |                                             |     0
+188.74ms |                                             |     0
+197.13ms | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                              |     2
+205.52ms |                                             |     0
+213.91ms |                                             |     0
+222.3ms  |                                             |     0
+230.69ms |                                             |     0
+239.08ms |                                             |     0
+247.46ms |                                             |     0
+255.85ms |                                             |     0
+264.24ms |                                             |     0
+276.82ms |                                             |     0
+293.6ms  |                                             |     0
+310.38ms | ▄▄▄▄▄▄▄                                     |     1
+327.16ms |                                             |     0
+343.93ms |                                             |     0
+360.71ms |                                             |     0
+377.49ms | ▄▄▄▄▄▄▄                                     |     1
+394.26ms |                                             |     0
+411.04ms |                                             |     0
+427.82ms | ▄▄▄▄▄▄▄                                     |     1
+444.6ms  |                                             |     0
+461.37ms |                                             |     0
+478.15ms |                                             |     0
+494.93ms |                                             |     0
+511.71ms |                                             |     0
+528.48ms |                                             |     0
+553.65ms |                                             |     0
+587.2ms  |                                             |     0
+620.76ms | ▄▄▄▄▄▄▄                                     |     1
+654.31ms |                                             |     0
+687.87ms | ▄▄▄▄▄▄▄                                     |     1
+721.42ms |                                             |     0
+754.97ms | ▄▄▄▄▄▄▄                                     |     1
+788.53ms |                                             |     0
+822.08ms |                                             |     0
+855.64ms |                                             |     0
+889.19ms |                                             |     0
+922.75ms |                                             |     0
+956.3ms  | ▄▄▄▄▄▄▄                                     |     1
+989.86ms |                                             |     0
+1.02s    |                                             |     0
+1.06s    |                                             |     0
+1.11s    | ▄▄▄▄▄▄▄▄▄▄▄▄▄▄                              |     2
+1.17s    |                                             |     0
+1.24s    |                                             |     0
+1.31s    |                                             |     0
+1.38s    |                                             |     0
+1.44s    | ▄▄▄▄▄▄▄                                     |     1
+```
+</details>
 
 ### Plotting graphs
 plots benchmark results as histograms, boxplots and line graphs to the new subdirectory `graphs-<RFC3339 timestamp>` in the current directory

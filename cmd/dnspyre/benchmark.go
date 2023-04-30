@@ -18,6 +18,7 @@ import (
 	"github.com/miekg/dns"
 	"github.com/quic-go/quic-go/http3"
 	"github.com/tantalor93/doh-go/doh"
+	"github.com/tantalor93/doq-go/doq"
 	"go.uber.org/ratelimit"
 	"golang.org/x/net/http2"
 )
@@ -77,11 +78,16 @@ type Benchmark struct {
 	Duration time.Duration
 
 	// internal variable so we do not have to parse the address with each request.
-	useDoH bool
+	useDoH  bool
+	useQuic bool
 }
 
 func (b *Benchmark) normalize() error {
 	b.useDoH, _ = isHTTPUrl(b.Server)
+	b.useQuic = strings.HasPrefix(b.Server, "quic://")
+	if b.useQuic {
+		b.Server = strings.TrimPrefix(b.Server, "quic://")
+	}
 
 	b.addPortIfMissing()
 
@@ -178,6 +184,16 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 			dohFunc = dohClient.SendViaPost
 		}
 	}
+	var quicClient *doq.Client
+	if b.useQuic {
+		var err error
+		// nolint:gosec
+		quicClient, err = doq.NewClient(b.Server, doq.Options{TlsConfig: &tls.Config{InsecureSkipVerify: b.Insecure}})
+		if err != nil {
+			return nil, err
+		}
+		network = "quic"
+	}
 
 	limits := ""
 	var limit ratelimit.Limiter
@@ -244,7 +260,15 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 						}
 
 						start := time.Now()
-						if b.useDoH {
+						// nolint:gocritic
+						if b.useQuic {
+							r, err = quicClient.Send(ctx, &m)
+							if err != nil {
+								st.Counters.IOError++
+								st.Errors = append(st.Errors, err)
+								continue
+							}
+						} else if b.useDoH {
 							r, err = dohFunc(ctx, b.Server, &m)
 							if err != nil {
 								st.Counters.IOError++
@@ -303,6 +327,10 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 func (b *Benchmark) addPortIfMissing() {
 	if b.useDoH {
 		// both HTTPS and HTTP are using default ports 443 and 80 if no other port is specified
+		return
+	}
+	if b.useQuic {
+		b.Server = net.JoinHostPort(b.Server, "853")
 		return
 	}
 	if _, _, err := net.SplitHostPort(b.Server); err != nil {
