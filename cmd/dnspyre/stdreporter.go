@@ -161,7 +161,7 @@ func makeBar(c int64, max int64) string {
 
 func roundDuration(dur time.Duration) time.Duration {
 	if dur > time.Minute {
-		return dur.Round(100 * time.Second)
+		return dur.Round(10 * time.Second)
 	}
 	if dur > time.Second {
 		return dur.Round(10 * time.Millisecond)
