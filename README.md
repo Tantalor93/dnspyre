@@ -26,6 +26,7 @@ This tool supports wide variety of options to customize DNS benchmark and benchm
 * benchmark DNS servers for a specified duration (`--duration` option)
 * benchmark DNS servers with DoT
 * benchmark DNS servers using DoH 
+* benchmark DNS servers using DoQ
 * benchmark DNS servers with uneven random load from provided high volume resources (see `/data` resources and `--probability` option)  
 * plot benchmark results via CLI histogram or plot the benchmark results as boxplot, histogram, line graphs and export them via all kind of image formats (png, svg, pdf)
 

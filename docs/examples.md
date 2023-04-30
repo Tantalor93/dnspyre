@@ -1128,6 +1128,7 @@ dnspyre --duration 10s --server quic://dns.adguard-dns.com --recurse  https://ra
 
 <details>
 <summary>output</summary>
+
 ```
 Using 1000 hostnames
 Benchmarking dns.adguard-dns.com:853 via quic with 1 concurrent requests
