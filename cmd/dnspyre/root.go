@@ -35,7 +35,7 @@ var (
 	pRate     = pApp.Flag("rate-limit", "Apply a global questions / second rate limit.").Short('l').Default("0").Int()
 	pQperConn = pApp.Flag("query-per-conn", "Queries on a connection before creating a new one. 0: unlimited. Applicable for plain DNS and DoT, this option is not considered for DoH.").Default("0").Int64()
 
-	pRecurse = pApp.Flag("recurse", "Allow DNS recursion.").Short('r').Default("false").Bool()
+	pRecurse = pApp.Flag("recurse", "Allow DNS recursion. Enabled by default. DNS recursion can be disabled by --no-recurse.").Short('r').Default("true").Bool()
 
 	pProbability = pApp.Flag("probability", "Each provided hostname will be used with provided probability. Value 1 and above means that each hostname will be used by each concurrent benchmark goroutine. Useful for randomizing queries across benchmark goroutines.").Default("1").Float64()
 
