@@ -10,7 +10,7 @@ parent: Examples
 dnspyre supports running benchmarks against [RFC-7858](https://datatracker.ietf.org/doc/html/rfc7858) compatible DNS over TLS servers
 
 ```
-dnspyre  --dot --recurse  --server 1.1.1.1:853 idnes.cz
+dnspyre --dot --server 1.1.1.1:853 idnes.cz
 ```
 
 ## DoT with self-signed certificates

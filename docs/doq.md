@@ -8,5 +8,5 @@ parent: Examples
 dnspyre supports running benchmarks against [RFC-9250](https://datatracker.ietf.org/doc/rfc9250/) compatible DNS over QUIC servers
 
 ```
-dnspyre --server quic://dns.adguard-dns.com --recurse google.com
+dnspyre --server quic://dns.adguard-dns.com google.com
 ```

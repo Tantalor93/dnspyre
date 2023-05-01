@@ -38,7 +38,7 @@ Flags:
   -c, --concurrency=1          Number of concurrent queries to issue.
   -l, --rate-limit=0           Apply a global questions / second rate limit.
       --query-per-conn=0       Queries on a connection before creating a new one. 0: unlimited. Applicable for plain DNS and DoT, this option is not considered for DoH.
-  -r, --recurse                Allow DNS recursion.
+  -r, --recurse                Allow DNS recursion. Enabled by default. DNS recursion can be disabled by --no-recurse.
       --probability=1          Each provided hostname will be used with provided probability. Value 1 and above means that each hostname will be used by each concurrent benchmark goroutine. Useful for randomizing queries across benchmark goroutines.
       --edns0=0                Enable EDNS0 with specified size.
       --ednsopt=""             code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal string. code must be an arbitrary numeric value.
