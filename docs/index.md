@@ -2,7 +2,6 @@
 title: Home
 layout: home
 nav_order: 0
-has_children: true
 ---
 
 # dnspyre
