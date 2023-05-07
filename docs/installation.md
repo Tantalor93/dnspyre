@@ -27,3 +27,10 @@ For **Bash**, add to your `~/.bash_profile` (or equivalent Bash configuration fi
 ```
 eval "$(dnspyre --completion-script-bash)"
 ```
+
+# Docker image
+if you don't want to install `dnspyre` locally, you can use prepared [Docker image](https://hub.docker.com/r/tantalor93/dnspyre/tags),
+for example 
+```
+docker run tantalor93/dnspyre --server 8.8.8.8 google.com
+```

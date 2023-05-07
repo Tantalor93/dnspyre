@@ -3,3 +3,10 @@ description: CLI tool for a high QPS DNS benchmark
 theme: just-the-docs
 
 url: https://tantalor93.github.io/dnspyre
+
+aux_links:
+  GitHub: https://github.com/tantalor93/dnspyre
+
+nav_external_links:
+- title: Source
+  url: https://github.com/tantalor93/dnspyre
