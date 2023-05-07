@@ -59,7 +59,7 @@ Flags:
       --plotf=png              Format of graphs. Supported formats: png, jpg.
       --doh-method=post        HTTP method to use for DoH requests. Supported values: get, post.
       --doh-protocol=1.1       HTTP protocol to use for DoH requests. Supported values: 1.1, 2 and 3.
-      --insecure               Disables server TLS certificate validation. Applicable both for DoT and DoH.
+      --insecure               Disables server TLS certificate validation. Applicable for DoT, DoH and DoQ.
   -d, --duration=1m            Specifies for how long the benchmark should be executing, the benchmark will run for the specified time while sending DNS requests in an infinite loop based on the data source. After running for the specified duration,
                                the benchmark is canceled. This option is exclusive with --number option. The duration is specified in GO duration format e.g. 10s, 15m, 1h.
       --version                Show application version.

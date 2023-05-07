@@ -67,7 +67,7 @@ var (
 	pDoHmethod   = pApp.Flag("doh-method", "HTTP method to use for DoH requests. Supported values: get, post.").Default("post").Enum("get", "post")
 	pDoHProtocol = pApp.Flag("doh-protocol", "HTTP protocol to use for DoH requests. Supported values: 1.1, 2 and 3.").Default("1.1").Enum("1.1", "2", "3")
 
-	pInsecure = pApp.Flag("insecure", "Disables server TLS certificate validation. Applicable both for DoT and DoH.").Default("false").Bool()
+	pInsecure = pApp.Flag("insecure", "Disables server TLS certificate validation. Applicable for DoT, DoH and DoQ.").Default("false").Bool()
 
 	pDuration = pApp.Flag("duration", "Specifies for how long the benchmark should be executing, the benchmark will run for the specified time "+
 		"while sending DNS requests in an infinite loop based on the data source. After running for the specified duration, the benchmark is canceled. "+
