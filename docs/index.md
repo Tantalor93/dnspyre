@@ -37,7 +37,7 @@ Flags:
   -n, --number=NUMBER          How many times the provided queries are repeated. Note that the total number of queries issued = types*number*concurrency*len(queries).
   -c, --concurrency=1          Number of concurrent queries to issue.
   -l, --rate-limit=0           Apply a global questions / second rate limit.
-      --query-per-conn=0       Queries on a connection before creating a new one. 0: unlimited. Applicable for plain DNS and DoT, this option is not considered for DoH.
+      --query-per-conn=0       Queries on a connection before creating a new one. 0: unlimited. Applicable for plain DNS and DoT, this option is not considered for DoH or DoQ.
   -r, --recurse                Allow DNS recursion. Enabled by default. DNS recursion can be disabled by --no-recurse.
       --probability=1          Each provided hostname will be used with provided probability. Value 1 and above means that each hostname will be used by each concurrent benchmark goroutine. Useful for randomizing queries across benchmark goroutines.
       --edns0=0                Enable EDNS0 with specified size.

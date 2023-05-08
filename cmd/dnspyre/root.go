@@ -33,7 +33,7 @@ var (
 	pConcurrency = pApp.Flag("concurrency", "Number of concurrent queries to issue.").Short('c').Default("1").Uint32()
 
 	pRate     = pApp.Flag("rate-limit", "Apply a global questions / second rate limit.").Short('l').Default("0").Int()
-	pQperConn = pApp.Flag("query-per-conn", "Queries on a connection before creating a new one. 0: unlimited. Applicable for plain DNS and DoT, this option is not considered for DoH.").Default("0").Int64()
+	pQperConn = pApp.Flag("query-per-conn", "Queries on a connection before creating a new one. 0: unlimited. Applicable for plain DNS and DoT, this option is not considered for DoH or DoQ.").Default("0").Int64()
 
 	pRecurse = pApp.Flag("recurse", "Allow DNS recursion. Enabled by default. DNS recursion can be disabled by --no-recurse.").Short('r').Default("true").Bool()
 
