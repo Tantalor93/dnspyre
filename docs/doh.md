@@ -4,8 +4,6 @@ layout: default
 parent: Examples
 ---
 
-
-
 # DoH
 {: .no_toc }
 

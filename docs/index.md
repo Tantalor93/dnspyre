@@ -10,16 +10,16 @@ Command-line DNS benchmark tool built to stress test and measure the performance
 
 This tool is based and originally forked from [dnstrace](https://github.com/redsift/dnstrace), but was largely rewritten and enhanced with additional functionality.
 
-This tool supports wide variety of options to customize DNS benchmark and benchmark output. For example you can:
-* benchmark DNS servers using DNS queries over UDP or TCP
-* benchmark DNS servers with all kinds of query types (A, AAAA, CNAME, HTTPS, ...)
+This tool supports wide variety of options to customize DNS benchmark and benchmark output. For example, you can:
+* benchmark DNS servers using DNS queries over UDP or TCP, see [plain DNS example](plaindns.md)
+* benchmark DNS servers with all kinds of query types like A, AAAA, CNAME, HTTPS, ... (`--type` option)
 * benchmark DNS servers with a lot of parallel queries and connections (`--number`, `--concurrency` options)
 * benchmark DNS servers for a specified duration (`--duration` option)
-* benchmark DNS servers with DoT
-* benchmark DNS servers using DoH
-* benchmark DNS servers using DoQ
-* benchmark DNS servers with uneven random load from provided high volume resources (see `/data` resources and `--probability` option)
-* plot benchmark results via CLI histogram or plot the benchmark results as boxplot, histogram, line graphs and export them via all kind of image formats (png, svg, pdf)
+* benchmark DNS servers with DoT, see [DoQ example](doq.md)
+* benchmark DNS servers using DoH, see [DoH example](doh.md)
+* benchmark DNS servers using DoQ, see [DoQ example](doq.md)
+* benchmark DNS servers with uneven random load from provided high volume resources (see `--probability` option)
+* plot benchmark results via CLI histogram or plot the benchmark results as boxplot, histogram, line graphs and export them via all kind of image formats like png, svg and pdf. (see `plot` and `plotf` options) 
 
 ## Usage
 

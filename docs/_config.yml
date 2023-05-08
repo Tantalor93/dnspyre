@@ -10,3 +10,6 @@ aux_links:
 nav_external_links:
 - title: Source
   url: https://github.com/tantalor93/dnspyre
+
+plugins:
+- jekyll-relative-links
