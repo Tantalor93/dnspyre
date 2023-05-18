@@ -1,6 +1,9 @@
 name: lint
 on:
   pull_request:
+  push:
+    branches:
+    - master
 jobs:
   golangci:
     runs-on: ubuntu-latest
