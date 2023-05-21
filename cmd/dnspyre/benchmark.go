@@ -82,6 +82,8 @@ type Benchmark struct {
 	useQuic bool
 }
 
+type queryFunc func(context.Context, string, *dns.Msg) (*dns.Msg, error)
+
 func (b *Benchmark) normalize() error {
 	b.useDoH, _ = isHTTPUrl(b.Server)
 	b.useQuic = strings.HasPrefix(b.Server, "quic://")
@@ -148,49 +150,19 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		network = "tcp"
 	}
 
-	var dohClient doh.Client
-	var dohFunc func(context.Context, string, *dns.Msg) (*dns.Msg, error)
+	var query queryFunc
 	if b.useDoH {
-		_, network = isHTTPUrl(b.Server)
-		var tr http.RoundTripper
-		switch b.DohProtocol {
-		case "3":
-			network += "/3"
-			// nolint:gosec
-			tr = &http3.RoundTripper{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
-		case "2":
-			network += "/2"
-			// nolint:gosec
-			tr = &http2.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
-		case "1.1":
-			fallthrough
-		default:
-			network += "/1.1"
-			// nolint:gosec
-			tr = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
-		}
-		c := http.Client{Transport: tr, Timeout: b.ReadTimeout}
-		dohClient = *doh.NewClient(&c)
-
-		switch b.DohMethod {
-		case "post":
-			network += " (POST)"
-			dohFunc = dohClient.SendViaPost
-		case "get":
-			network += " (GET)"
-			dohFunc = dohClient.SendViaGet
-		default:
-			network += " (POST)"
-			dohFunc = dohClient.SendViaPost
-		}
+		query, network = b.getDoHClient()
 	}
-	var quicClient *doq.Client
+
 	if b.useQuic {
-		var err error
 		// nolint:gosec
-		quicClient, err = doq.NewClient(b.Server, doq.Options{TlsConfig: &tls.Config{InsecureSkipVerify: b.Insecure}})
+		quicClient, err := doq.NewClient(b.Server, doq.Options{TlsConfig: &tls.Config{InsecureSkipVerify: b.Insecure}})
 		if err != nil {
 			return nil, err
+		}
+		query = func(ctx context.Context, _ string, msg *dns.Msg) (*dns.Msg, error) {
+			return quicClient.Send(ctx, msg)
 		}
 		network = "quic"
 	}
@@ -260,16 +232,8 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 						}
 
 						start := time.Now()
-						// nolint:gocritic
-						if b.useQuic {
-							r, err = quicClient.Send(ctx, &m)
-							if err != nil {
-								st.Counters.IOError++
-								st.Errors = append(st.Errors, err)
-								continue
-							}
-						} else if b.useDoH {
-							r, err = dohFunc(ctx, b.Server, &m)
+						if b.useQuic || b.useDoH {
+							r, err = query(ctx, b.Server, &m)
 							if err != nil {
 								st.Counters.IOError++
 								st.Errors = append(st.Errors, err)
@@ -356,4 +320,39 @@ func isHTTPUrl(s string) (ok bool, network string) {
 		return true, "https"
 	}
 	return false, ""
+}
+
+func (b *Benchmark) getDoHClient() (queryFunc, string) {
+	_, network := isHTTPUrl(b.Server)
+	var tr http.RoundTripper
+	switch b.DohProtocol {
+	case "3":
+		network += "/3"
+		// nolint:gosec
+		tr = &http3.RoundTripper{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
+	case "2":
+		network += "/2"
+		// nolint:gosec
+		tr = &http2.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
+	case "1.1":
+		fallthrough
+	default:
+		network += "/1.1"
+		// nolint:gosec
+		tr = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
+	}
+	c := http.Client{Transport: tr, Timeout: b.ReadTimeout}
+	dohClient := doh.NewClient(&c)
+
+	switch b.DohMethod {
+	case "post":
+		network += " (POST)"
+		return dohClient.SendViaPost, network
+	case "get":
+		network += " (GET)"
+		return dohClient.SendViaGet, network
+	default:
+		network += " (POST)"
+		return dohClient.SendViaPost, network
+	}
 }

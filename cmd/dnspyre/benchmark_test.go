@@ -468,6 +468,11 @@ func TestBenchmark_normalize(t *testing.T) {
 			benchmark:  Benchmark{Server: "http://127.0.0.1/dns-query"},
 			wantServer: "http://127.0.0.1/dns-query",
 		},
+		{
+			name:       "server - QUIC url",
+			benchmark:  Benchmark{Server: "quic://dns.adguard-dns.com"},
+			wantServer: "dns.adguard-dns.com:853",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

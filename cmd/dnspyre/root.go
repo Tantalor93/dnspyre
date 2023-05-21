@@ -3,7 +3,6 @@ package dnspyre
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"os"
 	"os/signal"
 	"syscall"
@@ -135,9 +134,6 @@ func Execute() {
 		<-sigsInt
 		os.Exit(1)
 	}()
-
-	// get going
-	rand.Seed(time.Now().UnixNano())
 
 	start := time.Now()
 	res, err := bench.Run(ctx)
