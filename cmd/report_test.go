@@ -1,4 +1,4 @@
-package dnspyre
+package cmd
 
 import (
 	"errors"

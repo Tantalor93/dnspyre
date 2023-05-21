@@ -1,7 +1,9 @@
 package main
 
-import "github.com/tantalor93/dnspyre/v2/cmd/dnspyre"
+import (
+	"github.com/tantalor93/dnspyre/v2/cmd"
+)
 
 func main() {
-	dnspyre.Execute()
+	cmd.Execute()
 }
