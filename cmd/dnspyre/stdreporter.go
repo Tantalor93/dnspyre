@@ -70,7 +70,7 @@ func (s *standardReporter) print(b *Benchmark, timings *hdrhistogram.Histogram, 
 		dist := timings.Distribution()
 		if b.HistDisplay && tc > 1 {
 			fmt.Println()
-			fmt.Println("DNS distribution,", tc, "datapoints")
+			fmt.Println("DNS distribution,", highlightStr(tc), "datapoints")
 
 			printBars(dist)
 		}
@@ -156,7 +156,7 @@ func makeBar(c int64, max int64) string {
 		return ""
 	}
 	t := int((43 * float64(c) / float64(max)) + 0.5)
-	return strings.Repeat("▄", t)
+	return strings.Repeat(highlightStr("▄"), t)
 }
 
 func roundDuration(dur time.Duration) time.Duration {
