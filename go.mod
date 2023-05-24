@@ -16,19 +16,19 @@ require (
 	go-hep.org/x/hep v0.32.1
 	go.uber.org/ratelimit v0.2.0
 	golang.org/x/net v0.10.0
-	gonum.org/v1/plot v0.12.0
+	gonum.org/v1/plot v0.13.0
 )
 
 require (
-	git.sr.ht/~sbinet/gg v0.3.1 // indirect
+	git.sr.ht/~sbinet/gg v0.4.1 // indirect
 	github.com/ajstarks/svgo v0.0.0-20211024235047-1546f124cd8b // indirect
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
 	github.com/andres-erbsen/clock v0.0.0-20160526145045-9e14626cd129 // indirect
 	github.com/campoy/embedmd v1.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/go-fonts/liberation v0.2.0 // indirect
-	github.com/go-latex/latex v0.0.0-20210823091927-c0d11ff05a81 // indirect
-	github.com/go-pdf/fpdf v0.6.0 // indirect
+	github.com/go-fonts/liberation v0.3.1 // indirect
+	github.com/go-latex/latex v0.0.0-20230307184459-12ec69307ad9 // indirect
+	github.com/go-pdf/fpdf v0.8.0 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/golang/mock v1.6.0 // indirect
@@ -45,13 +45,13 @@ require (
 	github.com/rivo/uniseg v0.3.4 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	golang.org/x/crypto v0.4.0 // indirect
-	golang.org/x/exp v0.0.0-20221205204356-47842c84f3db // indirect
-	golang.org/x/image v0.0.0-20220902085622-e7cb96979f69 // indirect
-	golang.org/x/mod v0.8.0 // indirect
+	golang.org/x/exp v0.0.0-20230510235704-dd950f8aeaea // indirect
+	golang.org/x/image v0.7.0 // indirect
+	golang.org/x/mod v0.9.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
-	golang.org/x/tools v0.6.0 // indirect
-	gonum.org/v1/gonum v0.12.0 // indirect
+	golang.org/x/tools v0.7.0 // indirect
+	gonum.org/v1/gonum v0.13.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
