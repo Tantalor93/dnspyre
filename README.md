@@ -1,3 +1,5 @@
+# dnspyre
+
 [![Release](https://img.shields.io/github/release/Tantalor93/dnspyre/all.svg)](https://github.com/tantalor93/dnspyre/releases)
 [![Docker Pulls](https://img.shields.io/docker/pulls/tantalor93/dnspyre.svg)](https://hub.docker.com/r/tantalor93/dnspyre)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tantalor93/dnspyre/v2)](https://goreportcard.com/report/github.com/tantalor93/dnspyre/v2)
@@ -6,9 +8,9 @@
 [![codecov](https://codecov.io/gh/Tantalor93/dnspyre/branch/master/graph/badge.svg?token=MC6PK2OLMK)](https://codecov.io/gh/Tantalor93/dnspyre)
 [![lint](https://github.com/Tantalor93/dnspyre/actions/workflows/lint.yml/badge.svg?branch=master)](https://github.com/Tantalor93/dnspyre/actions/workflows/lint.yml)
 
-# dnspyre
+![dnspyre logo](./docs/assets/logo.png)
 
-Command-line DNS benchmark tool built to stress test and measure the performance of DNS servers. You can easily run benchmark from MacOS, Linux or Windows systems.
+dnspyre is a command-line DNS benchmark tool built to stress test and measure the performance of DNS servers. You can easily run benchmark from MacOS, Linux or Windows systems.
 
 This tool is based and originally forked from [dnstrace](https://github.com/redsift/dnstrace), but was largely rewritten and enhanced with additional functionality.
 

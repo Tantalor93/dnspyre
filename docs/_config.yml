@@ -13,3 +13,6 @@ nav_external_links:
 
 plugins:
 - jekyll-relative-links
+
+logo: "/assets/logo.png"
+favicon_ico: "/assets/favicon.ico"
