@@ -10,7 +10,7 @@ require (
 	github.com/montanaflynn/stats v0.7.1
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/quic-go/quic-go v0.34.0
-	github.com/stretchr/testify v1.8.3
+	github.com/stretchr/testify v1.8.4
 	github.com/tantalor93/doh-go v0.1.0
 	github.com/tantalor93/doq-go v0.1.1
 	go-hep.org/x/hep v0.33.0
