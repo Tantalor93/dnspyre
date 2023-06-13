@@ -42,3 +42,4 @@ graphs*/
 # Jekyll documentation
 _site
 .jekyll-cache
+completions
