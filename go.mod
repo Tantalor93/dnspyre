@@ -12,7 +12,7 @@ require (
 	github.com/quic-go/quic-go v0.34.0
 	github.com/stretchr/testify v1.8.4
 	github.com/tantalor93/doh-go v0.1.0
-	github.com/tantalor93/doq-go v0.1.1
+	github.com/tantalor93/doq-go v0.2.0
 	go-hep.org/x/hep v0.33.0
 	go.uber.org/ratelimit v0.2.0
 	golang.org/x/net v0.11.0

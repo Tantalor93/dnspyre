@@ -225,7 +225,11 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 
 						// instead of setting the question, do this manually for lower overhead and lock free access to id
 						question.Name = q
-						m.Id = uint16(rando.Uint32())
+						if b.useQuic {
+							m.Id = 0
+						} else {
+							m.Id = uint16(rando.Uint32())
+						}
 						m.Question[0] = question
 						if limit != nil {
 							limit.Take()
