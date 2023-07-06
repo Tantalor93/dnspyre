@@ -42,7 +42,7 @@ brews:
     bash_completion.install "completions/dnspyre.bash" => "_dnspyre"
     zsh_completion.install "completions/dnspyre.zsh" => "_dnspyre"
 dockers:
-- use: buildx
+- use: docker
   id: dnspyre
   dockerfile: "Dockerfile-goreleaser"
   image_templates:
