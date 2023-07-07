@@ -297,13 +297,13 @@ func (b *Benchmark) addPortIfMissing() {
 		// both HTTPS and HTTP are using default ports 443 and 80 if no other port is specified
 		return
 	}
-	if b.useQuic {
-		b.Server = net.JoinHostPort(b.Server, "853")
-		return
-	}
 	if _, _, err := net.SplitHostPort(b.Server); err != nil {
 		if b.DOT {
 			// https://www.rfc-editor.org/rfc/rfc7858
+			b.Server = net.JoinHostPort(b.Server, "853")
+			return
+		}
+		if b.useQuic {
 			b.Server = net.JoinHostPort(b.Server, "853")
 			return
 		}

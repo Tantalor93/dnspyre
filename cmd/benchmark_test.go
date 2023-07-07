@@ -473,6 +473,11 @@ func TestBenchmark_normalize(t *testing.T) {
 			benchmark:  Benchmark{Server: "quic://dns.adguard-dns.com"},
 			wantServer: "dns.adguard-dns.com:853",
 		},
+		{
+			name:       "server - QUIC url with port",
+			benchmark:  Benchmark{Server: "quic://localhost:853"},
+			wantServer: "localhost:853",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
