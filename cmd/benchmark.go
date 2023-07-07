@@ -156,8 +156,9 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	}
 
 	if b.useQuic {
+		h, _, _ := net.SplitHostPort(b.Server)
 		// nolint:gosec
-		quicClient, err := doq.NewClient(b.Server, doq.Options{TLSConfig: &tls.Config{InsecureSkipVerify: b.Insecure}})
+		quicClient, err := doq.NewClient(b.Server, doq.Options{TLSConfig: &tls.Config{ServerName: h, InsecureSkipVerify: b.Insecure}})
 		if err != nil {
 			return nil, err
 		}
