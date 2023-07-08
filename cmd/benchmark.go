@@ -152,7 +152,13 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 
 	var query queryFunc
 	if b.useDoH {
-		query, network = b.getDoHClient()
+		var dohQuery queryFunc
+		dohQuery, network = b.getDoHClient()
+		query = func(ctx context.Context, s string, msg *dns.Msg) (*dns.Msg, error) {
+			reqTimeoutCtx, cancel := context.WithTimeout(ctx, dnsTimeout)
+			defer cancel()
+			return dohQuery(reqTimeoutCtx, s, msg)
+		}
 	}
 
 	if b.useQuic {
@@ -163,7 +169,9 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 			return nil, err
 		}
 		query = func(ctx context.Context, _ string, msg *dns.Msg) (*dns.Msg, error) {
-			return quicClient.Send(ctx, msg)
+			reqTimeoutCtx, cancel := context.WithTimeout(ctx, dnsTimeout)
+			defer cancel()
+			return quicClient.Send(reqTimeoutCtx, msg)
 		}
 		network = "quic"
 	}
