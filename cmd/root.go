@@ -43,10 +43,13 @@ func init() {
 	pApp.Flag("rate-limit", "Apply a global questions / second rate limit.").
 		Short('l').Default("0").IntVar(&benchmark.Rate)
 
+	pApp.Flag("rate-limit-worker", "Apply a questions / second rate limit for each concurrent worker specified by --concurrency option.").
+		Default("0").IntVar(&benchmark.RateLimitWorker)
+
 	pApp.Flag("query-per-conn", "Queries on a connection before creating a new one. 0: unlimited. Applicable for plain DNS and DoT, this option is not considered for DoH or DoQ.").
 		Default("0").Int64Var(&benchmark.QperConn)
 
-	pApp.Flag("recurse", "Allow DNS recursion. Enabled by default. DNS recursion can be disabled by --no-recurse.").
+	pApp.Flag("recurse", "Allow DNS recursion. Enabled by default.").
 		Short('r').Default("true").BoolVar(&benchmark.Recurse)
 
 	pApp.Flag("probability", "Each provided hostname will be used with provided probability. Value 1 and above means that each hostname will be used by each concurrent benchmark goroutine. Useful for randomizing queries across benchmark goroutines.").
@@ -65,7 +68,7 @@ func init() {
 
 	pApp.Flag("read", "DNS read timeout.").Default(dnsTimeout.String()).DurationVar(&benchmark.ReadTimeout)
 
-	pApp.Flag("codes", "Enable counting DNS return codes. Enabled by default. Specifying --no-codes disables code counting.").
+	pApp.Flag("codes", "Enable counting DNS return codes. Enabled by default.").
 		Default("true").BoolVar(&benchmark.Rcodes)
 
 	pApp.Flag("min", "Minimum value for timing histogram.").
@@ -77,7 +80,7 @@ func init() {
 	pApp.Flag("precision", "Significant figure for histogram precision.").
 		Default("1").PlaceHolder("[1-5]").IntVar(&benchmark.HistPre)
 
-	pApp.Flag("distribution", "Display distribution histogram of timings to stdout. Enabled by default. Specifying --no-distribution disables histogram display.").
+	pApp.Flag("distribution", "Display distribution histogram of timings to stdout. Enabled by default.").
 		Default("true").BoolVar(&benchmark.HistDisplay)
 
 	pApp.Flag("csv", "Export distribution to CSV.").
@@ -87,7 +90,7 @@ func init() {
 
 	pApp.Flag("silent", "Disable stdout.").Default("false").BoolVar(&benchmark.Silent)
 
-	pApp.Flag("color", "ANSI Color output. Enabled by default. By specifying --no-color disables coloring.").
+	pApp.Flag("color", "ANSI Color output. Enabled by default.").
 		Default("true").BoolVar(&benchmark.Color)
 
 	pApp.Flag("plot", "Plot benchmark results and export them to the directory.").
