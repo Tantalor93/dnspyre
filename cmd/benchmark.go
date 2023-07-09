@@ -36,8 +36,9 @@ type Benchmark struct {
 	Count       int64
 	Concurrency uint32
 
-	Rate     int
-	QperConn int64
+	Rate            int
+	RateLimitWorker int
+	QperConn        int64
 
 	Recurse bool
 
@@ -180,7 +181,14 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	var limit ratelimit.Limiter
 	if b.Rate > 0 {
 		limit = ratelimit.New(b.Rate)
-		limits = fmt.Sprintf("(limited to %s QPS)", highlightStr(b.Rate))
+		if b.RateLimitWorker == 0 {
+			limits = fmt.Sprintf("(limited to %s QPS overall)", highlightStr(b.Rate))
+		} else {
+			limits = fmt.Sprintf("(limited to %s QPS overall and %s QPS per concurrent worker)", highlightStr(b.Rate), highlightStr(b.RateLimitWorker))
+		}
+	}
+	if b.Rate == 0 && b.RateLimitWorker > 0 {
+		limits = fmt.Sprintf("(limited to %s QPS per concurrent worker)", highlightStr(b.RateLimitWorker))
 	}
 
 	if !b.Silent && !b.JSON {
@@ -215,21 +223,36 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 			// nolint:gosec
 			rando := rand.New(rand.NewSource(time.Now().Unix()))
 
+			var workerLimit ratelimit.Limiter
+			if b.RateLimitWorker > 0 {
+				workerLimit = ratelimit.New(b.RateLimitWorker)
+			}
+
 			var i int64
 			for i = 0; i < b.Count || b.Duration != 0; i++ {
 				for _, qt := range qTypes {
 					for _, q := range questions {
+						if ctx.Err() != nil {
+							return
+						}
 						if rando.Float64() > b.Probability {
 							continue
+						}
+						if limit != nil {
+							if err := checkLimit(ctx, limit); err != nil {
+								return
+							}
+						}
+						if workerLimit != nil {
+							if err := checkLimit(ctx, workerLimit); err != nil {
+								return
+							}
 						}
 						var r *dns.Msg
 						m := dns.Msg{}
 						m.RecursionDesired = b.Recurse
 						m.Question = make([]dns.Question, 1)
 						question := dns.Question{Qtype: qt, Qclass: dns.ClassINET}
-						if ctx.Err() != nil {
-							return
-						}
 						st.Counters.Total++
 
 						// instead of setting the question, do this manually for lower overhead and lock free access to id
@@ -240,9 +263,6 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 							m.Id = uint16(rando.Uint32())
 						}
 						m.Question[0] = question
-						if limit != nil {
-							limit.Take()
-						}
 
 						start := time.Now()
 						if b.useQuic || b.useDoH {
@@ -367,5 +387,20 @@ func (b *Benchmark) getDoHClient() (queryFunc, string) {
 	default:
 		network += " (POST)"
 		return dohClient.SendViaPost, network
+	}
+}
+
+func checkLimit(ctx context.Context, limiter ratelimit.Limiter) error {
+	done := make(chan struct{})
+	go func() {
+		limiter.Take()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 }
