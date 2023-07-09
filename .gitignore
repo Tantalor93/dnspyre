@@ -43,3 +43,4 @@ graphs*/
 _site
 .jekyll-cache
 completions
+manpages/

@@ -3,6 +3,7 @@ before:
   - go mod tidy
   - go generate ./...
   - sh scripts/completions.sh
+  - sh scripts/manpages.sh
 builds:
 - env:
   - CGO_ENABLED=0
@@ -25,6 +26,7 @@ archives:
   - LICENSE
   - README.md
   - completions/*
+  - manpages/*
 checksum:
   name_template: 'checksums.txt'
 snapshot:
@@ -41,6 +43,7 @@ brews:
     bin.install "dnspyre"
     bash_completion.install "completions/dnspyre.bash" => "_dnspyre"
     zsh_completion.install "completions/dnspyre.zsh" => "_dnspyre"
+    man1.install Dir["manpages/*.1"]
 dockers:
 - use: docker
   id: dnspyre
