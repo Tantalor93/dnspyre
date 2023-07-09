@@ -13,7 +13,7 @@ For example, this command
 dnspyre -d 30s -c 2 --server 8.8.8.8 --plot . https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains
 ```
 
-generates graphs these graphs:
+generates these graphs:
 * response latency histogram, see [Latency histogram](#latency-histogram) section
 * response latency boxplot, see [Latency boxplot](#latency-boxplot) section
 * barchart of response codes, see [Response codes barchart](#response-codes-barchart) section
