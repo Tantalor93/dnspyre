@@ -23,8 +23,6 @@ import (
 	"golang.org/x/net/http2"
 )
 
-const dnsTimeout = time.Second * 4
-
 var client = http.Client{
 	Timeout: 120 * time.Second,
 }
@@ -50,8 +48,10 @@ type Benchmark struct {
 	TCP bool
 	DOT bool
 
-	WriteTimeout time.Duration
-	ReadTimeout  time.Duration
+	WriteTimeout   time.Duration
+	ReadTimeout    time.Duration
+	ConnectTimeout time.Duration
+	RequestTimeout time.Duration
 
 	Rcodes bool
 
@@ -100,6 +100,10 @@ func (b *Benchmark) normalize() error {
 
 	if b.Duration > 0 && b.Count > 0 {
 		return errors.New("--number and --duration is specified at once, only one can be used")
+	}
+
+	if b.HistMax == 0 {
+		b.HistMax = b.RequestTimeout
 	}
 	return nil
 }
@@ -156,7 +160,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		var dohQuery queryFunc
 		dohQuery, network = b.getDoHClient()
 		query = func(ctx context.Context, s string, msg *dns.Msg) (*dns.Msg, error) {
-			reqTimeoutCtx, cancel := context.WithTimeout(ctx, dnsTimeout)
+			reqTimeoutCtx, cancel := context.WithTimeout(ctx, b.RequestTimeout)
 			defer cancel()
 			return dohQuery(reqTimeoutCtx, s, msg)
 		}
@@ -174,7 +178,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 			return nil, err
 		}
 		query = func(ctx context.Context, _ string, msg *dns.Msg) (*dns.Msg, error) {
-			reqTimeoutCtx, cancel := context.WithTimeout(ctx, dnsTimeout)
+			reqTimeoutCtx, cancel := context.WithTimeout(ctx, b.RequestTimeout)
 			defer cancel()
 			return quicClient.Send(reqTimeoutCtx, msg)
 		}

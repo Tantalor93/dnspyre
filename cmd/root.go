@@ -64,9 +64,13 @@ func init() {
 
 	pApp.Flag("dot", "Use DoT (DNS over TLS) for DNS requests.").Default("false").BoolVar(&benchmark.DOT)
 
-	pApp.Flag("write", "DNS write timeout.").Default("1s").DurationVar(&benchmark.WriteTimeout)
+	pApp.Flag("write", "write timeout.").Default("1s").DurationVar(&benchmark.WriteTimeout)
 
-	pApp.Flag("read", "DNS read timeout.").Default(dnsTimeout.String()).DurationVar(&benchmark.ReadTimeout)
+	pApp.Flag("read", "read timeout.").Default("3s").DurationVar(&benchmark.ReadTimeout)
+
+	pApp.Flag("connect", "connect timeout.").Default("1s").DurationVar(&benchmark.ConnectTimeout)
+
+	pApp.Flag("request", "request timeout.").Default("5s").DurationVar(&benchmark.RequestTimeout)
 
 	pApp.Flag("codes", "Enable counting DNS return codes. Enabled by default.").
 		Default("true").BoolVar(&benchmark.Rcodes)
@@ -74,8 +78,7 @@ func init() {
 	pApp.Flag("min", "Minimum value for timing histogram.").
 		Default((time.Microsecond * 400).String()).DurationVar(&benchmark.HistMin)
 
-	pApp.Flag("max", "Maximum value for timing histogram.").
-		Default(dnsTimeout.String()).DurationVar(&benchmark.HistMax)
+	pApp.Flag("max", "Maximum value for timing histogram.").DurationVar(&benchmark.HistMax)
 
 	pApp.Flag("precision", "Significant figure for histogram precision.").
 		Default("1").PlaceHolder("[1-5]").IntVar(&benchmark.HistPre)

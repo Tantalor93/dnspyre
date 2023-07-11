@@ -30,9 +30,8 @@ A high QPS DNS benchmark.
 
 Flags:
       --[no-]help              Show context-sensitive help (also try --help-long and --help-man).
-  -s, --server="127.0.0.1"     DNS server IP:port to test. IPv6 is also supported, for example '[fddd:dddd::]:53'. DoH (DNS over HTTPS) servers are supported such as `https://1.1.1.1/dns-query`, when such server is provided, the benchmark automatically
-                               switches to the use of DoH. Note that path on which the DoH server handles requests (like `/dns-query`) has to be provided as well. DoQ (DNS over QUIC) servers are also supported, such as `quic://dns.adguard-dns.com`,
-                               when such server is provided the benchmark switches to the use of DoQ.
+  -s, --server="127.0.0.1"     DNS server IP:port to test. IPv6 is also supported, for example '[fddd:dddd::]:53'. DoH (DNS over HTTPS) servers are supported such as `https://1.1.1.1/dns-query`, when such server is provided, the benchmark automatically switches to the use of DoH. Note that path on which the DoH server handles requests (like `/dns-query`) has to be provided as well. DoQ (DNS over QUIC) servers are also supported, such as `quic://dns.adguard-dns.com`, when such server is
+                               provided the benchmark switches to the use of DoQ.
   -t, --type=A ...             Query type. Repeatable flag. If multiple query types are specified then each query will be duplicated for each type.
   -n, --number=NUMBER          How many times the provided queries are repeated. Note that the total number of queries issued = types*number*concurrency*len(queries).
   -c, --concurrency=1          Number of concurrent queries to issue.
@@ -45,11 +44,13 @@ Flags:
       --ednsopt=""             code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal string. code must be an arbitrary numeric value.
       --[no-]tcp               Use TCP for DNS requests.
       --[no-]dot               Use DoT (DNS over TLS) for DNS requests.
-      --write=1s               DNS write timeout.
-      --read=4s                DNS read timeout.
+      --write=1s               write timeout.
+      --read=3s                read timeout.
+      --connect=1s             connect timeout.
+      --request=5s             request timeout.
       --[no-]codes             Enable counting DNS return codes. Enabled by default.
       --min=400µs              Minimum value for timing histogram.
-      --max=4s                 Maximum value for timing histogram.
+      --max=MAX                Maximum value for timing histogram.
       --precision=[1-5]        Significant figure for histogram precision.
       --[no-]distribution      Display distribution histogram of timings to stdout. Enabled by default.
       --csv=/path/to/file.csv  Export distribution to CSV.
@@ -61,11 +62,9 @@ Flags:
       --doh-method=post        HTTP method to use for DoH requests. Supported values: get, post.
       --doh-protocol=1.1       HTTP protocol to use for DoH requests. Supported values: 1.1, 2 and 3.
       --[no-]insecure          Disables server TLS certificate validation. Applicable for DoT, DoH and DoQ.
-  -d, --duration=1m            Specifies for how long the benchmark should be executing, the benchmark will run for the specified time while sending DNS requests in an infinite loop based on the data source. After running for the specified duration,
-                               the benchmark is canceled. This option is exclusive with --number option. The duration is specified in GO duration format e.g. 10s, 15m, 1h.
+  -d, --duration=1m            Specifies for how long the benchmark should be executing, the benchmark will run for the specified time while sending DNS requests in an infinite loop based on the data source. After running for the specified duration, the benchmark is canceled. This option is exclusive with --number option. The duration is specified in GO duration format e.g. 10s, 15m, 1h.
       --[no-]version           Show application version.
 
 Args:
-  <queries>  Queries to issue. It can be a local file referenced using @<file-path>, for example @data/2-domains. It can also be resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that
-             case, the file will be downloaded and saved in-memory.
+  <queries>  Queries to issue. It can be a local file referenced using @<file-path>, for example @data/2-domains. It can also be resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that case, the file will be downloaded and saved in-memory.
 ```

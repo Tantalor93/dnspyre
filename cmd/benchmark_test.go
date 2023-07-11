@@ -203,17 +203,19 @@ func Test_download_external_datasource_using_http(t *testing.T) {
 	defer ts.Close()
 
 	bench := Benchmark{
-		Queries:      []string{ts.URL},
-		Types:        []string{"A", "AAAA"},
-		Server:       s.Addr,
-		TCP:          false,
-		Concurrency:  2,
-		Count:        1,
-		Probability:  1,
-		WriteTimeout: 5 * time.Second,
-		ReadTimeout:  5 * time.Second,
-		Rcodes:       true,
-		Recurse:      true,
+		Queries:        []string{ts.URL},
+		Types:          []string{"A", "AAAA"},
+		Server:         s.Addr,
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -231,17 +233,19 @@ func Test_download_external_datasource_using_http_not_available(t *testing.T) {
 	ts.Close()
 
 	bench := Benchmark{
-		Queries:      []string{ts.URL},
-		Types:        []string{"A", "AAAA"},
-		Server:       "8.8.8.8",
-		TCP:          false,
-		Concurrency:  2,
-		Count:        1,
-		Probability:  1,
-		WriteTimeout: 5 * time.Second,
-		ReadTimeout:  5 * time.Second,
-		Rcodes:       true,
-		Recurse:      true,
+		Queries:        []string{ts.URL},
+		Types:          []string{"A", "AAAA"},
+		Server:         "8.8.8.8",
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -258,17 +262,19 @@ func Test_download_external_datasource_using_http_wrong_response(t *testing.T) {
 	defer ts.Close()
 
 	bench := Benchmark{
-		Queries:      []string{ts.URL},
-		Types:        []string{"A", "AAAA"},
-		Server:       "8.8.8.8",
-		TCP:          false,
-		Concurrency:  2,
-		Count:        1,
-		Probability:  1,
-		WriteTimeout: 5 * time.Second,
-		ReadTimeout:  5 * time.Second,
-		Rcodes:       true,
-		Recurse:      true,
+		Queries:        []string{ts.URL},
+		Types:          []string{"A", "AAAA"},
+		Server:         "8.8.8.8",
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -288,16 +294,18 @@ func Test_do_classic_dns_with_duration(t *testing.T) {
 	defer s.Close()
 
 	bench := Benchmark{
-		Queries:      []string{"example.org"},
-		Types:        []string{"A"},
-		Server:       s.Addr,
-		Concurrency:  1,
-		Duration:     2 * time.Second,
-		Probability:  1,
-		WriteTimeout: 5 * time.Second,
-		ReadTimeout:  5 * time.Second,
-		Rcodes:       true,
-		Recurse:      true,
+		Queries:        []string{"example.org"},
+		Types:          []string{"A"},
+		Server:         s.Addr,
+		Concurrency:    1,
+		Duration:       2 * time.Second,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -310,18 +318,20 @@ func Test_do_classic_dns_with_duration(t *testing.T) {
 
 func Test_duration_and_count_specified_at_once(t *testing.T) {
 	bench := Benchmark{
-		Queries:      []string{"example.org"},
-		Types:        []string{"A"},
-		Server:       "8.8.8.8",
-		TCP:          false,
-		Count:        1,
-		Duration:     time.Second,
-		Concurrency:  1,
-		Probability:  1,
-		WriteTimeout: 5 * time.Second,
-		ReadTimeout:  5 * time.Second,
-		Rcodes:       true,
-		Recurse:      true,
+		Queries:        []string{"example.org"},
+		Types:          []string{"A"},
+		Server:         "8.8.8.8",
+		TCP:            false,
+		Count:          1,
+		Duration:       time.Second,
+		Concurrency:    1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -344,16 +354,18 @@ func Test_do_classic_dns_default_count(t *testing.T) {
 	defer s.Close()
 
 	bench := Benchmark{
-		Queries:      []string{"example.org"},
-		Types:        []string{"A"},
-		Server:       s.Addr,
-		TCP:          false,
-		Concurrency:  1,
-		Probability:  1,
-		WriteTimeout: 5 * time.Second,
-		ReadTimeout:  5 * time.Second,
-		Rcodes:       true,
-		Recurse:      true,
+		Queries:        []string{"example.org"},
+		Types:          []string{"A"},
+		Server:         s.Addr,
+		TCP:            false,
+		Concurrency:    1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -409,17 +421,19 @@ func assertTimings(t *testing.T, rs *ResultStats) {
 
 func createBenchmark(server string, tcp bool, prob float64) Benchmark {
 	return Benchmark{
-		Queries:      []string{"example.org"},
-		Types:        []string{"A", "AAAA"},
-		Server:       server,
-		TCP:          tcp,
-		Concurrency:  2,
-		Count:        1,
-		Probability:  prob,
-		WriteTimeout: 5 * time.Second,
-		ReadTimeout:  5 * time.Second,
-		Rcodes:       true,
-		Recurse:      true,
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         server,
+		TCP:            tcp,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    prob,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
 	}
 }
 
