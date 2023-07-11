@@ -95,9 +95,6 @@ func (s *standardReporter) print(b *Benchmark, timings *hdrhistogram.Histogram, 
 func (b *Benchmark) printProgress(c Counters) {
 	fmt.Printf("\nTotal requests:\t\t%s\n", highlightStr(c.Total))
 
-	if c.ConnError > 0 {
-		errPrint(os.Stdout, "Connection errors:\t%d\n", c.ConnError)
-	}
 	if c.IOError > 0 {
 		errPrint(os.Stdout, "Read/Write errors:\t%d\n", c.IOError)
 	}

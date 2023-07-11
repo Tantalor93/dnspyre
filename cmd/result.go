@@ -10,7 +10,6 @@ import (
 // Counters represents various counters of benchmark results.
 type Counters struct {
 	Total      int64
-	ConnError  int64
 	IOError    int64
 	Success    int64
 	IDmismatch int64

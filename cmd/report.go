@@ -59,7 +59,6 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) error {
 		if s.Counters != nil {
 			totalCounters = Counters{
 				Total:      totalCounters.Total + s.Counters.Total,
-				ConnError:  totalCounters.ConnError + s.Counters.ConnError,
 				IOError:    totalCounters.IOError + s.Counters.IOError,
 				Success:    totalCounters.Success + s.Counters.Success,
 				IDmismatch: totalCounters.IDmismatch + s.Counters.IDmismatch,

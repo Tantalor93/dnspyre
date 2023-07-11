@@ -4,11 +4,13 @@ import (
 	"bufio"
 	"context"
 	"crypto/tls"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/rand"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -116,23 +118,9 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 
 	color.NoColor = !b.Color
 
-	var questions []string
-	for _, q := range b.Queries {
-		if ok, _ := isHTTPUrl(q); ok {
-			resp, err := client.Get(q)
-			if err != nil {
-				return nil, fmt.Errorf("failed to download file '%s' with error '%v'", q, err)
-			}
-			if resp.StatusCode < 200 || resp.StatusCode > 299 {
-				return nil, fmt.Errorf("failed to download file '%s' with status '%s'", q, resp.Status)
-			}
-			scanner := bufio.NewScanner(resp.Body)
-			for scanner.Scan() {
-				questions = append(questions, dns.Fqdn(scanner.Text()))
-			}
-		} else {
-			questions = append(questions, dns.Fqdn(q))
-		}
+	questions, err := b.prepareQuestions()
+	if err != nil {
+		return nil, err
 	}
 
 	if b.Duration != 0 {
@@ -151,8 +139,11 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	}
 
 	network := "udp"
-	if b.TCP || b.DOT {
+	if b.TCP {
 		network = "tcp"
+	}
+	if b.DOT {
+		network = "tls"
 	}
 
 	var query queryFunc
@@ -160,9 +151,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		var dohQuery queryFunc
 		dohQuery, network = b.getDoHClient()
 		query = func(ctx context.Context, s string, msg *dns.Msg) (*dns.Msg, error) {
-			reqTimeoutCtx, cancel := context.WithTimeout(ctx, b.RequestTimeout)
-			defer cancel()
-			return dohQuery(reqTimeoutCtx, s, msg)
+			return dohQuery(ctx, s, msg)
 		}
 	}
 
@@ -170,17 +159,16 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		h, _, _ := net.SplitHostPort(b.Server)
 		// nolint:gosec
 		quicClient, err := doq.NewClient(b.Server, doq.Options{
-			TLSConfig:    &tls.Config{ServerName: h, InsecureSkipVerify: b.Insecure},
-			ReadTimeout:  b.ReadTimeout,
-			WriteTimeout: b.WriteTimeout,
+			TLSConfig:      &tls.Config{ServerName: h, InsecureSkipVerify: b.Insecure},
+			ReadTimeout:    b.ReadTimeout,
+			WriteTimeout:   b.WriteTimeout,
+			ConnectTimeout: b.ConnectTimeout,
 		})
 		if err != nil {
 			return nil, err
 		}
 		query = func(ctx context.Context, _ string, msg *dns.Msg) (*dns.Msg, error) {
-			reqTimeoutCtx, cancel := context.WithTimeout(ctx, b.RequestTimeout)
-			defer cancel()
-			return quicClient.Send(reqTimeoutCtx, msg)
+			return quicClient.Send(ctx, msg)
 		}
 		network = "quic"
 	}
@@ -216,14 +204,10 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		st.Qtypes = make(map[string]int64)
 		st.Counters = &Counters{}
 
-		var co *dns.Conn
 		var err error
 		wg.Add(1)
 		go func(st *ResultStats) {
 			defer func() {
-				if co != nil {
-					co.Close()
-				}
 				wg.Done()
 			}()
 
@@ -237,6 +221,37 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 			}
 
 			var i int64
+
+			// shadow & copy the query func, because for DoQ and DoH we want to share the client, for plain DNS and DoT we don't
+			// due to manual connection redialing on error, etc.
+			query := query
+
+			if query == nil {
+				dnsClient := b.getDNSClient()
+
+				var co *dns.Conn
+				query = func(ctx context.Context, s string, msg *dns.Msg) (*dns.Msg, error) {
+					if co != nil && b.QperConn > 0 && i%b.QperConn == 0 {
+						co.Close()
+						co = nil
+					}
+
+					if co == nil {
+						co, err = dnsClient.Dial(b.Server)
+						if err != nil {
+							return nil, err
+						}
+					}
+					r, _, err := dnsClient.ExchangeWithConnContext(ctx, msg, co)
+					if err != nil {
+						co.Close()
+						co = nil
+						return nil, err
+					}
+					return r, nil
+				}
+			}
+
 			for i = 0; i < b.Count || b.Duration != 0; i++ {
 				for _, qt := range qTypes {
 					for _, q := range questions {
@@ -256,68 +271,39 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 								return
 							}
 						}
-						var r *dns.Msg
+						var resp *dns.Msg
+
 						m := dns.Msg{}
 						m.RecursionDesired = b.Recurse
-						m.Question = make([]dns.Question, 1)
-						question := dns.Question{Qtype: qt, Qclass: dns.ClassINET}
-						st.Counters.Total++
 
-						// instead of setting the question, do this manually for lower overhead and lock free access to id
-						question.Name = q
+						m.Question = make([]dns.Question, 1)
+						question := dns.Question{Name: q, Qtype: qt, Qclass: dns.ClassINET}
+						m.Question[0] = question
+
 						if b.useQuic {
 							m.Id = 0
 						} else {
 							m.Id = uint16(rando.Uint32())
 						}
-						m.Question[0] = question
 
-						start := time.Now()
-						if b.useQuic || b.useDoH {
-							r, err = query(ctx, b.Server, &m)
-							if err != nil {
-								st.Counters.IOError++
-								st.Errors = append(st.Errors, err)
-								continue
-							}
-						} else {
-							if co != nil && b.QperConn > 0 && i%b.QperConn == 0 {
-								co.Close()
-								co = nil
-							}
-
-							if co == nil {
-								co, err = dialConnection(b, &m, st)
-								if err != nil {
-									st.Errors = append(st.Errors, err)
-									continue
-								}
-							}
-
-							co.SetWriteDeadline(start.Add(b.WriteTimeout))
-							if err = co.WriteMsg(&m); err != nil {
-								// error writing
-								st.Errors = append(st.Errors, err)
-								st.Counters.IOError++
-								co.Close()
-								co = nil
-								continue
-							}
-
-							co.SetReadDeadline(time.Now().Add(b.ReadTimeout))
-
-							r, err = co.ReadMsg()
-							if err != nil {
-								// error reading
-								st.Errors = append(st.Errors, err)
-								st.Counters.IOError++
-								co.Close()
-								co = nil
-								continue
-							}
+						if ednsOpt := b.EdnsOpt; len(ednsOpt) > 0 {
+							addEdnsOpt(&m, ednsOpt)
 						}
 
-						st.record(&m, r, start, time.Since(start))
+						st.Counters.Total++
+
+						start := time.Now()
+
+						reqTimeoutCtx, cancel := context.WithTimeout(ctx, b.RequestTimeout)
+						if resp, err = query(reqTimeoutCtx, b.Server, &m); err != nil {
+							cancel()
+							st.Counters.IOError++
+							st.Errors = append(st.Errors, err)
+							continue
+						}
+
+						cancel()
+						st.record(&m, resp, start, time.Since(start))
 					}
 				}
 			}
@@ -327,6 +313,24 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	wg.Wait()
 
 	return stats, nil
+}
+
+func addEdnsOpt(m *dns.Msg, ednsOpt string) {
+	o := m.IsEdns0()
+	if o == nil {
+		m.SetEdns0(4096, true)
+		o = m.IsEdns0()
+	}
+	s := strings.Split(ednsOpt, ":")
+	data, err := hex.DecodeString(s[1])
+	if err != nil {
+		panic(err)
+	}
+	code, err := strconv.ParseUint(s[0], 10, 16)
+	if err != nil {
+		panic(err)
+	}
+	o.Option = append(o.Option, &dns.EDNS0_LOCAL{Code: uint16(code), Data: data})
 }
 
 func (b *Benchmark) addPortIfMissing() {
@@ -341,6 +345,7 @@ func (b *Benchmark) addPortIfMissing() {
 			return
 		}
 		if b.useQuic {
+			// https://datatracker.ietf.org/doc/rfc9250
 			b.Server = net.JoinHostPort(b.Server, "853")
 			return
 		}
@@ -396,6 +401,46 @@ func (b *Benchmark) getDoHClient() (queryFunc, string) {
 		network += " (POST)"
 		return dohClient.SendViaPost, network
 	}
+}
+
+func (b *Benchmark) getDNSClient() *dns.Client {
+	network := "udp"
+	if b.TCP {
+		network = "tcp"
+	} else if b.DOT {
+		network = "tcp-tls"
+	}
+
+	dnsClient := dns.Client{
+		Net:          network,
+		DialTimeout:  b.ConnectTimeout,
+		WriteTimeout: b.WriteTimeout,
+		ReadTimeout:  b.ReadTimeout,
+		Timeout:      b.RequestTimeout,
+	}
+	return &dnsClient
+}
+
+func (b *Benchmark) prepareQuestions() ([]string, error) {
+	var questions []string
+	for _, q := range b.Queries {
+		if ok, _ := isHTTPUrl(q); ok {
+			resp, err := client.Get(q)
+			if err != nil {
+				return nil, fmt.Errorf("failed to download file '%s' with error '%v'", q, err)
+			}
+			if resp.StatusCode < 200 || resp.StatusCode > 299 {
+				return nil, fmt.Errorf("failed to download file '%s' with status '%s'", q, resp.Status)
+			}
+			scanner := bufio.NewScanner(resp.Body)
+			for scanner.Scan() {
+				questions = append(questions, dns.Fqdn(scanner.Text()))
+			}
+		} else {
+			questions = append(questions, dns.Fqdn(q))
+		}
+	}
+	return questions, nil
 }
 
 func checkLimit(ctx context.Context, limiter ratelimit.Limiter) error {

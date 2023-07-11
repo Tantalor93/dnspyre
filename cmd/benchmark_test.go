@@ -401,7 +401,6 @@ func assertResultStats(t *testing.T, rs *ResultStats) {
 	}
 
 	assert.Equal(t, int64(2), rs.Counters.Total, "Run(ctx) total counter")
-	assert.Zero(t, rs.Counters.ConnError, "Run(ctx) connection error counter")
 	assert.Zero(t, rs.Counters.IOError, "error counter")
 	assert.Equal(t, int64(2), rs.Counters.Success, "Run(ctx) success counter")
 	assert.Zero(t, rs.Counters.IDmismatch, "Run(ctx) mismatch counter")

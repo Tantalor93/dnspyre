@@ -14,7 +14,6 @@ func Example_standard_printReport() {
 	b.PrintReport([]*ResultStats{&rs}, time.Second)
 
 	// Output: Total requests:		1
-	// Connection errors:	2
 	// Read/Write errors:	3
 	// ID mismatch errors:	6
 	// DNS success codes:	4
@@ -77,7 +76,6 @@ func testData() (Benchmark, ResultStats) {
 		Timings: []Datapoint{d1, d2},
 		Counters: &Counters{
 			Total:      1,
-			ConnError:  2,
 			IOError:    3,
 			Success:    4,
 			IDmismatch: 6,
