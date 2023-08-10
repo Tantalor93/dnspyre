@@ -152,7 +152,7 @@ func Execute() {
 	if err != nil {
 		errPrint(os.Stderr, "There was an error while starting benchmark: %s\n", err.Error())
 	} else {
-		if err := benchmark.PrintReport(res, end.Sub(start)); err != nil {
+		if err := benchmark.PrintReport(os.Stdout, res, end.Sub(start)); err != nil {
 			errPrint(os.Stderr, "There was an error while printing report: %s\n", err.Error())
 		}
 	}
