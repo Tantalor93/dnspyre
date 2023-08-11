@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"encoding/json"
+	"io"
 	"math"
-	"os"
 	"time"
 
 	"github.com/HdrHistogram/hdrhistogram-go"
@@ -43,7 +43,7 @@ type jsonResult struct {
 	LatencyDistribution      []histogramPoint `json:"latencyDistribution,omitempty"`
 }
 
-func (s *jsonReporter) print(b *Benchmark, timings *hdrhistogram.Histogram, codeTotals map[int]int64, totalCounters Counters, qtypeTotals map[string]int64, topErrs orderedMap, t time.Duration) error {
+func (s *jsonReporter) print(w io.Writer, b *Benchmark, timings *hdrhistogram.Histogram, codeTotals map[int]int64, totalCounters Counters, qtypeTotals map[string]int64, topErrs orderedMap, t time.Duration) error {
 	sumerrs := int64(0)
 	for _, v := range topErrs.m {
 		sumerrs += int64(v)
@@ -108,5 +108,5 @@ func (s *jsonReporter) print(b *Benchmark, timings *hdrhistogram.Histogram, code
 		LatencyDistribution: res,
 	}
 
-	return json.NewEncoder(os.Stdout).Encode(result)
+	return json.NewEncoder(w).Encode(result)
 }

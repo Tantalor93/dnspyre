@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"os"
+	"io"
 	"strconv"
 	"strings"
 	"time"
@@ -14,8 +14,8 @@ import (
 
 type standardReporter struct{}
 
-func (s *standardReporter) print(b *Benchmark, timings *hdrhistogram.Histogram, codeTotals map[int]int64, totalCounters Counters, qtypeTotals map[string]int64, topErrs orderedMap, t time.Duration) error {
-	b.printProgress(totalCounters)
+func (s *standardReporter) print(w io.Writer, b *Benchmark, timings *hdrhistogram.Histogram, codeTotals map[int]int64, totalCounters Counters, qtypeTotals map[string]int64, topErrs orderedMap, t time.Duration) error {
+	b.printProgress(w, totalCounters)
 
 	if len(codeTotals) > 0 {
 		fmt.Println()
@@ -26,7 +26,7 @@ func (s *standardReporter) print(b *Benchmark, timings *hdrhistogram.Histogram, 
 				printFn = successPrint
 			}
 			if c, ok := codeTotals[i]; ok {
-				printFn(os.Stdout, "\t%s:\t%d\n", dns.RcodeToString[i], c)
+				printFn(w, "\t%s:\t%d\n", dns.RcodeToString[i], c)
 			}
 		}
 	}
@@ -35,7 +35,7 @@ func (s *standardReporter) print(b *Benchmark, timings *hdrhistogram.Histogram, 
 		fmt.Println()
 		fmt.Println("DNS question types:")
 		for k, v := range qtypeTotals {
-			successPrint(os.Stdout, "\t%s:\t%d\n", k, v)
+			successPrint(w, "\t%s:\t%d\n", k, v)
 		}
 	}
 
@@ -72,7 +72,7 @@ func (s *standardReporter) print(b *Benchmark, timings *hdrhistogram.Histogram, 
 			fmt.Println()
 			fmt.Println("DNS distribution,", highlightStr(tc), "datapoints")
 
-			printBars(dist)
+			printBars(w, dist)
 		}
 	}
 
@@ -82,37 +82,37 @@ func (s *standardReporter) print(b *Benchmark, timings *hdrhistogram.Histogram, 
 	}
 
 	if len(topErrs.m) > 0 {
-		errPrint(os.Stdout, "\nTotal Errors: %d\n", sumerrs)
-		errPrint(os.Stdout, "Top errors:\n")
+		errPrint(w, "\nTotal Errors: %d\n", sumerrs)
+		errPrint(w, "Top errors:\n")
 		for _, err := range topErrs.order {
-			errPrint(os.Stdout, "%s\t%d (%.2f)%%\n", err, topErrs.m[err], (float64(topErrs.m[err])/float64(sumerrs))*100)
+			errPrint(w, "%s\t%d (%.2f)%%\n", err, topErrs.m[err], (float64(topErrs.m[err])/float64(sumerrs))*100)
 		}
 	}
 
 	return nil
 }
 
-func (b *Benchmark) printProgress(c Counters) {
+func (b *Benchmark) printProgress(w io.Writer, c Counters) {
 	fmt.Printf("\nTotal requests:\t\t%s\n", highlightStr(c.Total))
 
 	if c.IOError > 0 {
-		errPrint(os.Stdout, "Read/Write errors:\t%d\n", c.IOError)
+		errPrint(w, "Read/Write errors:\t%d\n", c.IOError)
 	}
 
 	if c.IDmismatch > 0 {
-		errPrint(os.Stdout, "ID mismatch errors:\t%d\n", c.IDmismatch)
+		errPrint(w, "ID mismatch errors:\t%d\n", c.IDmismatch)
 	}
 
 	if c.Success > 0 {
-		successPrint(os.Stdout, "DNS success codes:\t%d\n", c.Success)
+		successPrint(w, "DNS success codes:\t%d\n", c.Success)
 	}
 
 	if c.Truncated > 0 {
-		errPrint(os.Stdout, "Truncated responses:\t%d\n", c.Truncated)
+		errPrint(w, "Truncated responses:\t%d\n", c.Truncated)
 	}
 }
 
-func printBars(bars []hdrhistogram.Bar) {
+func printBars(w io.Writer, bars []hdrhistogram.Bar) {
 	counts := make([]int64, 0, len(bars))
 	lines := make([][]string, 0, len(bars))
 	added := false
@@ -141,7 +141,7 @@ func printBars(bars []hdrhistogram.Bar) {
 		l[1] = makeBar(counts[i], max)
 	}
 
-	table := tablewriter.NewWriter(os.Stdout)
+	table := tablewriter.NewWriter(w)
 	table.SetHeader([]string{"Latency", "", "Count"})
 	table.SetBorder(false)
 	table.AppendBulk(lines)

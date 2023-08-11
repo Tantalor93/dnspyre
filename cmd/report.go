@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"sort"
 	"time"
@@ -22,7 +23,7 @@ type orderedMap struct {
 }
 
 // PrintReport print formatted benchmark results to stdout. If there is a fatal error while printing report, an error is returned.
-func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) error {
+func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, t time.Duration) error {
 	// merge all the stats here
 	timings := hdrhistogram.New(b.HistMin.Nanoseconds(), b.HistMax.Nanoseconds(), b.HistPre)
 	codeTotals := make(map[int]int64)
@@ -126,10 +127,10 @@ func (b *Benchmark) PrintReport(stats []*ResultStats, t time.Duration) error {
 	topErrs := orderedMap{m: top3errs, order: top3errorsInOrder}
 	if b.JSON {
 		j := jsonReporter{}
-		return j.print(b, timings, codeTotals, totalCounters, qtypeTotals, topErrs, t)
+		return j.print(w, b, timings, codeTotals, totalCounters, qtypeTotals, topErrs, t)
 	}
 	s := standardReporter{}
-	return s.print(b, timings, codeTotals, totalCounters, qtypeTotals, topErrs, t)
+	return s.print(w, b, timings, codeTotals, totalCounters, qtypeTotals, topErrs, t)
 }
 
 func (b *Benchmark) fileName(dir, name string) string {
