@@ -377,6 +377,22 @@ func Test_do_classic_dns_default_count(t *testing.T) {
 	assert.Equal(t, int64(1), rs[0].Counters.Success)
 }
 
+func Test_do_doq(t *testing.T) {
+	server := doqServer{}
+	server.start()
+	defer server.stop()
+
+	bench := createBenchmark("quic://"+server.addr, true, 1)
+	bench.Insecure = true
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	assert.NoError(t, err, "expected no error from benchmark run")
+	assertResult(t, rs)
+}
+
 func assertResult(t *testing.T, rs []*ResultStats) {
 	if assert.Len(t, rs, 2, "Run(ctx) rstats") {
 		rs0 := rs[0]
