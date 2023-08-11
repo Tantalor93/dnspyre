@@ -27,6 +27,6 @@ jobs:
 
 workflows:
   version: 2
-  integration-tests:
+  tests:
     jobs:
     - build
