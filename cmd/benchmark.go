@@ -404,18 +404,20 @@ func (b *Benchmark) getDNSClient() *dns.Client {
 	network := "udp"
 	if b.TCP {
 		network = "tcp"
-	} else if b.DOT {
+	}
+	if b.DOT {
 		network = "tcp-tls"
 	}
 
-	dnsClient := dns.Client{
+	return &dns.Client{
 		Net:          network,
 		DialTimeout:  b.ConnectTimeout,
 		WriteTimeout: b.WriteTimeout,
 		ReadTimeout:  b.ReadTimeout,
 		Timeout:      b.RequestTimeout,
+		// nolint:gosec
+		TLSConfig: &tls.Config{InsecureSkipVerify: b.Insecure},
 	}
-	return &dnsClient
 }
 
 func (b *Benchmark) prepareQuestions() ([]string, error) {
