@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"net"
+	"crypto/tls"
 
 	"github.com/miekg/dns"
 )
@@ -18,35 +18,22 @@ func (s *Server) Close() {
 }
 
 // NewServer creates and starts new DNS server instance.
-func NewServer(network string, f dns.HandlerFunc) *Server {
+func NewServer(network string, tlsConfig *tls.Config, f dns.HandlerFunc) *Server {
 	ch := make(chan bool)
-	s := &dns.Server{}
-	s.Handler = f
+	s := &dns.Server{Net: network, Addr: "127.0.0.1:0", TLSConfig: tlsConfig, NotifyStartedFunc: func() { close(ch) }, Handler: f}
 
-	for i := 0; i < 10; i++ {
-		s.Listener, _ = net.Listen("tcp", "127.0.0.1:0")
-		if network == "udp" {
-			if s.Listener == nil {
-				continue
-			}
-			s.PacketConn, _ = net.ListenPacket("udp", s.Listener.Addr().String())
-			if s.PacketConn != nil {
-				break
-			}
-		}
-		if s.Listener != nil {
-			break
-		}
-	}
-	if s.Listener == nil {
-		panic("failed to create new client")
-	}
-
-	s.NotifyStartedFunc = func() { close(ch) }
 	go func() {
-		s.ActivateAndServe()
+		if err := s.ListenAndServe(); err != nil {
+			panic(err)
+		}
 	}()
 
 	<-ch
-	return &Server{inner: s, Addr: s.Listener.Addr().String()}
+	server := Server{inner: s}
+	if network == "udp" {
+		server.Addr = s.PacketConn.LocalAddr().String()
+	} else {
+		server.Addr = s.Listener.Addr().String()
+	}
+	return &server
 }

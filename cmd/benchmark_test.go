@@ -2,11 +2,14 @@ package cmd
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -46,7 +49,7 @@ func Test_do_classic_dns(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := NewServer(tt.args.protocol, func(w dns.ResponseWriter, r *dns.Msg) {
+			s := NewServer(tt.args.protocol, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 				ret := new(dns.Msg)
 				ret.SetReply(r)
 				ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -155,7 +158,7 @@ func Test_do_doh_get(t *testing.T) {
 }
 
 func Test_do_probability(t *testing.T) {
-	s := NewServer(udp, func(w dns.ResponseWriter, r *dns.Msg) {
+	s := NewServer(udp, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -182,7 +185,7 @@ func Test_do_probability(t *testing.T) {
 }
 
 func Test_download_external_datasource_using_http(t *testing.T) {
-	s := NewServer("udp", func(w dns.ResponseWriter, r *dns.Msg) {
+	s := NewServer("udp", nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -285,7 +288,7 @@ func Test_download_external_datasource_using_http_wrong_response(t *testing.T) {
 }
 
 func Test_do_classic_dns_with_duration(t *testing.T) {
-	s := NewServer("udp", func(w dns.ResponseWriter, r *dns.Msg) {
+	s := NewServer("udp", nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -341,7 +344,7 @@ func Test_duration_and_count_specified_at_once(t *testing.T) {
 }
 
 func Test_do_classic_dns_default_count(t *testing.T) {
-	s := NewServer("udp", func(w dns.ResponseWriter, r *dns.Msg) {
+	s := NewServer("udp", nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -384,6 +387,48 @@ func Test_do_doq(t *testing.T) {
 
 	bench := createBenchmark("quic://"+server.addr, true, 1)
 	bench.Insecure = true
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	assert.NoError(t, err, "expected no error from benchmark run")
+	assertResult(t, rs)
+}
+
+func Test_do_dot(t *testing.T) {
+	cert, err := tls.LoadX509KeyPair("test.crt", "test.key")
+	require.NoError(t, err)
+
+	certs, err := os.ReadFile("test.crt")
+	require.NoError(t, err)
+
+	pool, err := x509.SystemCertPool()
+	require.NoError(t, err)
+
+	pool.AppendCertsFromPEM(certs)
+	config := tls.Config{
+		ServerName:   "localhost",
+		RootCAs:      pool,
+		Certificates: []tls.Certificate{cert},
+		MinVersion:   tls.VersionTLS12,
+	}
+
+	server := NewServer("tcp-tls", &config, func(w dns.ResponseWriter, r *dns.Msg) {
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 500)
+
+		w.WriteMsg(ret)
+	})
+	defer server.Close()
+
+	bench := createBenchmark(server.Addr, false, 1)
+	bench.Insecure = true
+	bench.DOT = true
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
