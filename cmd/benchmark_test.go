@@ -562,3 +562,86 @@ func TestBenchmark_normalize(t *testing.T) {
 		})
 	}
 }
+
+func Test_global_ratelimit(t *testing.T) {
+	s := NewServer("udp", nil, func(w dns.ResponseWriter, r *dns.Msg) {
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 100)
+
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	bench := Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A"},
+		Server:         s.Addr,
+		TCP:            false,
+		Concurrency:    2,
+		Duration:       5 * time.Second,
+		Rate:           1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	assert.NoError(t, err, "expected no error from benchmark run")
+	assert.Len(t, rs, 2)
+	// assert that total queries is 5 with +-1 precision, because benchmark cancellation based on duration is not that precise
+	// and one worker can start the resolution before cancelling
+	assert.InDelta(t, int64(5), rs[0].Counters.Total+rs[1].Counters.Total, 1.0)
+}
+
+func Test_worker_ratelimit(t *testing.T) {
+	s := NewServer("udp", nil, func(w dns.ResponseWriter, r *dns.Msg) {
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 100)
+
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	bench := Benchmark{
+		Queries:         []string{"example.org"},
+		Types:           []string{"A"},
+		Server:          s.Addr,
+		TCP:             false,
+		Concurrency:     2,
+		Duration:        5 * time.Second,
+		RateLimitWorker: 1,
+		Probability:     1,
+		WriteTimeout:    1 * time.Second,
+		ReadTimeout:     3 * time.Second,
+		ConnectTimeout:  1 * time.Second,
+		RequestTimeout:  5 * time.Second,
+		Rcodes:          true,
+		Recurse:         true,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	assert.NoError(t, err, "expected no error from benchmark run")
+	assert.Len(t, rs, 2)
+	// assert that total queries is 10 with +-2 precision,
+	// because benchmark cancellation based on duration is not that precise
+	// and each worker can start the resolution before cancelling
+	assert.InDelta(t, int64(10), rs[0].Counters.Total+rs[1].Counters.Total, 2.0)
+}
