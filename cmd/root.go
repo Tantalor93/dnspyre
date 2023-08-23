@@ -55,8 +55,6 @@ func init() {
 	pApp.Flag("probability", "Each provided hostname will be used with provided probability. Value 1 and above means that each hostname will be used by each concurrent benchmark goroutine. Useful for randomizing queries across benchmark goroutines.").
 		Default("1").Float64Var(&benchmark.Probability)
 
-	pApp.Flag("edns0", "Enable EDNS0 with specified size.").Default("0").Uint16Var(&benchmark.UDPSize)
-
 	pApp.Flag("ednsopt", "code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal string. code must be an arbitrary numeric value.").
 		Default("").StringVar(&benchmark.EdnsOpt)
 
@@ -118,7 +116,9 @@ func init() {
 
 	pApp.Arg("queries", "Queries to issue. It can be a local file referenced using @<file-path>, for example @data/2-domains. "+
 		"It can also be resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that "+
-		"case, the file will be downloaded and saved in-memory.").Required().StringsVar(&benchmark.Queries)
+		"case, the file will be downloaded and saved in-memory. "+
+		"These data sources can be combined, for example \"google.com @data/2-domains https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/2-domains\"").
+		Required().StringsVar(&benchmark.Queries)
 }
 
 // Execute starts main logic of command.

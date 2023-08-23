@@ -22,7 +22,8 @@ type orderedMap struct {
 	order []string
 }
 
-// PrintReport print formatted benchmark results to stdout. If there is a fatal error while printing report, an error is returned.
+// PrintReport prints formatted benchmark result to stdout, exports graphs and generates CSV output if configured.
+// If there is a fatal error while printing report, an error is returned.
 func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, t time.Duration) error {
 	// merge all the stats here
 	timings := hdrhistogram.New(b.HistMin.Nanoseconds(), b.HistMax.Nanoseconds(), b.HistPre)

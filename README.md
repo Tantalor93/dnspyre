@@ -7,6 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![codecov](https://codecov.io/gh/Tantalor93/dnspyre/branch/master/graph/badge.svg?token=MC6PK2OLMK)](https://codecov.io/gh/Tantalor93/dnspyre)
 [![lint](https://github.com/Tantalor93/dnspyre/actions/workflows/lint.yml/badge.svg?branch=master)](https://github.com/Tantalor93/dnspyre/actions/workflows/lint.yml)
+[![](https://godoc.org/github.com/Tantalor93/dnspyre/v2/cmd?status.svg)](https://godoc.org/github.com/tantalor93/dnspyre/v2/cmd)
 
 ![dnspyre logo](./docs/assets/logo.png)
 
