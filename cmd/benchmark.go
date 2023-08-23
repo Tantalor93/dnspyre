@@ -210,7 +210,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 
 			// create a new lock free rand source for this goroutine
 			// nolint:gosec
-			rando := rand.New(rand.NewSource(time.Now().Unix()))
+			rando := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 			var workerLimit ratelimit.Limiter
 			if b.RateLimitWorker > 0 {
