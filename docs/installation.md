@@ -29,8 +29,8 @@ eval "$(dnspyre --completion-script-bash)"
 ```
 
 # Docker image
-if you don't want to install `dnspyre` locally, you can use prepared [Docker image](https://hub.docker.com/r/tantalor93/dnspyre/tags),
+if you don't want to install `dnspyre` locally, you can use prepared [Docker image](https://github.com/Tantalor93/dnspyre/pkgs/container/dnspyre),
 for example 
 ```
-docker run tantalor93/dnspyre --server 8.8.8.8 google.com
+docker run ghcr.io/tantalor93/dnspyre --server 8.8.8.8 google.com
 ```
