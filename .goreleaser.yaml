@@ -49,7 +49,7 @@ dockers:
   id: dnspyre
   dockerfile: "Dockerfile-goreleaser"
   image_templates:
-  - "tantalor93/dnspyre:{{ .Tag }}"
-  - "tantalor93/dnspyre:v{{ .Major }}"
-  - "tantalor93/dnspyre:v{{ .Major }}.{{ .Minor }}"
-  - "tantalor93/dnspyre:latest"
+  - "ghcr.io/tantalor93/dnspyre:{{ .Tag }}"
+  - "ghcr.io/tantalor93/dnspyre:v{{ .Major }}"
+  - "ghcr.io/tantalor93/dnspyre:v{{ .Major }}.{{ .Minor }}"
+  - "ghcr.io/tantalor93/dnspyre:latest"
