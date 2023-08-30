@@ -1,6 +1,6 @@
 module github.com/tantalor93/dnspyre/v2
 
-go 1.20
+go 1.21
 
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2
@@ -9,10 +9,10 @@ require (
 	github.com/miekg/dns v1.1.55
 	github.com/montanaflynn/stats v0.7.1
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/quic-go/quic-go v0.37.0
+	github.com/quic-go/quic-go v0.38.1
 	github.com/stretchr/testify v1.8.4
 	github.com/tantalor93/doh-go v0.1.0
-	github.com/tantalor93/doq-go v0.7.1
+	github.com/tantalor93/doq-go v0.8.0
 	go-hep.org/x/hep v0.33.0
 	go.uber.org/ratelimit v0.3.0
 	golang.org/x/net v0.14.0
@@ -40,7 +40,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.9.5 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
-	github.com/quic-go/qtls-go1-20 v0.3.0 // indirect
+	github.com/quic-go/qtls-go1-20 v0.3.3 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	golang.org/x/crypto v0.12.0 // indirect
