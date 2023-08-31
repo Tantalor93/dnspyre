@@ -8,6 +8,7 @@
 [![codecov](https://codecov.io/gh/Tantalor93/dnspyre/branch/master/graph/badge.svg?token=MC6PK2OLMK)](https://codecov.io/gh/Tantalor93/dnspyre)
 [![lint](https://github.com/Tantalor93/dnspyre/actions/workflows/lint.yml/badge.svg?branch=master)](https://github.com/Tantalor93/dnspyre/actions/workflows/lint.yml)
 [![](https://godoc.org/github.com/Tantalor93/dnspyre/v2/cmd?status.svg)](https://godoc.org/github.com/tantalor93/dnspyre/v2/cmd)
+[![Go version](https://img.shields.io/github/go-mod/go-version/Tantalor93/dnspyre)](https://github.com/Tantalor93/dnspyre/blob/master/go.mod#L3)
 
 ![dnspyre logo](./docs/assets/logo.png)
 
