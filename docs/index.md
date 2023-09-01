@@ -14,9 +14,9 @@ This tool supports wide variety of options to customize DNS benchmark and benchm
 * benchmark DNS servers with all kinds of query types like A, AAAA, CNAME, HTTPS, ... (`--type` option)
 * benchmark DNS servers with a lot of parallel queries and connections (`--number`, `--concurrency` options)
 * benchmark DNS servers for a specified duration (`--duration` option)
-* benchmark DNS servers with DoT, see [DoQ example](doq.md)
-* benchmark DNS servers using DoH, see [DoH example](doh.md)
-* benchmark DNS servers using DoQ, see [DoQ example](doq.md)
+* benchmark DNS servers with DoT ([DNS over TLS](https://datatracker.ietf.org/doc/html/rfc7858)), see [DoT example](dot.md)
+* benchmark DNS servers using DoH ([DNS over HTTPS](https://datatracker.ietf.org/doc/html/rfc8484)), see [DoH example](doh.md)
+* benchmark DNS servers using DoQ ([DNS over QUIC](https://datatracker.ietf.org/doc/rfc9250/)), see [DoQ example](doq.md)
 * benchmark DNS servers with uneven random load from provided high volume resources (see `--probability` option)
 * plot benchmark results via CLI histogram or plot the benchmark results as boxplot, histogram, line graphs and export them via all kind of image formats like png, svg and pdf. (see `--plot` and `--plotf` options) 
 
