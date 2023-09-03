@@ -30,9 +30,9 @@ A high QPS DNS benchmark.
 
 Flags:
       --[no-]help              Show context-sensitive help (also try --help-long and --help-man).
-  -s, --server="127.0.0.1"     DNS server IP:port to test. IPv6 is also supported, for example '[fddd:dddd::]:53'. DoH (DNS over HTTPS) servers are supported such as `https://1.1.1.1/dns-query`, when such server is provided, the benchmark automatically
-                               switches to the use of DoH. Note that path on which the DoH server handles requests (like `/dns-query`) has to be provided as well. DoQ (DNS over QUIC) servers are also supported, such as `quic://dns.adguard-dns.com`,
-                               when such server is provided the benchmark switches to the use of DoQ.
+  -s, --server="127.0.0.1"     DNS server IP:port to test. IPv6 is also supported, for example '[fddd:dddd::]:53'. DoH (DNS over HTTPS) servers are supported such as `https://1.1.1.1`, when such server is provided, the benchmark automatically switches to
+                               the use of DoH. Note that by default path `/dns-query` is assumed for DoH queries, if no path is provided in server parameter. DoQ (DNS over QUIC) servers are also supported, such as `quic://dns.adguard-dns.com`, when such
+                               server is provided the benchmark switches to the use of DoQ.
   -t, --type=A ...             Query type. Repeatable flag. If multiple query types are specified then each query will be duplicated for each type.
   -n, --number=NUMBER          How many times the provided queries are repeated. Note that the total number of queries issued = types*number*concurrency*len(queries).
   -c, --concurrency=1          Number of concurrent queries to issue.

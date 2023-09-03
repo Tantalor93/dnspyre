@@ -534,13 +534,18 @@ func TestBenchmark_normalize(t *testing.T) {
 		},
 		{
 			name:       "server - HTTPS url",
-			benchmark:  Benchmark{Server: "https://1.1.1.1/dns-query"},
+			benchmark:  Benchmark{Server: "https://1.1.1.1"},
 			wantServer: "https://1.1.1.1/dns-query",
 		},
 		{
 			name:       "server - HTTP url",
-			benchmark:  Benchmark{Server: "http://127.0.0.1/dns-query"},
+			benchmark:  Benchmark{Server: "http://127.0.0.1"},
 			wantServer: "http://127.0.0.1/dns-query",
+		},
+		{
+			name:       "server - custom HTTP url",
+			benchmark:  Benchmark{Server: "http://127.0.0.1/custom/dns-query"},
+			wantServer: "http://127.0.0.1/custom/dns-query",
 		},
 		{
 			name:       "server - QUIC url",

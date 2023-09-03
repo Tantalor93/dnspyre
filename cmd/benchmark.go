@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -43,7 +44,7 @@ type Benchmark struct {
 	// Format depends on the DNS protocol, that should be used for DNS benchmark:
 	// for plain DNS (either over UDP or TCP) the format is IP:port, if port is not provided then port 53 is used.
 	// for DoT the format is <IP>:[port], if port is not provided then port 853 is used.
-	// for DoH the format is https://<hostname>:[port] or http://<hostname>:[port], if port is not provided then either 443 or 80 port is used.
+	// for DoH the format is https://<hostname>:[port][/path] or http://<hostname>:[port][/path], if port is not provided then either 443 or 80 port is used. If no path is provided, then /dns-query is used.
 	// for DoQ the format is quic://<hostname>:[port], if port is not provided then port 853 is used.
 	Server string
 
@@ -155,6 +156,16 @@ func (b *Benchmark) normalize() error {
 	}
 
 	b.addPortIfMissing()
+
+	if b.useDoH {
+		parsedURL, err := url.Parse(b.Server)
+		if err != nil {
+			return err
+		}
+		if len(parsedURL.Path) == 0 {
+			b.Server += "/dns-query"
+		}
+	}
 
 	if b.Count == 0 && b.Duration == 0 {
 		b.Count = 1
