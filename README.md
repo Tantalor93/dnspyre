@@ -8,7 +8,6 @@
 [![lint](https://github.com/Tantalor93/dnspyre/actions/workflows/lint.yml/badge.svg?branch=master)](https://github.com/Tantalor93/dnspyre/actions/workflows/lint.yml)
 [![codecov](https://codecov.io/gh/Tantalor93/dnspyre/branch/master/graph/badge.svg?token=MC6PK2OLMK)](https://codecov.io/gh/Tantalor93/dnspyre)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tantalor93/dnspyre/v2)](https://goreportcard.com/report/github.com/tantalor93/dnspyre/v2)
-[![Docker Pulls](https://img.shields.io/docker/pulls/tantalor93/dnspyre.svg)](https://hub.docker.com/r/tantalor93/dnspyre)
 
 ![dnspyre logo](./docs/assets/logo.png)
 
