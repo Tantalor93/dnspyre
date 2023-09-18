@@ -6,7 +6,7 @@ require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2
 	github.com/alecthomas/kingpin/v2 v2.3.2
 	github.com/fatih/color v1.15.0
-	github.com/miekg/dns v1.1.55
+	github.com/miekg/dns v1.1.56
 	github.com/montanaflynn/stats v0.7.1
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/quic-go/quic-go v0.38.1
@@ -15,7 +15,7 @@ require (
 	github.com/tantalor93/doq-go v0.8.0
 	go-hep.org/x/hep v0.33.0
 	go.uber.org/ratelimit v0.3.0
-	golang.org/x/net v0.14.0
+	golang.org/x/net v0.15.0
 	gonum.org/v1/plot v0.13.0
 )
 
@@ -43,14 +43,14 @@ require (
 	github.com/quic-go/qtls-go1-20 v0.3.3 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
-	golang.org/x/crypto v0.12.0 // indirect
+	golang.org/x/crypto v0.13.0 // indirect
 	golang.org/x/exp v0.0.0-20230510235704-dd950f8aeaea // indirect
 	golang.org/x/image v0.7.0 // indirect
-	golang.org/x/mod v0.10.0 // indirect
-	golang.org/x/sync v0.2.0 // indirect
-	golang.org/x/sys v0.11.0 // indirect
-	golang.org/x/text v0.12.0 // indirect
-	golang.org/x/tools v0.9.1 // indirect
+	golang.org/x/mod v0.12.0 // indirect
+	golang.org/x/sync v0.3.0 // indirect
+	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/tools v0.13.0 // indirect
 	gonum.org/v1/gonum v0.13.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
