@@ -142,7 +142,7 @@ func plotLineThroughput(file string, times []Datapoint) {
 	p.Y.Tick.Marker = hplot.Ticks{N: 10, Format: "%.0f"}
 
 	l, err := plotter.NewLine(values)
-	l.Color = color.RGBA{R: 255, A: 255}
+	l.FillColor = color.RGBA{R: 175, G: 238, B: 238}
 	if err != nil {
 		panic(err)
 	}
@@ -232,10 +232,10 @@ func plotLineLatencies(file string, times []Datapoint) {
 	p.Y.Label.Text = "Latency (ms)"
 	p.Y.Tick.Marker = hplot.Ticks{N: 10, Format: "%.0f"}
 
-	plotLine(p, p99values, plotutil.Color(0), "p99")
-	plotLine(p, p95values, plotutil.Color(1), "p95")
-	plotLine(p, p90values, plotutil.Color(2), "p90")
-	plotLine(p, p50values, plotutil.Color(3), "p50")
+	plotLine(p, p99values, plotutil.DarkColors[0], plotutil.SoftColors[0], "p99")
+	plotLine(p, p95values, plotutil.DarkColors[1], plotutil.SoftColors[1], "p95")
+	plotLine(p, p90values, plotutil.DarkColors[2], plotutil.SoftColors[2], "p90")
+	plotLine(p, p50values, plotutil.DarkColors[3], plotutil.SoftColors[3], "p50")
 
 	p.Legend.Top = true
 
@@ -244,12 +244,13 @@ func plotLineLatencies(file string, times []Datapoint) {
 	}
 }
 
-func plotLine(p *plot.Plot, values plotter.XYs, color color.Color, name string) {
+func plotLine(p *plot.Plot, values plotter.XYs, color color.Color, fill color.Color, name string) {
 	l, err := plotter.NewLine(values)
 	l.Color = color
 	if err != nil {
 		panic(err)
 	}
+	l.FillColor = fill
 	p.Add(l)
 	p.Legend.Add(name, l)
 }

@@ -10,7 +10,7 @@ Graphs are exported into the new subdirectory `graphs-<RFC3339 timestamp>` on pr
 
 For example, this command
 ```
-dnspyre -d 30s -c 2 --server 8.8.8.8 --plot . https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains
+dnspyre -d 30s -c 2 --server 8.8.8.8 --plot . https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/10000-domains
 ```
 
 generates these graphs:
