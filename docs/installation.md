@@ -6,21 +6,21 @@ nav_order: 1
 
 # Installation
 
-You can install dnspyre using [Homebrew](https://brew.sh) package manager
+You can install *dnspyre* using [Homebrew](https://brew.sh) package manager
 ```
 brew tap tantalor93/dnspyre
 brew install dnspyre
 ```
 
-Also you can use standard [Go tooling](https://pkg.go.dev/cmd/go#hdr-Compile_and_install_packages_and_dependencies) to install dnspyre
+Also you can use standard [Go tooling](https://pkg.go.dev/cmd/go#hdr-Compile_and_install_packages_and_dependencies) to install *dnspyre*
 ```
 go install github.com/tantalor93/dnspyre/v2@latest
 ```
 
-Or you can download latest dnspyre binary archive for your operating system and architecture [here](https://github.com/Tantalor93/dnspyre/releases/latest)
+Or you can download latest *dnspyre* binary archive for your operating system and architecture [here](https://github.com/Tantalor93/dnspyre/releases/latest)
 
 ## Bash/ZSH Shell completion
-When dnspyre is installed using [Homebrew](https://brew.sh), the shell completions are installed automatically, if Homebrew is configured to [install them](https://docs.brew.sh/Shell-Completion)
+When *dnspyre* is installed using [Homebrew](https://brew.sh), the shell completions are installed automatically, if Homebrew is configured to [install them](https://docs.brew.sh/Shell-Completion)
 
 Otherwise you have to setup completions manually:
 
@@ -35,7 +35,7 @@ eval "$(dnspyre --completion-script-bash)"
 ```
 
 # Docker image
-if you don't want to install `dnspyre` locally, you can use prepared [Docker image](https://github.com/Tantalor93/dnspyre/pkgs/container/dnspyre),
+if you don't want to install *dnspyre* locally, you can use prepared [Docker image](https://github.com/Tantalor93/dnspyre/pkgs/container/dnspyre),
 for example 
 ```
 docker run ghcr.io/tantalor93/dnspyre --server 8.8.8.8 google.com
