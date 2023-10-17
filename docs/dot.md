@@ -7,7 +7,7 @@ parent: Examples
 # DoT
 {: .no_toc }
 
-dnspyre supports running benchmarks against [RFC-7858](https://datatracker.ietf.org/doc/html/rfc7858) compatible DNS over TLS servers
+*dnspyre* supports running benchmarks against [RFC-7858](https://datatracker.ietf.org/doc/html/rfc7858) compatible DNS over TLS servers
 
 ```
 dnspyre --dot --server 1.1.1.1:853 idnes.cz
