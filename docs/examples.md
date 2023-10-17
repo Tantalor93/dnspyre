@@ -7,7 +7,7 @@ has_children: true
 
 # Examples
 {: .no_toc }
-This page shows examples of dnspyre usage and its various options
+This page shows examples of *dnspyre* usage and its various options
 
 * TOC
 {:toc}
@@ -41,7 +41,7 @@ dnspyre -n 10 -c 10 --server 8.8.8.8 redsift.io example.com google.com
 ```
 
 ## Hostnames provided using file on local filesystem
-Instead of specifying hostnames as arguments to `dnspyre` tool, you can just specify file containing hostnames to be used by the tool,
+Instead of specifying hostnames as arguments to *dnspyre* tool, you can just specify file containing hostnames to be used by the tool,
 by referencing the file using `@<path-to-file>`
 ```
 dnspyre -n 10 -c 10 --server 8.8.8.8 @data/2-domains
@@ -54,7 +54,7 @@ dnspyre -n 10 -c 10 --server 8.8.8.8 https://raw.githubusercontent.com/Tantalor9
 ```
 
 ## Combining multiple query types in the benchmark
-Multiple DNS query types can be specified for `dnspyre` tool. 
+Multiple DNS query types can be specified for *dnspyre* tool. 
 This can be achieved by repeating type `-t`, all queries will be made by each specified query type
 ```
 dnspyre -n 10 -c 10 --server 8.8.8.8 -t A -t AAAA @data/2-domains
@@ -91,12 +91,12 @@ dnspyre -n 10 -c 10 idnes.cz --server 127.0.0.1 --ednsopt=65518:fddddddd10000000
 ```
 
 ## Output benchmark results as JSON
-By specifying `--json` flag, dnspyre can output benchmark results in a JSON format, which is better for further automatic processing
+By specifying `--json` flag, *dnspyre* can output benchmark results in a JSON format, which is better for further automatic processing
 ```
 dnspyre --duration 5s --server 8.8.8.8 google.com  --json
 ```
 
-example of chaining of dnspyre with [jq](https://stedolan.github.io/jq/) for getting pretty JSON
+example of chaining of *dnspyre* with [jq](https://stedolan.github.io/jq/) for getting pretty JSON
 ```
 dnspyre --duration 5s --server 8.8.8.8 google.com --no-distribution --json | jq '.'
 ```
