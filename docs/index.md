@@ -6,7 +6,7 @@ nav_order: 0
 
 # dnspyre
 
-dnspyre is a command-line DNS benchmark tool built to stress test and measure the performance of DNS servers. You can easily run benchmark from MacOS, Linux or Windows systems.
+*dnspyre* is a command-line DNS benchmark tool built to stress test and measure the performance of DNS servers. You can easily run benchmark from MacOS, Linux or Windows systems.
 This tool is based and originally forked from [dnstrace](https://github.com/redsift/dnstrace), but was largely rewritten and enhanced with additional functionality.
 
 This tool supports wide variety of options to customize DNS benchmark and benchmark output. For example, you can:
