@@ -5,7 +5,7 @@ parent: Examples
 ---
 
 # Plain DNS
-dnspyre supports running benchmarks against DNS servers using plain DNS over UDP (default option)
+*dnspyre* supports running benchmarks against DNS servers using plain DNS over UDP (default option)
 ```
 dnspyre --server 8.8.8.8 google.com
 ```
