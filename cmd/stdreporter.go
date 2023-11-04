@@ -14,10 +14,10 @@ import (
 
 type standardReporter struct{}
 
-func (s *standardReporter) print(w io.Writer, b *Benchmark, timings *hdrhistogram.Histogram, codeTotals map[int]int64, totalCounters Counters, qtypeTotals map[string]int64, topErrs orderedMap, t time.Duration) error {
-	b.printProgress(w, totalCounters)
+func (s *standardReporter) print(params reportParameters) error {
+	params.benchmark.printProgress(params.outputWriter, params.totalCounters)
 
-	if len(codeTotals) > 0 {
+	if len(params.codeTotals) > 0 {
 		fmt.Println()
 		fmt.Println("DNS response codes:")
 		for i := dns.RcodeSuccess; i <= dns.RcodeBadCookie; i++ {
@@ -25,36 +25,41 @@ func (s *standardReporter) print(w io.Writer, b *Benchmark, timings *hdrhistogra
 			if i == dns.RcodeSuccess {
 				printFn = successPrint
 			}
-			if c, ok := codeTotals[i]; ok {
-				printFn(w, "\t%s:\t%d\n", dns.RcodeToString[i], c)
+			if c, ok := params.codeTotals[i]; ok {
+				printFn(params.outputWriter, "\t%s:\t%d\n", dns.RcodeToString[i], c)
 			}
 		}
 	}
 
-	if len(qtypeTotals) > 0 {
+	if len(params.qtypeTotals) > 0 {
 		fmt.Println()
 		fmt.Println("DNS question types:")
-		for k, v := range qtypeTotals {
-			successPrint(w, "\t%s:\t%d\n", k, v)
+		for k, v := range params.qtypeTotals {
+			successPrint(params.outputWriter, "\t%s:\t%d\n", k, v)
 		}
+	}
+
+	if params.benchmark.DNSSEC {
+		fmt.Println()
+		fmt.Println("Number of domains secured using DNSSEC:", highlightStr(len(params.authenticatedDomains)))
 	}
 
 	fmt.Println()
 
-	fmt.Println("Time taken for tests:\t", highlightStr(roundDuration(t).String()))
-	fmt.Printf("Questions per second:\t %s", highlightStr(fmt.Sprintf("%0.1f", float64(totalCounters.Total)/t.Seconds())))
+	fmt.Println("Time taken for tests:\t", highlightStr(roundDuration(params.benchmarkDuration).String()))
+	fmt.Printf("Questions per second:\t %s", highlightStr(fmt.Sprintf("%0.1f", float64(params.totalCounters.Total)/params.benchmarkDuration.Seconds())))
 
-	min := time.Duration(timings.Min())
-	mean := time.Duration(timings.Mean())
-	sd := time.Duration(timings.StdDev())
-	max := time.Duration(timings.Max())
-	p99 := time.Duration(timings.ValueAtQuantile(99))
-	p95 := time.Duration(timings.ValueAtQuantile(95))
-	p90 := time.Duration(timings.ValueAtQuantile(90))
-	p75 := time.Duration(timings.ValueAtQuantile(75))
-	p50 := time.Duration(timings.ValueAtQuantile(50))
+	min := time.Duration(params.timings.Min())
+	mean := time.Duration(params.timings.Mean())
+	sd := time.Duration(params.timings.StdDev())
+	max := time.Duration(params.timings.Max())
+	p99 := time.Duration(params.timings.ValueAtQuantile(99))
+	p95 := time.Duration(params.timings.ValueAtQuantile(95))
+	p90 := time.Duration(params.timings.ValueAtQuantile(90))
+	p75 := time.Duration(params.timings.ValueAtQuantile(75))
+	p50 := time.Duration(params.timings.ValueAtQuantile(50))
 
-	if tc := timings.TotalCount(); tc > 0 {
+	if tc := params.timings.TotalCount(); tc > 0 {
 		fmt.Println()
 		fmt.Println("DNS timings,", highlightStr(tc), "datapoints")
 		fmt.Println("\t min:\t\t", highlightStr(roundDuration(min)))
@@ -67,25 +72,25 @@ func (s *standardReporter) print(w io.Writer, b *Benchmark, timings *hdrhistogra
 		fmt.Println("\t p75:\t\t", highlightStr(roundDuration(p75)))
 		fmt.Println("\t p50:\t\t", highlightStr(roundDuration(p50)))
 
-		dist := timings.Distribution()
-		if b.HistDisplay && tc > 1 {
+		dist := params.timings.Distribution()
+		if params.benchmark.HistDisplay && tc > 1 {
 			fmt.Println()
 			fmt.Println("DNS distribution,", highlightStr(tc), "datapoints")
 
-			printBars(w, dist)
+			printBars(params.outputWriter, dist)
 		}
 	}
 
 	sumerrs := 0
-	for _, v := range topErrs.m {
+	for _, v := range params.topErrs.m {
 		sumerrs += v
 	}
 
-	if len(topErrs.m) > 0 {
-		errPrint(w, "\nTotal Errors: %d\n", sumerrs)
-		errPrint(w, "Top errors:\n")
-		for _, err := range topErrs.order {
-			errPrint(w, "%s\t%d (%.2f)%%\n", err, topErrs.m[err], (float64(topErrs.m[err])/float64(sumerrs))*100)
+	if len(params.topErrs.m) > 0 {
+		errPrint(params.outputWriter, "\nTotal Errors: %d\n", sumerrs)
+		errPrint(params.outputWriter, "Top errors:\n")
+		for _, err := range params.topErrs.order {
+			errPrint(params.outputWriter, "%s\t%d (%.2f)%%\n", err, params.topErrs.m[err], (float64(params.topErrs.m[err])/float64(sumerrs))*100)
 		}
 	}
 

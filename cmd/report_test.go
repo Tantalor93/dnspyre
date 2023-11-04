@@ -45,6 +45,46 @@ func Example_standard_printReport() {
 	// test2	1 (33.33)%
 }
 
+func Example_standard_printReport_dnssec() {
+	b, rs := testData()
+	b.DNSSEC = true
+	rs.AuthenticatedDomains = map[string]struct{}{"example.org.": {}}
+
+	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Second)
+
+	// Output: Total requests:		1
+	// Read/Write errors:	3
+	// ID mismatch errors:	6
+	// DNS success codes:	4
+	// Truncated responses:	7
+	//
+	// DNS response codes:
+	//	NOERROR:	2
+	//
+	// DNS question types:
+	//	A:	2
+	//
+	// Number of domains secured using DNSSEC: 1
+	//
+	// Time taken for tests:	 1s
+	// Questions per second:	 1.0
+	// DNS timings, 2 datapoints
+	//	 min:		 5ns
+	//	 mean:		 7ns
+	//	 [+/-sd]:	 2ns
+	//	 max:		 10ns
+	//	 p99:		 10ns
+	//	 p95:		 10ns
+	//	 p90:		 10ns
+	//	 p75:		 10ns
+	//	 p50:		 5ns
+	//
+	// Total Errors: 3
+	// Top errors:
+	// test	2 (66.67)%
+	// test2	1 (33.33)%
+}
+
 func Example_json_printReport() {
 	b, rs := testData()
 	b.JSON = true
@@ -54,6 +94,19 @@ func Example_json_printReport() {
 	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Second)
 
 	// Output: {"totalRequests":1,"totalSuccessCodes":4,"totalErrors":3,"TotalIDmismatch":6,"totalTruncatedResponses":7,"responseRcodes":{"NOERROR":2},"questionTypes":{"A":2},"queriesPerSecond":1,"benchmarkDurationSeconds":1,"latencyStats":{"minMs":0,"meanMs":0,"stdMs":0,"maxMs":0,"p99Ms":0,"p95Ms":0,"p90Ms":0,"p75Ms":0,"p50Ms":0},"latencyDistribution":[{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1}]}
+}
+
+func Example_json_printReport_dnssec() {
+	b, rs := testData()
+	b.JSON = true
+	b.Rcodes = true
+	b.HistDisplay = true
+	b.DNSSEC = true
+	rs.AuthenticatedDomains = map[string]struct{}{"example.org.": {}}
+
+	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Second)
+
+	// Output: {"totalRequests":1,"totalSuccessCodes":4,"totalErrors":3,"TotalIDmismatch":6,"totalTruncatedResponses":7,"responseRcodes":{"NOERROR":2},"questionTypes":{"A":2},"queriesPerSecond":1,"benchmarkDurationSeconds":1,"latencyStats":{"minMs":0,"meanMs":0,"stdMs":0,"maxMs":0,"p99Ms":0,"p95Ms":0,"p90Ms":0,"p75Ms":0,"p50Ms":0},"latencyDistribution":[{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1}],"totalDNSSECSecuredDomains":1}
 }
 
 func testData() (Benchmark, ResultStats) {

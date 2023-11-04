@@ -58,6 +58,9 @@ func init() {
 	pApp.Flag("ednsopt", "code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal string. code must be an arbitrary numeric value.").
 		Default("").StringVar(&benchmark.EdnsOpt)
 
+	pApp.Flag("dnssec", "Allow DNSSEC (sets DO bit for all DNS requests to 1)").
+		Default("false").BoolVar(&benchmark.DNSSEC)
+
 	pApp.Flag("tcp", "Use TCP for DNS requests.").Default("false").BoolVar(&benchmark.TCP)
 
 	pApp.Flag("dot", "Use DoT (DNS over TLS) for DNS requests.").Default("false").BoolVar(&benchmark.DOT)

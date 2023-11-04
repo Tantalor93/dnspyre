@@ -2,11 +2,9 @@ package cmd
 
 import (
 	"encoding/json"
-	"io"
 	"math"
 	"time"
 
-	"github.com/HdrHistogram/hdrhistogram-go"
 	"github.com/miekg/dns"
 )
 
@@ -30,36 +28,37 @@ type histogramPoint struct {
 }
 
 type jsonResult struct {
-	TotalRequests            int64            `json:"totalRequests"`
-	TotalSuccessCodes        int64            `json:"totalSuccessCodes"`
-	TotalErrors              int64            `json:"totalErrors"`
-	TotalIDmismatch          int64            `json:"TotalIDmismatch"`
-	TotalTruncatedResponses  int64            `json:"totalTruncatedResponses"`
-	ResponseRcodes           map[string]int64 `json:"responseRcodes,omitempty"`
-	QuestionTypes            map[string]int64 `json:"questionTypes"`
-	QueriesPerSecond         float64          `json:"queriesPerSecond"`
-	BenchmarkDurationSeconds float64          `json:"benchmarkDurationSeconds"`
-	LatencyStats             latencyStats     `json:"latencyStats"`
-	LatencyDistribution      []histogramPoint `json:"latencyDistribution,omitempty"`
+	TotalRequests             int64            `json:"totalRequests"`
+	TotalSuccessCodes         int64            `json:"totalSuccessCodes"`
+	TotalErrors               int64            `json:"totalErrors"`
+	TotalIDmismatch           int64            `json:"TotalIDmismatch"`
+	TotalTruncatedResponses   int64            `json:"totalTruncatedResponses"`
+	ResponseRcodes            map[string]int64 `json:"responseRcodes,omitempty"`
+	QuestionTypes             map[string]int64 `json:"questionTypes"`
+	QueriesPerSecond          float64          `json:"queriesPerSecond"`
+	BenchmarkDurationSeconds  float64          `json:"benchmarkDurationSeconds"`
+	LatencyStats              latencyStats     `json:"latencyStats"`
+	LatencyDistribution       []histogramPoint `json:"latencyDistribution,omitempty"`
+	TotalDNSSECSecuredDomains *int             `json:"totalDNSSECSecuredDomains,omitempty"`
 }
 
-func (s *jsonReporter) print(w io.Writer, b *Benchmark, timings *hdrhistogram.Histogram, codeTotals map[int]int64, totalCounters Counters, qtypeTotals map[string]int64, topErrs orderedMap, t time.Duration) error {
+func (s *jsonReporter) print(params reportParameters) error {
 	sumerrs := int64(0)
-	for _, v := range topErrs.m {
+	for _, v := range params.topErrs.m {
 		sumerrs += int64(v)
 	}
 
 	codeTotalsMapped := make(map[string]int64)
-	if b.Rcodes {
-		for k, v := range codeTotals {
+	if params.benchmark.Rcodes {
+		for k, v := range params.codeTotals {
 			codeTotalsMapped[dns.RcodeToString[k]] = v
 		}
 	}
 
 	var res []histogramPoint
 
-	if b.HistDisplay {
-		dist := timings.Distribution()
+	if params.benchmark.HistDisplay {
+		dist := params.timings.Distribution()
 		for _, d := range dist {
 			res = append(res, histogramPoint{
 				LatencyMs: time.Duration(d.To/2 + d.From/2).Milliseconds(),
@@ -85,28 +84,32 @@ func (s *jsonReporter) print(w io.Writer, b *Benchmark, timings *hdrhistogram.Hi
 	}
 
 	result := jsonResult{
-		TotalRequests:            totalCounters.Total,
-		TotalSuccessCodes:        totalCounters.Success,
+		TotalRequests:            params.totalCounters.Total,
+		TotalSuccessCodes:        params.totalCounters.Success,
 		TotalErrors:              sumerrs,
-		TotalIDmismatch:          totalCounters.IDmismatch,
-		TotalTruncatedResponses:  totalCounters.Truncated,
-		QueriesPerSecond:         math.Round(float64(totalCounters.Total)/t.Seconds()*100) / 100,
-		BenchmarkDurationSeconds: roundDuration(t).Seconds(),
+		TotalIDmismatch:          params.totalCounters.IDmismatch,
+		TotalTruncatedResponses:  params.totalCounters.Truncated,
+		QueriesPerSecond:         math.Round(float64(params.totalCounters.Total)/params.benchmarkDuration.Seconds()*100) / 100,
+		BenchmarkDurationSeconds: roundDuration(params.benchmarkDuration).Seconds(),
 		ResponseRcodes:           codeTotalsMapped,
-		QuestionTypes:            qtypeTotals,
+		QuestionTypes:            params.qtypeTotals,
 		LatencyStats: latencyStats{
-			MinMs:  time.Duration(timings.Min()).Milliseconds(),
-			MeanMs: time.Duration(timings.Mean()).Milliseconds(),
-			StdMs:  time.Duration(timings.StdDev()).Milliseconds(),
-			MaxMs:  time.Duration(timings.Max()).Milliseconds(),
-			P99Ms:  time.Duration(timings.ValueAtQuantile(99)).Milliseconds(),
-			P95Ms:  time.Duration(timings.ValueAtQuantile(95)).Milliseconds(),
-			P90Ms:  time.Duration(timings.ValueAtQuantile(90)).Milliseconds(),
-			P75Ms:  time.Duration(timings.ValueAtQuantile(75)).Milliseconds(),
-			P50Ms:  time.Duration(timings.ValueAtQuantile(50)).Milliseconds(),
+			MinMs:  time.Duration(params.timings.Min()).Milliseconds(),
+			MeanMs: time.Duration(params.timings.Mean()).Milliseconds(),
+			StdMs:  time.Duration(params.timings.StdDev()).Milliseconds(),
+			MaxMs:  time.Duration(params.timings.Max()).Milliseconds(),
+			P99Ms:  time.Duration(params.timings.ValueAtQuantile(99)).Milliseconds(),
+			P95Ms:  time.Duration(params.timings.ValueAtQuantile(95)).Milliseconds(),
+			P90Ms:  time.Duration(params.timings.ValueAtQuantile(90)).Milliseconds(),
+			P75Ms:  time.Duration(params.timings.ValueAtQuantile(75)).Milliseconds(),
+			P50Ms:  time.Duration(params.timings.ValueAtQuantile(50)).Milliseconds(),
 		},
 		LatencyDistribution: res,
 	}
+	if params.benchmark.DNSSEC {
+		totalDNSSECSecuredDomains := len(params.authenticatedDomains)
+		result.TotalDNSSECSecuredDomains = &totalDNSSECSecuredDomains
+	}
 
-	return json.NewEncoder(w).Encode(result)
+	return json.NewEncoder(params.outputWriter).Encode(result)
 }
