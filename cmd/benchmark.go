@@ -30,6 +30,9 @@ var client = http.Client{
 	Timeout: 120 * time.Second,
 }
 
+// defaultEdns0BufferSize default EDNS0 buffer size according to the http://www.dnsflagday.net/2020/
+const defaultEdns0BufferSize = 1232
+
 // Benchmark is representation of runnable DNS benchmark scenario.
 // based on domains provided in Benchmark.Queries, it will be firing DNS queries until
 // the desired number of queries have been sent by each concurrent worker (see Benchmark.Count) or the desired
@@ -88,6 +91,9 @@ type Benchmark struct {
 
 	// DNSSEC Allow DNSSEC (sets DO bit for all DNS requests to 1)
 	DNSSEC bool
+
+	// Edns0 configures EDNS0 usage in DNS requests send by benchmark and configures EDNS0 buffer size to the specified value. When 0 is configured, then EDNS0 is not used.
+	Edns0 uint16
 
 	// TCP controls whether plain DNS benchmark uses TCP or UDP. When true, the TCP is used.
 	TCP bool
@@ -151,7 +157,12 @@ type Benchmark struct {
 
 type queryFunc func(context.Context, string, *dns.Msg) (*dns.Msg, error)
 
-func (b *Benchmark) normalize() error {
+// prepare validates and normalizes Benchmark settings.
+func (b *Benchmark) prepare() error {
+	if len(b.Server) == 0 {
+		return errors.New("server for benchmarking must not be empty")
+	}
+
 	b.useDoH, _ = isHTTPUrl(b.Server)
 	b.useQuic = strings.HasPrefix(b.Server, "quic://")
 	if b.useQuic {
@@ -181,16 +192,36 @@ func (b *Benchmark) normalize() error {
 	if b.HistMax == 0 {
 		b.HistMax = b.RequestTimeout
 	}
+
+	if b.Edns0 != 0 && (b.Edns0 < 512 || b.Edns0 > 4096) {
+		return errors.New("--edns0 must have value between 512 and 4096")
+	}
+
+	if len(b.EdnsOpt) != 0 {
+		split := strings.Split(b.EdnsOpt, ":")
+		if len(split) != 2 {
+			return errors.New("--ednsopt is not in correct format")
+		}
+		_, err := hex.DecodeString(split[1])
+		if err != nil {
+			return errors.New("--ednsopt is not in correct format, data is not hexadecimal string")
+		}
+		_, err = strconv.ParseUint(split[0], 10, 16)
+		if err != nil {
+			return errors.New("--ednsopt is not in correct format, code is not a decimal number")
+		}
+	}
+
 	return nil
 }
 
 // Run executes benchmark, if benchmark is unable to start the error is returned, otherwise array of results from parallel benchmark goroutines is returned.
 func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
-	if err := b.normalize(); err != nil {
+	color.NoColor = !b.Color
+
+	if err := b.prepare(); err != nil {
 		return nil, err
 	}
-
-	color.NoColor = !b.Color
 
 	questions, err := b.prepareQuestions()
 	if err != nil {
@@ -357,13 +388,16 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 							m.Id = uint16(rando.Uint32())
 						}
 
+						if b.Edns0 > 0 {
+							m.SetEdns0(b.Edns0, false)
+						}
 						if ednsOpt := b.EdnsOpt; len(ednsOpt) > 0 {
 							addEdnsOpt(&m, ednsOpt)
 						}
 						if b.DNSSEC {
 							edns0 := m.IsEdns0()
 							if edns0 == nil {
-								m.SetEdns0(4096, true)
+								m.SetEdns0(defaultEdns0BufferSize, false)
 								edns0 = m.IsEdns0()
 							}
 							edns0.SetDo(true)
@@ -397,18 +431,12 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 func addEdnsOpt(m *dns.Msg, ednsOpt string) {
 	o := m.IsEdns0()
 	if o == nil {
-		m.SetEdns0(4096, true)
+		m.SetEdns0(defaultEdns0BufferSize, false)
 		o = m.IsEdns0()
 	}
 	s := strings.Split(ednsOpt, ":")
-	data, err := hex.DecodeString(s[1])
-	if err != nil {
-		panic(err)
-	}
-	code, err := strconv.ParseUint(s[0], 10, 16)
-	if err != nil {
-		panic(err)
-	}
+	data, _ := hex.DecodeString(s[1])
+	code, _ := strconv.ParseUint(s[0], 10, 16)
 	o.Option = append(o.Option, &dns.EDNS0_LOCAL{Code: uint16(code), Data: data})
 }
 
