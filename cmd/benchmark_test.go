@@ -5,11 +5,13 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -100,6 +102,81 @@ func Test_do_classic_dns_dnssec(t *testing.T) {
 	for _, r := range rs {
 		assert.Equal(t, r.AuthenticatedDomains, map[string]struct{}{"example.org.": {}})
 	}
+}
+
+func Test_do_classic_dns_edns0(t *testing.T) {
+	s := NewServer("udp", nil, func(w dns.ResponseWriter, r *dns.Msg) {
+		opt := r.IsEdns0()
+		if assert.NotNil(t, opt) {
+			assert.EqualValues(t, opt.UDPSize(), 1024)
+		}
+
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.SetEdns0(defaultEdns0BufferSize, false)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 500)
+
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	bench := createBenchmark(s.Addr, false, 1)
+	bench.Edns0 = 1024
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	assert.NoError(t, err, "expected no error from benchmark run")
+	assertResult(t, rs)
+}
+
+func Test_do_classic_dns_edns0_ednsopt(t *testing.T) {
+	testOpt := uint16(65518)
+	testOptData := "test"
+	testHexOptData := hex.EncodeToString([]byte(testOptData))
+
+	s := NewServer("udp", nil, func(w dns.ResponseWriter, r *dns.Msg) {
+		opt := r.IsEdns0()
+		if assert.NotNil(t, opt) {
+			assert.EqualValues(t, opt.UDPSize(), 1024)
+			expectedOpt := false
+			for _, v := range opt.Option {
+				if v.Option() == testOpt {
+					if localOpt, ok := v.(*dns.EDNS0_LOCAL); ok {
+						assert.Equal(t, testOptData, string(localOpt.Data))
+						expectedOpt = true
+					}
+				}
+			}
+			assert.True(t, expectedOpt)
+		}
+
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.SetEdns0(defaultEdns0BufferSize, false)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 500)
+
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	bench := createBenchmark(s.Addr, false, 1)
+	bench.Edns0 = 1024
+	bench.EdnsOpt = strconv.Itoa(int(testOpt)) + ":" + testHexOptData
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	assert.NoError(t, err, "expected no error from benchmark run")
+	assertResult(t, rs)
 }
 
 func Test_do_doh_post(t *testing.T) {
@@ -529,7 +606,7 @@ func createBenchmark(server string, tcp bool, prob float64) Benchmark {
 // A returns an A record from rr. It panics on errors.
 func A(rr string) *dns.A { r, _ := dns.NewRR(rr); return r.(*dns.A) }
 
-func TestBenchmark_normalize(t *testing.T) {
+func TestBenchmark_prepare(t *testing.T) {
 	tests := []struct {
 		name       string
 		benchmark  Benchmark
@@ -586,13 +663,45 @@ func TestBenchmark_normalize(t *testing.T) {
 			benchmark:  Benchmark{Server: "quic://localhost:853"},
 			wantServer: "localhost:853",
 		},
+		{
+			name:      "count and duration specified at once",
+			benchmark: Benchmark{Server: "8.8.8.8", Count: 10, Duration: time.Minute},
+			wantErr:   true,
+		},
+		{
+			name:      "invalid EDNS0 buffer size",
+			benchmark: Benchmark{Server: "8.8.8.8", Edns0: 1},
+			wantErr:   true,
+		},
+		{
+			name:      "Missing server",
+			benchmark: Benchmark{},
+			wantErr:   true,
+		},
+		{
+			name:      "invalid format of ednsopt",
+			benchmark: Benchmark{Server: "8.8.8.8", EdnsOpt: "test"},
+			wantErr:   true,
+		},
+		{
+			name:      "invalid format of ednsopt, code is not decimal",
+			benchmark: Benchmark{Server: "8.8.8.8", EdnsOpt: "test:74657374"},
+			wantErr:   true,
+		},
+		{
+			name:      "invalid format of ednsopt, code is not decimal",
+			benchmark: Benchmark{Server: "8.8.8.8", EdnsOpt: "65518:test"},
+			wantErr:   true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.benchmark.normalize()
+			err := tt.benchmark.prepare()
 
 			require.Equal(t, tt.wantErr, err != nil)
-			assert.Equal(t, tt.wantServer, tt.benchmark.Server)
+			if !tt.wantErr {
+				assert.Equal(t, tt.wantServer, tt.benchmark.Server)
+			}
 		})
 	}
 }

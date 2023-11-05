@@ -61,6 +61,9 @@ func init() {
 	pApp.Flag("dnssec", "Allow DNSSEC (sets DO bit for all DNS requests to 1)").
 		Default("false").BoolVar(&benchmark.DNSSEC)
 
+	pApp.Flag("edns0", "Configures EDNS0 usage in DNS requests send by benchmark and configures EDNS0 buffer size to the specified value. When 0 is configured, then EDNS0 is not used.").
+		Default("0").Uint16Var(&benchmark.Edns0)
+
 	pApp.Flag("tcp", "Use TCP for DNS requests.").Default("false").BoolVar(&benchmark.TCP)
 
 	pApp.Flag("dot", "Use DoT (DNS over TLS) for DNS requests.").Default("false").BoolVar(&benchmark.DOT)
