@@ -24,12 +24,13 @@ type Datapoint struct {
 
 // ResultStats is a representation of benchmark results of single concurrent thread.
 type ResultStats struct {
-	Codes    map[int]int64
-	Qtypes   map[string]int64
-	Hist     *hdrhistogram.Histogram
-	Timings  []Datapoint
-	Counters *Counters
-	Errors   []error
+	Codes                map[int]int64
+	Qtypes               map[string]int64
+	Hist                 *hdrhistogram.Histogram
+	Timings              []Datapoint
+	Counters             *Counters
+	Errors               []error
+	AuthenticatedDomains map[string]struct{}
 }
 
 func (rs *ResultStats) record(req *dns.Msg, resp *dns.Msg, time time.Time, timing time.Duration) {
@@ -55,6 +56,12 @@ func (rs *ResultStats) record(req *dns.Msg, resp *dns.Msg, time time.Time, timin
 	}
 	if rs.Qtypes != nil {
 		rs.Qtypes[dns.TypeToString[req.Question[0].Qtype]]++
+	}
+	if resp.AuthenticatedData {
+		if rs.AuthenticatedDomains == nil {
+			rs.AuthenticatedDomains = make(map[string]struct{})
+		}
+		rs.AuthenticatedDomains[req.Question[0].Name] = struct{}{}
 	}
 
 	rs.Hist.RecordValue(timing.Nanoseconds())

@@ -73,6 +73,35 @@ func Test_do_classic_dns(t *testing.T) {
 	}
 }
 
+func Test_do_classic_dns_dnssec(t *testing.T) {
+	s := NewServer("udp", nil, func(w dns.ResponseWriter, r *dns.Msg) {
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		edns0 := ret.SetEdns0(512, false)
+		edns0.AuthenticatedData = true
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 500)
+
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	bench := createBenchmark(s.Addr, false, 1)
+	bench.DNSSEC = true
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	assert.NoError(t, err, "expected no error from benchmark run")
+	assertResult(t, rs)
+	for _, r := range rs {
+		assert.Equal(t, r.AuthenticatedDomains, map[string]struct{}{"example.org.": {}})
+	}
+}
+
 func Test_do_doh_post(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		bd, err := io.ReadAll(r.Body)

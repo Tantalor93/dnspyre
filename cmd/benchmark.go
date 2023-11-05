@@ -86,6 +86,9 @@ type Benchmark struct {
 	// code must be an arbitrary numeric value.
 	EdnsOpt string
 
+	// DNSSEC Allow DNSSEC (sets DO bit for all DNS requests to 1)
+	DNSSEC bool
+
 	// TCP controls whether plain DNS benchmark uses TCP or UDP. When true, the TCP is used.
 	TCP bool
 
@@ -356,6 +359,14 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 
 						if ednsOpt := b.EdnsOpt; len(ednsOpt) > 0 {
 							addEdnsOpt(&m, ednsOpt)
+						}
+						if b.DNSSEC {
+							edns0 := m.IsEdns0()
+							if edns0 == nil {
+								m.SetEdns0(4096, true)
+								edns0 = m.IsEdns0()
+							}
+							edns0.SetDo(true)
 						}
 
 						st.Counters.Total++

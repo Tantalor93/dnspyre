@@ -22,9 +22,21 @@ type orderedMap struct {
 	order []string
 }
 
+type reportParameters struct {
+	benchmark            *Benchmark
+	outputWriter         io.Writer
+	timings              *hdrhistogram.Histogram
+	codeTotals           map[int]int64
+	totalCounters        Counters
+	qtypeTotals          map[string]int64
+	topErrs              orderedMap
+	authenticatedDomains map[string]struct{}
+	benchmarkDuration    time.Duration
+}
+
 // PrintReport prints formatted benchmark result to stdout, exports graphs and generates CSV output if configured.
 // If there is a fatal error while printing report, an error is returned.
-func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, t time.Duration) error {
+func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchmarkDuration time.Duration) error {
 	// merge all the stats here
 	timings := hdrhistogram.New(b.HistMin.Nanoseconds(), b.HistMax.Nanoseconds(), b.HistPre)
 	codeTotals := make(map[int]int64)
@@ -122,16 +134,36 @@ func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, t time.Durati
 		writeBars(csv, timings.Distribution())
 	}
 
+	authenticatedDomains := make(map[string]struct{})
+	if b.DNSSEC {
+		for _, v := range stats {
+			for k := range v.AuthenticatedDomains {
+				authenticatedDomains[k] = struct{}{}
+			}
+		}
+	}
+
 	if b.Silent {
 		return nil
 	}
 	topErrs := orderedMap{m: top3errs, order: top3errorsInOrder}
+	params := reportParameters{
+		benchmark:            b,
+		outputWriter:         w,
+		timings:              timings,
+		codeTotals:           codeTotals,
+		totalCounters:        totalCounters,
+		qtypeTotals:          qtypeTotals,
+		topErrs:              topErrs,
+		authenticatedDomains: authenticatedDomains,
+		benchmarkDuration:    benchmarkDuration,
+	}
 	if b.JSON {
 		j := jsonReporter{}
-		return j.print(w, b, timings, codeTotals, totalCounters, qtypeTotals, topErrs, t)
+		return j.print(params)
 	}
 	s := standardReporter{}
-	return s.print(w, b, timings, codeTotals, totalCounters, qtypeTotals, topErrs, t)
+	return s.print(params)
 }
 
 func (b *Benchmark) fileName(dir, name string) string {
