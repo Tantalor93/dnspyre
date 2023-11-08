@@ -83,13 +83,6 @@ roughly every third hostname from the datasource will be used by the each concur
 dnspyre --duration 30s -c 10 --server 8.8.8.8  --probability 0.33  https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains
 ```
 
-## EDNSOPT usage
-you can also specify EDNS option with arbitrary payload, here we are specifying EDNSOPT `65518`
-coming from the local/experimental range with payload `fddddddd100000000000000000000001`
-```
-dnspyre -n 10 -c 10 idnes.cz --server 127.0.0.1 --ednsopt=65518:fddddddd100000000000000000000001
-```
-
 ## Output benchmark results as JSON
 By specifying `--json` flag, *dnspyre* can output benchmark results in a JSON format, which is better for further automatic processing
 ```
