@@ -5,8 +5,7 @@ on:
     tags:
     - '*'
 
-permissions:
-  contents: write
+permissions: write-all
 
 jobs:
   goreleaser:
