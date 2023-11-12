@@ -1,5 +1,6 @@
 name: goreleaser
 
+# Release is triggered upon pushing a new tag
 on:
   push:
     tags:
