@@ -299,12 +299,12 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 
 	var bar *progressbar.ProgressBar
 	var incrementBar bool
-	if repetitions := b.Count * int64(b.Concurrency) * int64(len(b.Types)) * int64(len(questions)); b.ProgressBar && repetitions >= 100 {
+	if repetitions := b.Count * int64(b.Concurrency) * int64(len(b.Types)) * int64(len(questions)); !b.Silent && b.ProgressBar && repetitions >= 100 {
 		fmt.Println()
 		bar = progressbar.Default(repetitions, "Progress:")
 		incrementBar = true
 	}
-	if b.ProgressBar && b.Duration >= 10*time.Second {
+	if !b.Silent && b.ProgressBar && b.Duration >= 10*time.Second {
 		fmt.Println()
 		bar = progressbar.Default(int64(b.Duration.Seconds()), "Progress:")
 		ticker := time.NewTicker(time.Second)
