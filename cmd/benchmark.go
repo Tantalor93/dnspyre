@@ -20,6 +20,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/miekg/dns"
 	"github.com/quic-go/quic-go/http3"
+	"github.com/schollz/progressbar/v3"
 	"github.com/tantalor93/doh-go/doh"
 	"github.com/tantalor93/doq-go/doq"
 	"go.uber.org/ratelimit"
@@ -144,6 +145,9 @@ type Benchmark struct {
 
 	// Insecure disables server TLS certificate validation. Applicable for DoT, DoH and DoQ.
 	Insecure bool
+
+	// ProgressBar controls whether the progress bar is printed.
+	ProgressBar bool
 
 	// Queries list of domains and data sources to be used in Benchmark. It can contain a local file data source referenced using @<file-path>, for example @data/2-domains.
 	// It can also be data source file accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that case the file will be downloaded and saved in-memory.
@@ -293,6 +297,29 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		fmt.Printf("Benchmarking %s via %s with %s concurrent requests %s\n", highlightStr(b.Server), highlightStr(network), highlightStr(b.Concurrency), limits)
 	}
 
+	var bar *progressbar.ProgressBar
+	var incrementBar bool
+	if repetitions := b.Count * int64(b.Concurrency) * int64(len(b.Types)) * int64(len(questions)); !b.Silent && b.ProgressBar && repetitions >= 100 {
+		fmt.Println()
+		bar = progressbar.Default(repetitions, "Progress:")
+		incrementBar = true
+	}
+	if !b.Silent && b.ProgressBar && b.Duration >= 10*time.Second {
+		fmt.Println()
+		bar = progressbar.Default(int64(b.Duration.Seconds()), "Progress:")
+		ticker := time.NewTicker(time.Second)
+		go func() {
+			for {
+				select {
+				case <-ticker.C:
+					bar.Add(1)
+				case <-ctx.Done():
+					return
+				}
+			}
+		}()
+	}
+
 	stats := make([]*ResultStats, b.Concurrency)
 
 	var wg sync.WaitGroup
@@ -412,11 +439,13 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 							cancel()
 							st.Counters.IOError++
 							st.Errors = append(st.Errors, err)
-							continue
+						} else {
+							cancel()
+							st.record(&m, resp, start, time.Since(start))
 						}
-
-						cancel()
-						st.record(&m, resp, start, time.Since(start))
+						if incrementBar {
+							bar.Add(1)
+						}
 					}
 				}
 			}
