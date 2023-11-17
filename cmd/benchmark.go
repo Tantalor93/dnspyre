@@ -301,6 +301,10 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	var incrementBar bool
 	if repetitions := b.Count * int64(b.Concurrency) * int64(len(b.Types)) * int64(len(questions)); !b.Silent && b.ProgressBar && repetitions >= 100 {
 		fmt.Println()
+		if b.Probability < 1.0 {
+			// show spinner when Benchmark.Probability is less than 1.0, because the actual number of repetitions is not known
+			repetitions = -1
+		}
 		bar = progressbar.Default(repetitions, "Progress:")
 		incrementBar = true
 	}

@@ -98,7 +98,7 @@ func (s *standardReporter) print(params reportParameters) error {
 }
 
 func (b *Benchmark) printProgress(w io.Writer, c Counters) {
-	fmt.Printf("\nTotal requests:\t\t%s\n", highlightStr(c.Total))
+	fmt.Printf("\n\nTotal requests:\t\t%s\n", highlightStr(c.Total))
 
 	if c.IOError > 0 {
 		errPrint(w, "Read/Write errors:\t%d\n", c.IOError)
