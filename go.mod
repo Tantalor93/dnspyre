@@ -6,13 +6,13 @@ require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2
 	github.com/alecthomas/kingpin/v2 v2.3.2
 	github.com/fatih/color v1.16.0
-	github.com/miekg/dns v1.1.56
+	github.com/miekg/dns v1.1.57
 	github.com/montanaflynn/stats v0.7.1
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/quic-go/quic-go v0.38.1
 	github.com/schollz/progressbar/v3 v3.14.1
 	github.com/stretchr/testify v1.8.4
-	github.com/tantalor93/doh-go v0.1.0
+	github.com/tantalor93/doh-go v0.1.1
 	github.com/tantalor93/doq-go v0.8.0
 	go-hep.org/x/hep v0.34.1
 	go.uber.org/ratelimit v0.3.0
