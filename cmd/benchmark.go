@@ -386,8 +386,8 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 			}
 
 			for i = 0; i < b.Count || b.Duration != 0; i++ {
-				for _, qt := range qTypes {
-					for _, q := range questions {
+				for _, q := range questions {
+					for _, qt := range qTypes {
 						if ctx.Err() != nil {
 							return
 						}
