@@ -16,3 +16,11 @@ plugins:
 
 logo: "/assets/logo.png"
 favicon_ico: "/assets/favicon.ico"
+
+callouts:
+  note:
+    color: purple
+  warning:
+    color: red
+  important:
+    color: blue

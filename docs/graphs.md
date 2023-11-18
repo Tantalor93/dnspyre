@@ -9,6 +9,7 @@ parent: Examples
 Graphs are exported into the new subdirectory `graphs-<RFC3339 timestamp>` on provided path
 
 For example, this command
+
 ```
 dnspyre -d 30s -c 2 --server 8.8.8.8 --plot . https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/10000-domains
 ```
