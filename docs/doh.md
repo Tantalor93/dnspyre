@@ -13,6 +13,12 @@ parent: Examples
 dnspyre --server 'https://1.1.1.1' google.com
 ```
 
+or
+
+```
+dnspyre --server https://cloudflare-dns.com  google.com
+```
+
 See other examples of customization of DoH benchmarks
 * TOC
 {:toc}
