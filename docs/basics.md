@@ -6,9 +6,9 @@ parent: Examples
 
 # Basics
 *dnspyre* is a tool for benchmarking DNS servers, it works by spawning configured number of concurrent worker thread, where each worker thread
-is sending DNS queries for a domains provided to the *dnspyre* tool. The *dnspyre* runs until on the conditions is met:
-* configured number of repetitions of domain queries is sent (`-n`, `--number` flag is specified)
-* the required duration of benchmark run elapses (`--duration` is specified)
+is sending DNS queries for a domains provided to the *dnspyre* tool. The *dnspyre* runs until one of the conditions is met:
+* configured number of repetitions of domain queries is sent (if `--number` flag is specified)
+* the required duration of benchmark run elapses (if `--duration` flag is specified)
 * benchmark is interrupted with the SIGINT signal
 
 ## Run benchmark with the configured number of repetitions
