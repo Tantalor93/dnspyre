@@ -45,11 +45,11 @@ const defaultEdns0BufferSize = 1232
 // or the worker will be generating arbitrary number of queries until Benchmark.Duration is reached.
 type Benchmark struct {
 	// Server represents (plain DNS, DoT, DoH or DoQ) server, which will be benchmarked.
-	// Format depends on the DNS protocol, that should be used for DNS benchmark:
-	// for plain DNS (either over UDP or TCP) the format is IP:port, if port is not provided then port 53 is used.
-	// for DoT the format is <IP>:[port], if port is not provided then port 853 is used.
-	// for DoH the format is https://<hostname>:[port][/path] or http://<hostname>:[port][/path], if port is not provided then either 443 or 80 port is used. If no path is provided, then /dns-query is used.
-	// for DoQ the format is quic://<hostname>:[port], if port is not provided then port 853 is used.
+	// Format depends on the DNS protocol, that should be used for DNS benchmark.
+	// For plain DNS (either over UDP or TCP) the format is <IP/host>[:port], if port is not provided then port 53 is used.
+	// For DoT the format is <IP/host>[:port], if port is not provided then port 853 is used.
+	// For DoH the format is https://<IP/host>[:port][/path] or http://<IP/host>[:port][/path], if port is not provided then either 443 or 80 port is used. If no path is provided, then /dns-query is used.
+	// For DoQ the format is quic://<IP/host>[:port], if port is not provided then port 853 is used.
 	Server string
 
 	// Types is an array of DNS query types, that should be used in benchmark. All domains retrieved from domain data source will be fired with each
@@ -173,8 +173,6 @@ func (b *Benchmark) prepare() error {
 		b.Server = strings.TrimPrefix(b.Server, "quic://")
 	}
 
-	b.addPortIfMissing()
-
 	if b.useDoH {
 		parsedURL, err := url.Parse(b.Server)
 		if err != nil {
@@ -183,6 +181,20 @@ func (b *Benchmark) prepare() error {
 		if len(parsedURL.Path) == 0 {
 			b.Server += "/dns-query"
 		}
+	}
+
+	b.addPortIfMissing()
+
+	if !b.useDoH && !b.useQuic {
+		host, port, err := net.SplitHostPort(b.Server)
+		if err != nil {
+			return errors.New("failed to parse --server")
+		}
+		addr, err := net.ResolveIPAddr("ip", host)
+		if err != nil {
+			return errors.New("failed to resolve --server address")
+		}
+		b.Server = net.JoinHostPort(addr.String(), port)
 	}
 
 	if b.Count == 0 && b.Duration == 0 {
@@ -370,7 +382,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 					}
 
 					if co == nil {
-						co, err = dnsClient.Dial(b.Server)
+						co, err = dnsClient.DialContext(ctx, b.Server)
 						if err != nil {
 							return nil, err
 						}
@@ -490,10 +502,6 @@ func (b *Benchmark) addPortIfMissing() {
 			return
 		}
 		b.Server = net.JoinHostPort(b.Server, "53")
-		return
-	}
-	if ip := net.ParseIP(b.Server); ip != nil {
-		b.Server = net.JoinHostPort(ip.String(), "53")
 		return
 	}
 }

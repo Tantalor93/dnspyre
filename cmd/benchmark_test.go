@@ -639,6 +639,26 @@ func TestBenchmark_prepare(t *testing.T) {
 			wantServer: "[fddd:dddd::]:53",
 		},
 		{
+			name:       "server - resolve addr for plain DNS",
+			benchmark:  Benchmark{Server: "google-public-dns-a.google.com"},
+			wantServer: "8.8.8.8:53",
+		},
+		{
+			name:       "server - resolve addr with port for plain DNS",
+			benchmark:  Benchmark{Server: "google-public-dns-a.google.com:53"},
+			wantServer: "8.8.8.8:53",
+		},
+		{
+			name:       "server - resolve addr for DoT",
+			benchmark:  Benchmark{Server: "google-public-dns-a.google.com", DOT: true},
+			wantServer: "8.8.8.8:853",
+		},
+		{
+			name:       "server - DoT with IP address",
+			benchmark:  Benchmark{Server: "8.8.8.8", DOT: true},
+			wantServer: "8.8.8.8:853",
+		},
+		{
 			name:       "server - HTTPS url",
 			benchmark:  Benchmark{Server: "https://1.1.1.1"},
 			wantServer: "https://1.1.1.1/dns-query",
