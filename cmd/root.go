@@ -25,10 +25,12 @@ var (
 )
 
 func init() {
-	pApp.Flag("server", "DNS server IP:port to test. IPv6 is also supported, for example '[fddd:dddd::]:53'. "+
-		"DoH (DNS over HTTPS) servers are supported such as `https://1.1.1.1`, when such server is provided, the benchmark automatically switches to the use of DoH. "+
-		"Note that by default path `/dns-query` is assumed for DoH queries, if no path is provided in server parameter. DoQ (DNS over QUIC) servers are also supported, such as `quic://dns.adguard-dns.com`, "+
-		"when such server is provided the benchmark switches to the use of DoQ.").Short('s').Default("127.0.0.1").StringVar(&benchmark.Server)
+	pApp.Flag("server", "Server represents (plain DNS, DoT, DoH or DoQ) server, which will be benchmarked. "+
+		"Format depends on the DNS protocol, that should be used for DNS benchmark. "+
+		"For plain DNS (either over UDP or TCP) the format is <IP/host>[:port], if port is not provided then port 53 is used. "+
+		"For DoT the format is <IP/host>[:port], if port is not provided then port 853 is used. "+
+		"For DoH the format is https://<IP/host>[:port][/path] or http://<IP/host>[:port][/path], if port is not provided then either 443 or 80 port is used. If no path is provided, then /dns-query is used. "+
+		"For DoQ the format is quic://<IP/host>[:port], if port is not provided then port 853 is used.").Short('s').Default("127.0.0.1").StringVar(&benchmark.Server)
 
 	pApp.Flag("type", "Query type. Repeatable flag. If multiple query types are specified then each query will be duplicated for each type.").
 		Short('t').Default("A").EnumsVar(&benchmark.Types, getSupportedDNSTypes()...)
