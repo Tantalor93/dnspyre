@@ -15,3 +15,9 @@ or you can benchmark using DNS over TCP
 ```
 dnspyre --tcp --server 8.8.8.8 google.com
 ```
+
+also you can provide a DNS server hostname instead of the server IP address
+
+```
+dnspyre --server dns.google google.com
+```
