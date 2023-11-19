@@ -30,28 +30,31 @@ A high QPS DNS benchmark.
 
 Flags:
       --[no-]help              Show context-sensitive help (also try --help-long and --help-man).
-  -s, --server="127.0.0.1"     DNS server IP:port to test. IPv6 is also supported, for example '[fddd:dddd::]:53'. DoH (DNS over HTTPS) servers
-                               are supported such as `https://1.1.1.1`, when such server is provided, the benchmark automatically switches to the
-                               use of DoH. Note that by default path `/dns-query` is assumed for DoH queries, if no path is provided in server
-                               parameter. DoQ (DNS over QUIC) servers are also supported, such as `quic://dns.adguard-dns.com`, when such server
-                               is provided the benchmark switches to the use of DoQ.
-  -t, --type=A ...             Query type. Repeatable flag. If multiple query types are specified then each query will be duplicated for each
-                               type.
+  -s, --server="127.0.0.1"     Server represents (plain DNS, DoT, DoH or DoQ) server, which will be benchmarked. Format depends on the
+                               DNS protocol, that should be used for DNS benchmark. For plain DNS (either over UDP or TCP) the format is
+                               <IP/host>[:port], if port is not provided then port 53 is used. For DoT the format is <IP/host>[:port],
+                               if port is not provided then port 853 is used. For DoH the format is https://<IP/host>[:port][/path] or
+                               http://<IP/host>[:port][/path], if port is not provided then either 443 or 80 port is used. If no path is
+                               provided, then /dns-query is used. For DoQ the format is quic://<IP/host>[:port], if port is not provided
+                               then port 853 is used.
+  -t, --type=A ...             Query type. Repeatable flag. If multiple query types are specified then each query will be duplicated for
+                               each type.
   -n, --number=NUMBER          How many times the provided queries are repeated. Note that the total number of queries issued =
                                types*number*concurrency*len(queries).
   -c, --concurrency=1          Number of concurrent queries to issue.
   -l, --rate-limit=0           Apply a global questions / second rate limit.
       --rate-limit-worker=0    Apply a questions / second rate limit for each concurrent worker specified by --concurrency option.
-      --query-per-conn=0       Queries on a connection before creating a new one. 0: unlimited. Applicable for plain DNS and DoT, this option is
-                               not considered for DoH or DoQ.
+      --query-per-conn=0       Queries on a connection before creating a new one. 0: unlimited. Applicable for plain DNS and DoT,
+                               this option is not considered for DoH or DoQ.
   -r, --[no-]recurse           Allow DNS recursion. Enabled by default.
-      --probability=1          Each provided hostname will be used with provided probability. Value 1 and above means that each hostname will be
-                               used by each concurrent benchmark goroutine. Useful for randomizing queries across benchmark goroutines.
-      --ednsopt=""             code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal string.
-                               code must be an arbitrary numeric value.
+      --probability=1          Each provided hostname will be used with provided probability. Value 1 and above means that each hostname
+                               will be used by each concurrent benchmark goroutine. Useful for randomizing queries across benchmark
+                               goroutines.
+      --ednsopt=""             code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal
+                               string. code must be an arbitrary numeric value.
       --[no-]dnssec            Allow DNSSEC (sets DO bit for all DNS requests to 1)
-      --edns0=0                Configures EDNS0 usage in DNS requests send by benchmark and configures EDNS0 buffer size to the specified value.
-                               When 0 is configured, then EDNS0 is not used.
+      --edns0=0                Configures EDNS0 usage in DNS requests send by benchmark and configures EDNS0 buffer size to the
+                               specified value. When 0 is configured, then EDNS0 is not used.
       --[no-]tcp               Use TCP for DNS requests.
       --[no-]dot               Use DoT (DNS over TLS) for DNS requests.
       --write=1s               write timeout.
@@ -72,15 +75,16 @@ Flags:
       --doh-method=post        HTTP method to use for DoH requests. Supported values: get, post.
       --doh-protocol=1.1       HTTP protocol to use for DoH requests. Supported values: 1.1, 2 and 3.
       --[no-]insecure          Disables server TLS certificate validation. Applicable for DoT, DoH and DoQ.
-  -d, --duration=1m            Specifies for how long the benchmark should be executing, the benchmark will run for the specified time while
-                               sending DNS requests in an infinite loop based on the data source. After running for the specified duration,
-                               the benchmark is canceled. This option is exclusive with --number option. The duration is specified in GO duration
-                               format e.g. 10s, 15m, 1h.
+  -d, --duration=1m            Specifies for how long the benchmark should be executing, the benchmark will run for the specified time
+                               while sending DNS requests in an infinite loop based on the data source. After running for the specified
+                               duration, the benchmark is canceled. This option is exclusive with --number option. The duration is
+                               specified in GO duration format e.g. 10s, 15m, 1h.
+      --[no-]progress          Controls whether the progress bar is shown. Enabled by default.
       --[no-]version           Show application version.
 
 Args:
-  <queries>  Queries to issue. It can be a local file referenced using @<file-path>, for example @data/2-domains. It can also be resource
-             accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that case,
-             the file will be downloaded and saved in-memory. These data sources can be combined, for example "google.com @data/2-domains
-             https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/2-domains"
+  <queries>  Queries to issue. It can be a local file referenced using @<file-path>, for example @data/2-domains. It can also be
+             resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains,
+             in that case, the file will be downloaded and saved in-memory. These data sources can be combined, for example "google.com
+             @data/2-domains https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/2-domains"
 ```
