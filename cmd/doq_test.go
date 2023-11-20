@@ -129,6 +129,9 @@ func readDOQMessage(r io.Reader) (*dns.Msg, error) {
 
 	buf := make([]byte, size)
 	_, err = io.ReadFull(r, buf)
+	if err != nil {
+		return nil, err
+	}
 
 	// A client or server receives a STREAM FIN before receiving all the bytes
 	// for a message indicated in the 2-octet length field.
