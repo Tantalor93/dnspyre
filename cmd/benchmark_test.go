@@ -69,7 +69,7 @@ func Test_do_classic_dns(t *testing.T) {
 			defer cancel()
 			rs, err := bench.Run(ctx)
 
-			assert.NoError(t, err, "expected no error from benchmark run")
+			require.NoError(t, err, "expected no error from benchmark run")
 			assertResult(t, rs)
 		})
 	}
@@ -97,7 +97,7 @@ func Test_do_classic_dns_dnssec(t *testing.T) {
 	defer cancel()
 	rs, err := bench.Run(ctx)
 
-	assert.NoError(t, err, "expected no error from benchmark run")
+	require.NoError(t, err, "expected no error from benchmark run")
 	assertResult(t, rs)
 	for _, r := range rs {
 		assert.Equal(t, r.AuthenticatedDomains, map[string]struct{}{"example.org.": {}})
@@ -130,7 +130,7 @@ func Test_do_classic_dns_edns0(t *testing.T) {
 	defer cancel()
 	rs, err := bench.Run(ctx)
 
-	assert.NoError(t, err, "expected no error from benchmark run")
+	require.NoError(t, err, "expected no error from benchmark run")
 	assertResult(t, rs)
 }
 
@@ -175,7 +175,7 @@ func Test_do_classic_dns_edns0_ednsopt(t *testing.T) {
 	defer cancel()
 	rs, err := bench.Run(ctx)
 
-	assert.NoError(t, err, "expected no error from benchmark run")
+	require.NoError(t, err, "expected no error from benchmark run")
 	assertResult(t, rs)
 }
 
@@ -216,7 +216,7 @@ func Test_do_doh_post(t *testing.T) {
 	defer cancel()
 	rs, err := bench.Run(ctx)
 
-	assert.NoError(t, err, "expected no error from benchmark run")
+	require.NoError(t, err, "expected no error from benchmark run")
 	assertResult(t, rs)
 }
 
@@ -259,7 +259,7 @@ func Test_do_doh_get(t *testing.T) {
 	defer cancel()
 	rs, err := bench.Run(ctx)
 
-	assert.NoError(t, err, "expected no error from benchmark run")
+	require.NoError(t, err, "expected no error from benchmark run")
 	assertResult(t, rs)
 }
 
@@ -282,12 +282,10 @@ func Test_do_probability(t *testing.T) {
 	defer cancel()
 	rs, err := bench.Run(ctx)
 
-	assert.NoError(t, err, "expected no error from benchmark run")
-	assert.Len(t, rs, 2, "Run(ctx) rstats")
-	rs0 := rs[0]
-	rs1 := rs[1]
-	assert.Equal(t, int64(0), rs0.Counters.Total, "Run(ctx) total counter")
-	assert.Equal(t, int64(0), rs1.Counters.Total, "Run(ctx) total counter")
+	require.NoError(t, err, "expected no error from benchmark run")
+	require.Len(t, rs, 2, "expected results from two workers")
+	assert.Equal(t, int64(0), rs[0].Counters.Total, "Run(ctx) total counter")
+	assert.Equal(t, int64(0), rs[1].Counters.Total, "Run(ctx) total counter")
 }
 
 func Test_download_external_datasource_using_http(t *testing.T) {
@@ -331,7 +329,7 @@ func Test_download_external_datasource_using_http(t *testing.T) {
 	defer cancel()
 	rs, err := bench.Run(ctx)
 
-	assert.NoError(t, err, "expected no error from benchmark run")
+	require.NoError(t, err, "expected no error from benchmark run")
 	assertResult(t, rs)
 }
 
@@ -361,7 +359,7 @@ func Test_download_external_datasource_using_http_not_available(t *testing.T) {
 	defer cancel()
 	_, err := bench.Run(ctx)
 
-	assert.Error(t, err, "expected error from benchmark run")
+	require.Error(t, err, "expected error from benchmark run")
 }
 
 func Test_download_external_datasource_using_http_wrong_response(t *testing.T) {
@@ -390,7 +388,7 @@ func Test_download_external_datasource_using_http_wrong_response(t *testing.T) {
 	defer cancel()
 	_, err := bench.Run(ctx)
 
-	assert.Error(t, err, "expected error from benchmark run")
+	require.Error(t, err, "expected error from benchmark run")
 }
 
 func Test_do_classic_dns_with_duration(t *testing.T) {
@@ -421,7 +419,7 @@ func Test_do_classic_dns_with_duration(t *testing.T) {
 	defer cancel()
 	rs, err := bench.Run(ctx)
 
-	assert.NoError(t, err, "expected no error from benchmark run")
+	require.NoError(t, err, "expected no error from benchmark run")
 	assert.GreaterOrEqual(t, rs[0].Counters.Total, int64(1), "there should be atleast one execution")
 }
 
@@ -446,7 +444,7 @@ func Test_duration_and_count_specified_at_once(t *testing.T) {
 	defer cancel()
 	_, err := bench.Run(ctx)
 
-	assert.Error(t, err, "expected error from benchmark run")
+	require.Error(t, err, "expected error from benchmark run")
 }
 
 func Test_do_classic_dns_default_count(t *testing.T) {
@@ -480,14 +478,22 @@ func Test_do_classic_dns_default_count(t *testing.T) {
 	defer cancel()
 	rs, err := bench.Run(ctx)
 
-	assert.NoError(t, err, "expected no error from benchmark run")
-	assert.Len(t, rs, 1, "Run(ctx) rstats")
+	require.NoError(t, err, "expected no error from benchmark run")
+	require.Len(t, rs, 1, "expected results from one worker")
 	assert.Equal(t, int64(1), rs[0].Counters.Total)
 	assert.Equal(t, int64(1), rs[0].Counters.Success)
 }
 
 func Test_do_doq(t *testing.T) {
-	server := doqServer{}
+	server := newDoQServer(func(r *dns.Msg) *dns.Msg {
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 500)
+		return ret
+	})
 	server.start()
 	defer server.stop()
 
@@ -498,7 +504,7 @@ func Test_do_doq(t *testing.T) {
 	defer cancel()
 	rs, err := bench.Run(ctx)
 
-	assert.NoError(t, err, "expected no error from benchmark run")
+	require.NoError(t, err, "expected no error from benchmark run")
 	assertResult(t, rs)
 }
 
@@ -540,71 +546,9 @@ func Test_do_dot(t *testing.T) {
 	defer cancel()
 	rs, err := bench.Run(ctx)
 
-	assert.NoError(t, err, "expected no error from benchmark run")
+	require.NoError(t, err, "expected no error from benchmark run")
 	assertResult(t, rs)
 }
-
-func assertResult(t *testing.T, rs []*ResultStats) {
-	if assert.Len(t, rs, 2, "Run(ctx) rstats") {
-		rs0 := rs[0]
-		rs1 := rs[1]
-		assertResultStats(t, rs0)
-		assertResultStats(t, rs1)
-		assertTimings(t, rs0)
-		assertTimings(t, rs1)
-	}
-}
-
-func assertResultStats(t *testing.T, rs *ResultStats) {
-	assert.NotNil(t, rs.Hist, "Run(ctx) rstats histogram")
-
-	if assert.NotNil(t, rs.Codes, "Run(ctx) rstats codes") {
-		assert.Equal(t, int64(2), rs.Codes[0], "Run(ctx) rstats codes NOERROR, state:"+fmt.Sprint(rs.Codes))
-	}
-
-	if assert.NotNil(t, rs.Qtypes, "Run(ctx) rstats qtypes") {
-		assert.Equal(t, int64(1), rs.Qtypes[dns.TypeToString[dns.TypeA]], "Run(ctx) rstats qtypes A, state:"+fmt.Sprint(rs.Codes))
-		assert.Equal(t, int64(1), rs.Qtypes[dns.TypeToString[dns.TypeAAAA]], "Run(ctx) rstats qtypes AAAA, state:"+fmt.Sprint(rs.Codes))
-	}
-
-	assert.Equal(t, int64(2), rs.Counters.Total, "Run(ctx) total counter")
-	assert.Zero(t, rs.Counters.IOError, "error counter")
-	assert.Equal(t, int64(2), rs.Counters.Success, "Run(ctx) success counter")
-	assert.Zero(t, rs.Counters.IDmismatch, "Run(ctx) mismatch counter")
-	assert.Zero(t, rs.Counters.Truncated, "Run(ctx) truncated counter")
-}
-
-func assertTimings(t *testing.T, rs *ResultStats) {
-	if assert.Len(t, rs.Timings, 2, "Run(ctx) rstats timings") {
-		t0 := rs.Timings[0]
-		t1 := rs.Timings[1]
-		assert.NotZero(t, t0.Duration, "Run(ctx) rstats timings duration")
-		assert.NotZero(t, t0.Start, "Run(ctx) rstats timings start")
-		assert.NotZero(t, t1.Duration, "Run(ctx) rstats timings duration")
-		assert.NotZero(t, t1.Start, "Run(ctx) rstats timings start")
-	}
-}
-
-func createBenchmark(server string, tcp bool, prob float64) Benchmark {
-	return Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         server,
-		TCP:            tcp,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    prob,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-	}
-}
-
-// A returns an A record from rr. It panics on errors.
-func A(rr string) *dns.A { r, _ := dns.NewRR(rr); return r.(*dns.A) }
 
 func TestBenchmark_prepare(t *testing.T) {
 	tests := []struct {
@@ -760,8 +704,8 @@ func Test_global_ratelimit(t *testing.T) {
 	defer cancel()
 	rs, err := bench.Run(ctx)
 
-	assert.NoError(t, err, "expected no error from benchmark run")
-	assert.Len(t, rs, 2)
+	require.NoError(t, err, "expected no error from benchmark run")
+	require.Len(t, rs, 2, "expected results from two workers")
 	// assert that total queries is 5 with +-1 precision, because benchmark cancellation based on duration is not that precise
 	// and one worker can start the resolution before cancelling
 	assert.InDelta(t, int64(5), rs[0].Counters.Total+rs[1].Counters.Total, 1.0)
@@ -801,10 +745,177 @@ func Test_worker_ratelimit(t *testing.T) {
 	defer cancel()
 	rs, err := bench.Run(ctx)
 
-	assert.NoError(t, err, "expected no error from benchmark run")
-	assert.Len(t, rs, 2)
+	require.NoError(t, err, "expected no error from benchmark run")
+	require.Len(t, rs, 2, "expected results from two workers")
+
 	// assert that total queries is 10 with +-2 precision,
 	// because benchmark cancellation based on duration is not that precise
 	// and each worker can start the resolution before cancelling
 	assert.InDelta(t, int64(10), rs[0].Counters.Total+rs[1].Counters.Total, 2.0)
 }
+
+func Test_do_classic_dns_error(t *testing.T) {
+	s := NewServer("udp", nil, func(w dns.ResponseWriter, r *dns.Msg) {
+	})
+	defer s.Close()
+
+	bench := createBenchmark(s.Addr, false, 1)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	require.NoError(t, err, "expected no error from benchmark run")
+	require.Len(t, rs, 2, "expected results from two workers")
+
+	assert.Equal(t, rs[0].Counters.Total, int64(2), "there should be executions")
+	assert.Equal(t, rs[0].Counters.IOError, int64(2), "there should be errors")
+	assert.Equal(t, rs[1].Counters.Total, int64(2), "there should be executions")
+	assert.Equal(t, rs[1].Counters.IOError, int64(2), "there should be errors")
+}
+
+func Test_do_dot_error(t *testing.T) {
+	cert, err := tls.LoadX509KeyPair("test.crt", "test.key")
+	require.NoError(t, err)
+
+	certs, err := os.ReadFile("test.crt")
+	require.NoError(t, err)
+
+	pool, err := x509.SystemCertPool()
+	require.NoError(t, err)
+
+	pool.AppendCertsFromPEM(certs)
+	config := tls.Config{
+		ServerName:   "localhost",
+		RootCAs:      pool,
+		Certificates: []tls.Certificate{cert},
+		MinVersion:   tls.VersionTLS12,
+	}
+
+	server := NewServer("tcp-tls", &config, func(w dns.ResponseWriter, r *dns.Msg) {
+	})
+	defer server.Close()
+
+	bench := createBenchmark(server.Addr, false, 1)
+	bench.Insecure = true
+	bench.DOT = true
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	require.NoError(t, err, "expected no error from benchmark run")
+	require.Len(t, rs, 2, "expected results from two workers")
+
+	assert.Equal(t, rs[0].Counters.Total, int64(2), "there should be executions")
+	assert.Equal(t, rs[0].Counters.IOError, int64(2), "there should be errors")
+	assert.Equal(t, rs[1].Counters.Total, int64(2), "there should be executions")
+	assert.Equal(t, rs[1].Counters.IOError, int64(2), "there should be errors")
+}
+
+func Test_do_doh_error(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(500)
+	}))
+	defer ts.Close()
+
+	bench := createBenchmark(ts.URL, true, 1)
+	bench.DohMethod = post
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	require.NoError(t, err, "expected no error from benchmark run")
+	require.Len(t, rs, 2, "expected results from two workers")
+
+	assert.Equal(t, rs[0].Counters.Total, int64(2), "there should be executions")
+	assert.Equal(t, rs[0].Counters.IOError, int64(2), "there should be errors")
+	assert.Equal(t, rs[1].Counters.Total, int64(2), "there should be executions")
+	assert.Equal(t, rs[1].Counters.IOError, int64(2), "there should be errors")
+}
+
+func Test_do_doq_error(t *testing.T) {
+	server := newDoQServer(func(r *dns.Msg) *dns.Msg {
+		return nil
+	})
+	server.start()
+	defer server.stop()
+
+	bench := createBenchmark("quic://"+server.addr, true, 1)
+	bench.Insecure = true
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	require.NoError(t, err, "expected no error from benchmark run")
+	require.Len(t, rs, 2, "expected results from two workers")
+
+	assert.Equal(t, rs[0].Counters.Total, int64(2), "there should be executions")
+	assert.Equal(t, rs[0].Counters.IOError, int64(2), "there should be errors")
+	assert.Equal(t, rs[1].Counters.Total, int64(2), "there should be executions")
+	assert.Equal(t, rs[1].Counters.IOError, int64(2), "there should be errors")
+}
+
+func assertResult(t *testing.T, rs []*ResultStats) {
+	if assert.Len(t, rs, 2, "Run(ctx) rstats") {
+		rs0 := rs[0]
+		rs1 := rs[1]
+		assertResultStats(t, rs0)
+		assertResultStats(t, rs1)
+		assertTimings(t, rs0)
+		assertTimings(t, rs1)
+	}
+}
+
+func assertResultStats(t *testing.T, rs *ResultStats) {
+	assert.NotNil(t, rs.Hist, "Run(ctx) rstats histogram")
+
+	if assert.NotNil(t, rs.Codes, "Run(ctx) rstats codes") {
+		assert.Equal(t, int64(2), rs.Codes[0], "Run(ctx) rstats codes NOERROR, state:"+fmt.Sprint(rs.Codes))
+	}
+
+	if assert.NotNil(t, rs.Qtypes, "Run(ctx) rstats qtypes") {
+		assert.Equal(t, int64(1), rs.Qtypes[dns.TypeToString[dns.TypeA]], "Run(ctx) rstats qtypes A, state:"+fmt.Sprint(rs.Codes))
+		assert.Equal(t, int64(1), rs.Qtypes[dns.TypeToString[dns.TypeAAAA]], "Run(ctx) rstats qtypes AAAA, state:"+fmt.Sprint(rs.Codes))
+	}
+
+	assert.Equal(t, int64(2), rs.Counters.Total, "Run(ctx) total counter")
+	assert.Zero(t, rs.Counters.IOError, "error counter")
+	assert.Equal(t, int64(2), rs.Counters.Success, "Run(ctx) success counter")
+	assert.Zero(t, rs.Counters.IDmismatch, "Run(ctx) mismatch counter")
+	assert.Zero(t, rs.Counters.Truncated, "Run(ctx) truncated counter")
+}
+
+func assertTimings(t *testing.T, rs *ResultStats) {
+	if assert.Len(t, rs.Timings, 2, "Run(ctx) rstats timings") {
+		t0 := rs.Timings[0]
+		t1 := rs.Timings[1]
+		assert.NotZero(t, t0.Duration, "Run(ctx) rstats timings duration")
+		assert.NotZero(t, t0.Start, "Run(ctx) rstats timings start")
+		assert.NotZero(t, t1.Duration, "Run(ctx) rstats timings duration")
+		assert.NotZero(t, t1.Start, "Run(ctx) rstats timings start")
+	}
+}
+
+func createBenchmark(server string, tcp bool, prob float64) Benchmark {
+	return Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         server,
+		TCP:            tcp,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    prob,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+	}
+}
+
+// A returns an A record from rr. It panics on errors.
+func A(rr string) *dns.A { r, _ := dns.NewRR(rr); return r.(*dns.A) }

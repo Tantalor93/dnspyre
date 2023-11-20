@@ -5,20 +5,28 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/binary"
-	"net"
+	"fmt"
+	"io"
 	"os"
 	"sync/atomic"
-	"time"
 
 	"github.com/miekg/dns"
 	"github.com/quic-go/quic-go"
 )
+
+type doqHandler func(req *dns.Msg) *dns.Msg
 
 // doqServer is a DoQ test DNS server.
 type doqServer struct {
 	addr     string
 	listener *quic.Listener
 	closed   atomic.Bool
+	handler  doqHandler
+}
+
+func newDoQServer(f doqHandler) *doqServer {
+	server := doqServer{handler: f}
+	return &server
 }
 
 func (d *doqServer) start() {
@@ -44,25 +52,20 @@ func (d *doqServer) start() {
 					if err != nil {
 						return
 					}
-					// sleep to have some not zero duration
-					time.Sleep(100 * time.Millisecond)
 
-					resp := dns.Msg{
-						MsgHdr:   dns.MsgHdr{Rcode: dns.RcodeSuccess},
-						Question: []dns.Question{{Name: "example.org.", Qtype: dns.TypeA}},
-						Answer: []dns.RR{&dns.A{
-							Hdr: dns.RR_Header{
-								Name:   "example.org.",
-								Rrtype: dns.TypeA,
-								Class:  dns.ClassINET,
-								Ttl:    10,
-							},
-							A: net.ParseIP("127.0.0.1"),
-						}},
+					req, err := readDOQMessage(stream)
+					if err != nil {
+						return
+					}
+
+					resp := d.handler(req)
+					if resp == nil {
+						// this should cause timeout
+						return
 					}
 					pack, err := resp.Pack()
 					if err != nil {
-						panic(err)
+						return
 					}
 					packWithPrefix := make([]byte, 2+len(pack))
 					binary.BigEndian.PutUint16(packWithPrefix, uint16(len(pack)))
@@ -105,4 +108,37 @@ func generateTLSConfig() *tls.Config {
 		RootCAs:      pool,
 		MinVersion:   tls.VersionTLS12,
 	}
+}
+
+func readDOQMessage(r io.Reader) (*dns.Msg, error) {
+	// All DNS messages (queries and responses) sent over DoQ connections MUST
+	// be encoded as a 2-octet length field followed by the message content as
+	// specified in [RFC1035].
+	// See https://www.rfc-editor.org/rfc/rfc9250.html#section-4.2-4
+	sizeBuf := make([]byte, 2)
+	_, err := io.ReadFull(r, sizeBuf)
+	if err != nil {
+		return nil, err
+	}
+
+	size := binary.BigEndian.Uint16(sizeBuf)
+
+	if size == 0 {
+		return nil, fmt.Errorf("message size is 0: probably unsupported DoQ version")
+	}
+
+	buf := make([]byte, size)
+	_, err = io.ReadFull(r, buf)
+
+	// A client or server receives a STREAM FIN before receiving all the bytes
+	// for a message indicated in the 2-octet length field.
+	// See https://www.rfc-editor.org/rfc/rfc9250#section-4.3.3-2.2
+	if size != uint16(len(buf)) {
+		return nil, fmt.Errorf("message size does not match 2-byte prefix")
+	}
+
+	msg := &dns.Msg{}
+	err = msg.Unpack(buf)
+
+	return msg, err
 }
