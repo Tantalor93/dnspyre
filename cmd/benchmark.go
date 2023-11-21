@@ -34,6 +34,20 @@ var client = http.Client{
 // defaultEdns0BufferSize default EDNS0 buffer size according to the http://www.dnsflagday.net/2020/
 const defaultEdns0BufferSize = 1232
 
+const (
+	udpNetwork    = "udp"
+	tcpNetwork    = "tcp"
+	tcptlsNetwork = "tcp-tls"
+	quicNetwork   = "quic"
+
+	getMethod  = "get"
+	postMethod = "post"
+
+	http1Proto = "1.1"
+	http2Proto = "2"
+	http3Proto = "3"
+)
+
 // Benchmark is representation of runnable DNS benchmark scenario.
 // based on domains provided in Benchmark.Queries, it will be firing DNS queries until
 // the desired number of queries have been sent by each concurrent worker (see Benchmark.Count) or the desired
@@ -259,12 +273,12 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		qTypes = append(qTypes, dns.StringToType[v])
 	}
 
-	network := "udp"
+	network := udpNetwork
 	if b.TCP {
-		network = "tcp"
+		network = tcpNetwork
 	}
 	if b.DOT {
-		network = "tls"
+		network = tcptlsNetwork
 	}
 
 	var query queryFunc
@@ -288,7 +302,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		query = func(ctx context.Context, _ string, msg *dns.Msg) (*dns.Msg, error) {
 			return quicClient.Send(ctx, msg)
 		}
-		network = "quic"
+		network = quicNetwork
 	}
 
 	limits := ""
@@ -515,19 +529,20 @@ func isHTTPUrl(s string) (ok bool, network string) {
 func (b *Benchmark) getDoHClient() (queryFunc, string) {
 	_, network := isHTTPUrl(b.Server)
 	var tr http.RoundTripper
+	network += "/"
 	switch b.DohProtocol {
-	case "3":
-		network += "/3"
+	case http3Proto:
+		network += http3Proto
 		// nolint:gosec
 		tr = &http3.RoundTripper{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
-	case "2":
-		network += "/2"
+	case http2Proto:
+		network += http2Proto
 		// nolint:gosec
 		tr = &http2.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
-	case "1.1":
+	case http1Proto:
 		fallthrough
 	default:
-		network += "/1.1"
+		network += http1Proto
 		// nolint:gosec
 		tr = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
 	}
@@ -535,10 +550,10 @@ func (b *Benchmark) getDoHClient() (queryFunc, string) {
 	dohClient := doh.NewClient(&c)
 
 	switch b.DohMethod {
-	case "post":
+	case postMethod:
 		network += " (POST)"
 		return dohClient.SendViaPost, network
-	case "get":
+	case getMethod:
 		network += " (GET)"
 		return dohClient.SendViaGet, network
 	default:
@@ -548,12 +563,12 @@ func (b *Benchmark) getDoHClient() (queryFunc, string) {
 }
 
 func (b *Benchmark) getDNSClient() *dns.Client {
-	network := "udp"
+	network := udpNetwork
 	if b.TCP {
-		network = "tcp"
+		network = tcpNetwork
 	}
 	if b.DOT {
-		network = "tcp-tls"
+		network = tcptlsNetwork
 	}
 
 	return &dns.Client{
