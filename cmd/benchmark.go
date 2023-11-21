@@ -451,14 +451,10 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 						start := time.Now()
 
 						reqTimeoutCtx, cancel := context.WithTimeout(ctx, b.RequestTimeout)
-						if resp, err = query(reqTimeoutCtx, b.Server, &m); err != nil {
-							cancel()
-							st.Counters.IOError++
-							st.Errors = append(st.Errors, err)
-						} else {
-							cancel()
-							st.record(&m, resp, start, time.Since(start))
-						}
+						resp, err = query(reqTimeoutCtx, b.Server, &m)
+						cancel()
+						st.record(&m, resp, err, start, time.Since(start))
+
 						if incrementBar {
 							bar.Add(1)
 						}

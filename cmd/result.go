@@ -33,7 +33,13 @@ type ResultStats struct {
 	AuthenticatedDomains map[string]struct{}
 }
 
-func (rs *ResultStats) record(req *dns.Msg, resp *dns.Msg, time time.Time, timing time.Duration) {
+func (rs *ResultStats) record(req *dns.Msg, resp *dns.Msg, err error, time time.Time, timing time.Duration) {
+	if err != nil {
+		rs.Counters.IOError++
+		rs.Errors = append(rs.Errors, err)
+		return
+	}
+
 	if resp.Truncated {
 		rs.Counters.Truncated++
 	}
