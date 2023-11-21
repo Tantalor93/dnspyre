@@ -9,7 +9,7 @@ import (
 	"github.com/miekg/dns"
 )
 
-func Example_standard_printReport() {
+func ExampleBenchmark_PrintReport() {
 	b, rs := testData()
 
 	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Second)
@@ -45,7 +45,7 @@ func Example_standard_printReport() {
 	// test2	1 (33.33)%
 }
 
-func Example_standard_printReport_dnssec() {
+func ExampleBenchmark_PrintReport_dnssec() {
 	b, rs := testData()
 	b.DNSSEC = true
 	rs.AuthenticatedDomains = map[string]struct{}{"example.org.": {}}
@@ -85,7 +85,7 @@ func Example_standard_printReport_dnssec() {
 	// test2	1 (33.33)%
 }
 
-func Example_json_printReport() {
+func ExampleBenchmark_PrintReport_json() {
 	b, rs := testData()
 	b.JSON = true
 	b.Rcodes = true
@@ -96,7 +96,7 @@ func Example_json_printReport() {
 	// Output: {"totalRequests":1,"totalSuccessCodes":4,"totalErrors":3,"TotalIDmismatch":6,"totalTruncatedResponses":7,"responseRcodes":{"NOERROR":2},"questionTypes":{"A":2},"queriesPerSecond":1,"benchmarkDurationSeconds":1,"latencyStats":{"minMs":0,"meanMs":0,"stdMs":0,"maxMs":0,"p99Ms":0,"p95Ms":0,"p90Ms":0,"p75Ms":0,"p50Ms":0},"latencyDistribution":[{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1}]}
 }
 
-func Example_json_printReport_dnssec() {
+func ExampleBenchmark_PrintReport_json_dnssec() {
 	b, rs := testData()
 	b.JSON = true
 	b.Rcodes = true

@@ -30,7 +30,7 @@ func NewServer(network string, tlsConfig *tls.Config, f dns.HandlerFunc) *Server
 
 	<-ch
 	server := Server{inner: s}
-	if network == "udp" {
+	if network == udpNetwork {
 		server.Addr = s.PacketConn.LocalAddr().String()
 	} else {
 		server.Addr = s.Listener.Addr().String()

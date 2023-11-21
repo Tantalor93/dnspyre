@@ -108,10 +108,10 @@ func init() {
 		Default("png").EnumVar(&benchmark.PlotFormat, "png", "jpg")
 
 	pApp.Flag("doh-method", "HTTP method to use for DoH requests. Supported values: get, post.").
-		Default("post").EnumVar(&benchmark.DohMethod, "get", "post")
+		Default("post").EnumVar(&benchmark.DohMethod, getMethod, postMethod)
 
 	pApp.Flag("doh-protocol", "HTTP protocol to use for DoH requests. Supported values: 1.1, 2 and 3.").
-		Default("1.1").EnumVar(&benchmark.DohProtocol, "1.1", "2", "3")
+		Default(http1Proto).EnumVar(&benchmark.DohProtocol, http1Proto, http2Proto, http3Proto)
 
 	pApp.Flag("insecure", "Disables server TLS certificate validation. Applicable for DoT, DoH and DoQ.").
 		Default("false").BoolVar(&benchmark.Insecure)

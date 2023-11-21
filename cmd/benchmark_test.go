@@ -20,15 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	udp = "udp"
-	tcp = "tcp"
-
-	get  = "get"
-	post = "post"
-)
-
-func Test_do_classic_dns(t *testing.T) {
+func TestBenchmark_Run_PlainDNS(t *testing.T) {
 	type args struct {
 		protocol string
 	}
@@ -37,15 +29,15 @@ func Test_do_classic_dns(t *testing.T) {
 		args args
 	}{
 		{
-			"benchmark - DNS over UDP",
+			"DNS over UDP",
 			args{
-				protocol: udp,
+				protocol: udpNetwork,
 			},
 		},
 		{
-			"benchmark - DNS over TCP",
+			"DNS over TCP",
 			args{
-				protocol: tcp,
+				protocol: tcpNetwork,
 			},
 		},
 	}
@@ -63,7 +55,7 @@ func Test_do_classic_dns(t *testing.T) {
 			})
 			defer s.Close()
 
-			bench := createBenchmark(s.Addr, tt.args.protocol == tcp, 1)
+			bench := createBenchmark(s.Addr, tt.args.protocol == tcpNetwork, 1)
 
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
@@ -75,8 +67,8 @@ func Test_do_classic_dns(t *testing.T) {
 	}
 }
 
-func Test_do_classic_dns_dnssec(t *testing.T) {
-	s := NewServer("udp", nil, func(w dns.ResponseWriter, r *dns.Msg) {
+func TestBenchmark_Run_PlainDNS_dnssec(t *testing.T) {
+	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		edns0 := ret.SetEdns0(512, false)
@@ -104,8 +96,8 @@ func Test_do_classic_dns_dnssec(t *testing.T) {
 	}
 }
 
-func Test_do_classic_dns_edns0(t *testing.T) {
-	s := NewServer("udp", nil, func(w dns.ResponseWriter, r *dns.Msg) {
+func TestBenchmark_Run_PlainDNS_edns0(t *testing.T) {
+	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		opt := r.IsEdns0()
 		if assert.NotNil(t, opt) {
 			assert.EqualValues(t, opt.UDPSize(), 1024)
@@ -134,12 +126,12 @@ func Test_do_classic_dns_edns0(t *testing.T) {
 	assertResult(t, rs)
 }
 
-func Test_do_classic_dns_edns0_ednsopt(t *testing.T) {
+func TestBenchmark_Run_PlainDNS_edns0_ednsopt(t *testing.T) {
 	testOpt := uint16(65518)
 	testOptData := "test"
 	testHexOptData := hex.EncodeToString([]byte(testOptData))
 
-	s := NewServer("udp", nil, func(w dns.ResponseWriter, r *dns.Msg) {
+	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		opt := r.IsEdns0()
 		if assert.NotNil(t, opt) {
 			assert.EqualValues(t, opt.UDPSize(), 1024)
@@ -179,7 +171,7 @@ func Test_do_classic_dns_edns0_ednsopt(t *testing.T) {
 	assertResult(t, rs)
 }
 
-func Test_do_doh_post(t *testing.T) {
+func TestBenchmark_Run_DoH_post(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		bd, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -210,7 +202,7 @@ func Test_do_doh_post(t *testing.T) {
 	defer ts.Close()
 
 	bench := createBenchmark(ts.URL, true, 1)
-	bench.DohMethod = post
+	bench.DohMethod = postMethod
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -220,7 +212,7 @@ func Test_do_doh_post(t *testing.T) {
 	assertResult(t, rs)
 }
 
-func Test_do_doh_get(t *testing.T) {
+func TestBenchmark_Run_DoH_get(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		dnsQryParam := query.Get("dns")
@@ -253,7 +245,7 @@ func Test_do_doh_get(t *testing.T) {
 	defer ts.Close()
 
 	bench := createBenchmark(ts.URL, true, 1)
-	bench.DohMethod = get
+	bench.DohMethod = getMethod
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -263,8 +255,111 @@ func Test_do_doh_get(t *testing.T) {
 	assertResult(t, rs)
 }
 
-func Test_do_probability(t *testing.T) {
-	s := NewServer(udp, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+func TestBenchmark_Run_DoH_http1(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		bd, err := io.ReadAll(r.Body)
+		if err != nil {
+			panic(err)
+		}
+
+		msg := dns.Msg{}
+		err = msg.Unpack(bd)
+		if err != nil {
+			panic(err)
+		}
+
+		msg.Answer = append(msg.Answer, A("example.org. IN A 127.0.0.1"))
+
+		pack, err := msg.Pack()
+		if err != nil {
+			panic(err)
+		}
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 500)
+
+		_, err = w.Write(pack)
+		if err != nil {
+			panic(err)
+		}
+	}))
+	defer ts.Close()
+
+	bench := createBenchmark(ts.URL, true, 1)
+	bench.DohProtocol = http1Proto
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	require.NoError(t, err, "expected no error from benchmark run")
+	assertResult(t, rs)
+}
+
+func TestBenchmark_Run_DoH_http2(t *testing.T) {
+	cert, err := tls.LoadX509KeyPair("test.crt", "test.key")
+	require.NoError(t, err)
+
+	certs, err := os.ReadFile("test.crt")
+	require.NoError(t, err)
+
+	pool, err := x509.SystemCertPool()
+	require.NoError(t, err)
+
+	pool.AppendCertsFromPEM(certs)
+	config := tls.Config{
+		ServerName:   "localhost",
+		RootCAs:      pool,
+		Certificates: []tls.Certificate{cert},
+		MinVersion:   tls.VersionTLS12,
+	}
+
+	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		bd, err := io.ReadAll(r.Body)
+		if err != nil {
+			panic(err)
+		}
+
+		msg := dns.Msg{}
+		err = msg.Unpack(bd)
+		if err != nil {
+			panic(err)
+		}
+
+		msg.Answer = append(msg.Answer, A("example.org. IN A 127.0.0.1"))
+
+		pack, err := msg.Pack()
+		if err != nil {
+			panic(err)
+		}
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 500)
+
+		_, err = w.Write(pack)
+		if err != nil {
+			panic(err)
+		}
+	}))
+	ts.EnableHTTP2 = true
+	ts.TLS = &config
+	ts.StartTLS()
+	defer ts.Close()
+
+	bench := createBenchmark(ts.URL, true, 1)
+	bench.DohProtocol = http2Proto
+	bench.Insecure = true
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	require.NoError(t, err, "expected no error from benchmark run")
+	assertResult(t, rs)
+}
+
+func TestBenchmark_Run_PlainDNS_probability(t *testing.T) {
+	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -288,8 +383,8 @@ func Test_do_probability(t *testing.T) {
 	assert.Equal(t, int64(0), rs[1].Counters.Total, "Run(ctx) total counter")
 }
 
-func Test_download_external_datasource_using_http(t *testing.T) {
-	s := NewServer("udp", nil, func(w dns.ResponseWriter, r *dns.Msg) {
+func TestBenchmark_Run_PlainDNS_download_external_datasource_using_http(t *testing.T) {
+	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -309,21 +404,8 @@ func Test_download_external_datasource_using_http(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	bench := Benchmark{
-		Queries:        []string{ts.URL},
-		Types:          []string{"A", "AAAA"},
-		Server:         s.Addr,
-		TCP:            false,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-	}
+	bench := createBenchmark(s.Addr, false, 1)
+	bench.Queries = []string{ts.URL}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -333,27 +415,14 @@ func Test_download_external_datasource_using_http(t *testing.T) {
 	assertResult(t, rs)
 }
 
-func Test_download_external_datasource_using_http_not_available(t *testing.T) {
+func TestBenchmark_Run_PlainDNS_download_external_datasource_using_http_not_available(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	}))
 	// close right away to get dead port
 	ts.Close()
 
-	bench := Benchmark{
-		Queries:        []string{ts.URL},
-		Types:          []string{"A", "AAAA"},
-		Server:         "8.8.8.8",
-		TCP:            false,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-	}
+	bench := createBenchmark("8.8.8.8", false, 1)
+	bench.Queries = []string{ts.URL}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -362,27 +431,14 @@ func Test_download_external_datasource_using_http_not_available(t *testing.T) {
 	require.Error(t, err, "expected error from benchmark run")
 }
 
-func Test_download_external_datasource_using_http_wrong_response(t *testing.T) {
+func TestBenchmark_Run_PlainDNS_download_external_datasource_using_http_wrong_response(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	}))
 	defer ts.Close()
 
-	bench := Benchmark{
-		Queries:        []string{ts.URL},
-		Types:          []string{"A", "AAAA"},
-		Server:         "8.8.8.8",
-		TCP:            false,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-	}
+	bench := createBenchmark("8.8.8.8", false, 1)
+	bench.Queries = []string{ts.URL}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -391,8 +447,8 @@ func Test_download_external_datasource_using_http_wrong_response(t *testing.T) {
 	require.Error(t, err, "expected error from benchmark run")
 }
 
-func Test_do_classic_dns_with_duration(t *testing.T) {
-	s := NewServer("udp", nil, func(w dns.ResponseWriter, r *dns.Msg) {
+func TestBenchmark_Run_PlainDNS_duration(t *testing.T) {
+	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -423,7 +479,7 @@ func Test_do_classic_dns_with_duration(t *testing.T) {
 	assert.GreaterOrEqual(t, rs[0].Counters.Total, int64(1), "there should be atleast one execution")
 }
 
-func Test_duration_and_count_specified_at_once(t *testing.T) {
+func TestBenchmark_Run_PlainDNS_duration_and_count_specified_at_once(t *testing.T) {
 	bench := Benchmark{
 		Queries:        []string{"example.org"},
 		Types:          []string{"A"},
@@ -447,8 +503,8 @@ func Test_duration_and_count_specified_at_once(t *testing.T) {
 	require.Error(t, err, "expected error from benchmark run")
 }
 
-func Test_do_classic_dns_default_count(t *testing.T) {
-	s := NewServer("udp", nil, func(w dns.ResponseWriter, r *dns.Msg) {
+func TestBenchmark_Run_PlainDNS_default_count(t *testing.T) {
+	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -484,7 +540,7 @@ func Test_do_classic_dns_default_count(t *testing.T) {
 	assert.Equal(t, int64(1), rs[0].Counters.Success)
 }
 
-func Test_do_doq(t *testing.T) {
+func TestBenchmark_Run_DoQ(t *testing.T) {
 	server := newDoQServer(func(r *dns.Msg) *dns.Msg {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
@@ -508,7 +564,7 @@ func Test_do_doq(t *testing.T) {
 	assertResult(t, rs)
 }
 
-func Test_do_dot(t *testing.T) {
+func TestBenchmark_Run_DoT(t *testing.T) {
 	cert, err := tls.LoadX509KeyPair("test.crt", "test.key")
 	require.NoError(t, err)
 
@@ -526,7 +582,7 @@ func Test_do_dot(t *testing.T) {
 		MinVersion:   tls.VersionTLS12,
 	}
 
-	server := NewServer("tcp-tls", &config, func(w dns.ResponseWriter, r *dns.Msg) {
+	server := NewServer(tcptlsNetwork, &config, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -653,7 +709,7 @@ func TestBenchmark_prepare(t *testing.T) {
 			wantErr:   true,
 		},
 		{
-			name:      "invalid format of ednsopt, code is not decimal",
+			name:      "invalid format of ednsopt, data is not hexadecimal string",
 			benchmark: Benchmark{Server: "8.8.8.8", EdnsOpt: "65518:test"},
 			wantErr:   true,
 		},
@@ -670,8 +726,8 @@ func TestBenchmark_prepare(t *testing.T) {
 	}
 }
 
-func Test_global_ratelimit(t *testing.T) {
-	s := NewServer("udp", nil, func(w dns.ResponseWriter, r *dns.Msg) {
+func TestBenchmark_Run_global_ratelimit(t *testing.T) {
+	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -711,8 +767,8 @@ func Test_global_ratelimit(t *testing.T) {
 	assert.InDelta(t, int64(5), rs[0].Counters.Total+rs[1].Counters.Total, 1.0)
 }
 
-func Test_worker_ratelimit(t *testing.T) {
-	s := NewServer("udp", nil, func(w dns.ResponseWriter, r *dns.Msg) {
+func TestBenchmark_Run_worker_ratelimit(t *testing.T) {
+	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -754,8 +810,8 @@ func Test_worker_ratelimit(t *testing.T) {
 	assert.InDelta(t, int64(10), rs[0].Counters.Total+rs[1].Counters.Total, 2.0)
 }
 
-func Test_do_classic_dns_error(t *testing.T) {
-	s := NewServer("udp", nil, func(w dns.ResponseWriter, r *dns.Msg) {
+func TestBenchmark_Run_PlainDNS_error(t *testing.T) {
+	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 	})
 	defer s.Close()
 
@@ -774,7 +830,7 @@ func Test_do_classic_dns_error(t *testing.T) {
 	assert.Equal(t, rs[1].Counters.IOError, int64(2), "there should be errors")
 }
 
-func Test_do_dot_error(t *testing.T) {
+func TestBenchmark_Run_DoT_error(t *testing.T) {
 	cert, err := tls.LoadX509KeyPair("test.crt", "test.key")
 	require.NoError(t, err)
 
@@ -792,7 +848,7 @@ func Test_do_dot_error(t *testing.T) {
 		MinVersion:   tls.VersionTLS12,
 	}
 
-	server := NewServer("tcp-tls", &config, func(w dns.ResponseWriter, r *dns.Msg) {
+	server := NewServer(tcptlsNetwork, &config, func(w dns.ResponseWriter, r *dns.Msg) {
 	})
 	defer server.Close()
 
@@ -813,14 +869,14 @@ func Test_do_dot_error(t *testing.T) {
 	assert.Equal(t, rs[1].Counters.IOError, int64(2), "there should be errors")
 }
 
-func Test_do_doh_error(t *testing.T) {
+func TestBenchmark_Run_DoH_error(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(500)
 	}))
 	defer ts.Close()
 
 	bench := createBenchmark(ts.URL, true, 1)
-	bench.DohMethod = post
+	bench.DohMethod = postMethod
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -835,7 +891,7 @@ func Test_do_doh_error(t *testing.T) {
 	assert.Equal(t, rs[1].Counters.IOError, int64(2), "there should be errors")
 }
 
-func Test_do_doq_error(t *testing.T) {
+func TestBenchmark_Run_DoQ_error(t *testing.T) {
 	server := newDoQServer(func(r *dns.Msg) *dns.Msg {
 		return nil
 	})
@@ -856,6 +912,162 @@ func Test_do_doq_error(t *testing.T) {
 	assert.Equal(t, rs[0].Counters.IOError, int64(2), "there should be errors")
 	assert.Equal(t, rs[1].Counters.Total, int64(2), "there should be executions")
 	assert.Equal(t, rs[1].Counters.IOError, int64(2), "there should be errors")
+}
+
+func TestBenchmark_Run_PlainDNS_truncated(t *testing.T) {
+	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+		ret.Truncated = true
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 500)
+
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	bench := createBenchmark(s.Addr, false, 1)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	require.NoError(t, err, "expected no error from benchmark run")
+	require.Len(t, rs, 2, "expected results from two workers")
+
+	assert.Equal(t, rs[0].Counters.Total, int64(2), "there should be executions")
+	assert.Equal(t, rs[0].Counters.Truncated, int64(2), "there should be truncated messages")
+	assert.Equal(t, rs[1].Counters.Total, int64(2), "there should be executions")
+	assert.Equal(t, rs[1].Counters.Truncated, int64(2), "there should be truncated messages")
+}
+
+func TestBenchmark_Run_DoT_truncated(t *testing.T) {
+	cert, err := tls.LoadX509KeyPair("test.crt", "test.key")
+	require.NoError(t, err)
+
+	certs, err := os.ReadFile("test.crt")
+	require.NoError(t, err)
+
+	pool, err := x509.SystemCertPool()
+	require.NoError(t, err)
+
+	pool.AppendCertsFromPEM(certs)
+	config := tls.Config{
+		ServerName:   "localhost",
+		RootCAs:      pool,
+		Certificates: []tls.Certificate{cert},
+		MinVersion:   tls.VersionTLS12,
+	}
+
+	server := NewServer(tcptlsNetwork, &config, func(w dns.ResponseWriter, r *dns.Msg) {
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+		ret.Truncated = true
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 500)
+
+		w.WriteMsg(ret)
+	})
+	defer server.Close()
+
+	bench := createBenchmark(server.Addr, false, 1)
+	bench.Insecure = true
+	bench.DOT = true
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	require.NoError(t, err, "expected no error from benchmark run")
+	require.Len(t, rs, 2, "expected results from two workers")
+
+	assert.Equal(t, rs[0].Counters.Total, int64(2), "there should be executions")
+	assert.Equal(t, rs[0].Counters.Truncated, int64(2), "there should be truncated messages")
+	assert.Equal(t, rs[1].Counters.Total, int64(2), "there should be executions")
+	assert.Equal(t, rs[1].Counters.Truncated, int64(2), "there should be truncated messages")
+}
+
+func TestBenchmark_Run_DoH_truncated(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		bd, err := io.ReadAll(r.Body)
+		if err != nil {
+			panic(err)
+		}
+
+		msg := dns.Msg{}
+		err = msg.Unpack(bd)
+		if err != nil {
+			panic(err)
+		}
+
+		ret := new(dns.Msg)
+		ret.SetReply(&msg)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+		ret.Truncated = true
+
+		pack, err := ret.Pack()
+		if err != nil {
+			panic(err)
+		}
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 500)
+
+		_, err = w.Write(pack)
+		if err != nil {
+			panic(err)
+		}
+	}))
+	defer ts.Close()
+
+	bench := createBenchmark(ts.URL, true, 1)
+	bench.DohMethod = postMethod
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	require.NoError(t, err, "expected no error from benchmark run")
+	require.Len(t, rs, 2, "expected results from two workers")
+
+	assert.Equal(t, rs[0].Counters.Total, int64(2), "there should be executions")
+	assert.Equal(t, rs[0].Counters.Truncated, int64(2), "there should be truncated messages")
+	assert.Equal(t, rs[1].Counters.Total, int64(2), "there should be executions")
+	assert.Equal(t, rs[1].Counters.Truncated, int64(2), "there should be truncated messages")
+}
+
+func TestBenchmark_Run_DoQ_truncated(t *testing.T) {
+	server := newDoQServer(func(r *dns.Msg) *dns.Msg {
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+		ret.Truncated = true
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 500)
+		return ret
+	})
+	server.start()
+	defer server.stop()
+
+	bench := createBenchmark("quic://"+server.addr, true, 1)
+	bench.Insecure = true
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	require.NoError(t, err, "expected no error from benchmark run")
+	require.Len(t, rs, 2, "expected results from two workers")
+
+	assert.Equal(t, rs[0].Counters.Total, int64(2), "there should be executions")
+	assert.Equal(t, rs[0].Counters.Truncated, int64(2), "there should be truncated messages")
+	assert.Equal(t, rs[1].Counters.Total, int64(2), "there should be executions")
+	assert.Equal(t, rs[1].Counters.Truncated, int64(2), "there should be truncated messages")
 }
 
 func assertResult(t *testing.T, rs []*ResultStats) {
