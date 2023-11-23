@@ -1070,6 +1070,98 @@ func TestBenchmark_Run_DoQ_truncated(t *testing.T) {
 	assert.Equal(t, rs[1].Counters.Truncated, int64(2), "there should be truncated messages")
 }
 
+func ExampleBenchmark_Run_plainDNS_udp() {
+	bench := createBenchmark("8.8.8.8", false, 1)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	bench.Run(ctx)
+
+	// Output: Using 1 hostnames
+	// Benchmarking 8.8.8.8:53 via udp with 2 concurrent requests
+}
+
+func ExampleBenchmark_Run_plainDNS_tcp() {
+	bench := createBenchmark("8.8.8.8", true, 1)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	bench.Run(ctx)
+
+	// Output: Using 1 hostnames
+	// Benchmarking 8.8.8.8:53 via tcp with 2 concurrent requests
+}
+
+func ExampleBenchmark_Run_dot() {
+	bench := createBenchmark("8.8.8.8", true, 1)
+	bench.DOT = true
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	bench.Run(ctx)
+
+	// Output: Using 1 hostnames
+	// Benchmarking 8.8.8.8:853 via tcp-tls with 2 concurrent requests
+}
+
+func ExampleBenchmark_Run_doh() {
+	bench := createBenchmark("https://1.1.1.1", true, 1)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	bench.Run(ctx)
+
+	// Output: Using 1 hostnames
+	// Benchmarking https://1.1.1.1/dns-query via https/1.1 (POST) with 2 concurrent requests
+}
+
+func ExampleBenchmark_Run_doh_get() {
+	bench := createBenchmark("https://1.1.1.1", true, 1)
+	bench.DohMethod = getMethod
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	bench.Run(ctx)
+
+	// Output: Using 1 hostnames
+	// Benchmarking https://1.1.1.1/dns-query via https/1.1 (GET) with 2 concurrent requests
+}
+
+func ExampleBenchmark_Run_doh_http2() {
+	bench := createBenchmark("https://1.1.1.1", true, 1)
+	bench.DohProtocol = http2Proto
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	bench.Run(ctx)
+
+	// Output: Using 1 hostnames
+	// Benchmarking https://1.1.1.1/dns-query via https/2 (POST) with 2 concurrent requests
+}
+
+func ExampleBenchmark_Run_doh_http3() {
+	bench := createBenchmark("https://1.1.1.1", true, 1)
+	bench.DohProtocol = http3Proto
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	bench.Run(ctx)
+
+	// Output: Using 1 hostnames
+	// Benchmarking https://1.1.1.1/dns-query via https/3 (POST) with 2 concurrent requests
+}
+
+func ExampleBenchmark_Run_doq() {
+	bench := createBenchmark("quic://dns.adguard-dns.com", true, 1)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	bench.Run(ctx)
+
+	// Output: Using 1 hostnames
+	// Benchmarking dns.adguard-dns.com:853 via quic with 2 concurrent requests
+}
+
 func assertResult(t *testing.T, rs []*ResultStats) {
 	if assert.Len(t, rs, 2, "Run(ctx) rstats") {
 		rs0 := rs[0]
