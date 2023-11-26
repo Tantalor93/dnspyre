@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"sort"
 	"time"
@@ -51,10 +53,12 @@ func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchmarkDura
 
 	for _, s := range stats {
 		for _, err := range s.Errors {
-			if v, ok := errs[err.Error()]; ok {
-				errs[err.Error()] = v + 1
+			errorString := errString(err)
+
+			if v, ok := errs[errorString]; ok {
+				errs[errorString] = v + 1
 			} else {
-				errs[err.Error()] = 1
+				errs[errorString] = 1
 			}
 		}
 
@@ -164,6 +168,19 @@ func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchmarkDura
 	}
 	s := standardReporter{}
 	return s.print(params)
+}
+
+func errString(err ErrorDatapoint) string {
+	var errorString string
+	var netOpErr *net.OpError
+
+	switch {
+	case errors.As(err.Err, &netOpErr):
+		errorString = netOpErr.Op + " " + netOpErr.Net + " " + netOpErr.Addr.String()
+	default:
+		errorString = err.Err.Error()
+	}
+	return errorString
 }
 
 func (b *Benchmark) fileName(dir, name string) string {
