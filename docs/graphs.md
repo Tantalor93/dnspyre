@@ -11,7 +11,7 @@ Graphs are exported into the new subdirectory `graphs-<RFC3339 timestamp>` on pr
 For example, this command
 
 ```
-dnspyre -d 30s -c 2 --server 8.8.8.8 --plot . https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/10000-domains
+dnspyre -d 30s -c 20 --server 8.8.8.8 --plot . https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/10000-domains
 ```
 
 generates these graphs:
@@ -19,7 +19,8 @@ generates these graphs:
 * response latency boxplot, see [Latency boxplot](#latency-boxplot) section
 * barchart of response codes, see [Response codes barchart](#response-codes-barchart) section
 * throughput of DNS server during the benchmark, see [Throughput line graph](#throughput-line-graph) section
-* linegraphs of observed latencies of responses of DNS server, see [Latency line plot](#latency-line-plot) section
+* line graphs of observed latencies of responses of DNS server, see [Latency line plot](#latency-line-plot) section
+* error rate over time, see []
 
 ## Latency histogram
 Shows the distribution of response latencies 
@@ -45,3 +46,8 @@ Shows the throughput of DNS requests during benchmark execution
 Shows the latencies of DNS responses during benchmark execution
 
 ![latency line](graphs/latency-lineplot.png)
+
+## Error rate over time plot
+Shows the number of errors during benchmark execution
+
+![error rate line](graphs/errorrate-lineplot.png)
