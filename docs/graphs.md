@@ -20,7 +20,7 @@ generates these graphs:
 * barchart of response codes, see [Response codes barchart](#response-codes-barchart) section
 * throughput of DNS server during the benchmark, see [Throughput line graph](#throughput-line-graph) section
 * line graphs of observed latencies of responses of DNS server, see [Latency line plot](#latency-line-plot) section
-* error rate over time, see []
+* error rate over time, see [Error rate over time plot](#error-rate-over-time-plot) section
 
 ## Latency histogram
 Shows the distribution of response latencies 
