@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"sort"
 	"time"
@@ -42,6 +44,7 @@ func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchmarkDura
 	codeTotals := make(map[int]int64)
 	qtypeTotals := make(map[string]int64)
 	times := make([]Datapoint, 0)
+	errTimes := make([]ErrorDatapoint, 0)
 
 	errs := make(map[string]int, 0)
 	top3errs := make(map[string]int)
@@ -51,11 +54,15 @@ func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchmarkDura
 
 	for _, s := range stats {
 		for _, err := range s.Errors {
-			if v, ok := errs[err.Error()]; ok {
-				errs[err.Error()] = v + 1
+			errorString := errString(err)
+
+			if v, ok := errs[errorString]; ok {
+				errs[errorString] = v + 1
 			} else {
-				errs[err.Error()] = 1
+				errs[errorString] = 1
 			}
+
+			errTimes = append(errTimes, s.Errors...)
 		}
 
 		timings.Merge(s.Hist)
@@ -96,9 +103,14 @@ func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchmarkDura
 		}
 	}
 
-	// sort data points from the oldest to the earliest so we can better plot time dependant graphs (like line)
+	// sort data points from the oldest to the earliest, so we can better plot time dependant graphs (like line)
 	sort.SliceStable(times, func(i, j int) bool {
 		return times[i].Start.Before(times[j].Start)
+	})
+
+	// sort error data points from the oldest to the earliest, so we can better plot time dependant graphs (like line)
+	sort.SliceStable(errTimes, func(i, j int) bool {
+		return errTimes[i].Start.Before(errTimes[j].Start)
 	})
 
 	if len(b.PlotDir) != 0 {
@@ -112,6 +124,7 @@ func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchmarkDura
 		plotResponses(b.fileName(dir, "responses-barchart"), codeTotals)
 		plotLineThroughput(b.fileName(dir, "throughput-lineplot"), times)
 		plotLineLatencies(b.fileName(dir, "latency-lineplot"), times)
+		plotErrorRate(b.fileName(dir, "errorrate-lineplot"), errTimes)
 	}
 
 	var csv *os.File
@@ -164,6 +177,19 @@ func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchmarkDura
 	}
 	s := standardReporter{}
 	return s.print(params)
+}
+
+func errString(err ErrorDatapoint) string {
+	var errorString string
+	var netOpErr *net.OpError
+
+	switch {
+	case errors.As(err.Err, &netOpErr):
+		errorString = netOpErr.Op + " " + netOpErr.Net + " " + netOpErr.Addr.String()
+	default:
+		errorString = err.Err.Error()
+	}
+	return errorString
 }
 
 func (b *Benchmark) fileName(dir, name string) string {

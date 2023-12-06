@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"net"
 	"os"
 	"time"
 
@@ -39,10 +40,11 @@ func ExampleBenchmark_PrintReport() {
 	//	 p75:		 10ns
 	//	 p50:		 5ns
 	//
-	// Total Errors: 3
+	// Total Errors: 6
 	// Top errors:
-	// test	2 (66.67)%
-	// test2	1 (33.33)%
+	// test2	3 (50.00)%
+	// read udp 8.8.8.8:53	2 (33.33)%
+	// test	1 (16.67)%
 }
 
 func ExampleBenchmark_PrintReport_dnssec() {
@@ -79,10 +81,11 @@ func ExampleBenchmark_PrintReport_dnssec() {
 	//	 p75:		 10ns
 	//	 p50:		 5ns
 	//
-	// Total Errors: 3
+	// Total Errors: 6
 	// Top errors:
-	// test	2 (66.67)%
-	// test2	1 (33.33)%
+	// test2	3 (50.00)%
+	// read udp 8.8.8.8:53	2 (33.33)%
+	// test	1 (16.67)%
 }
 
 func ExampleBenchmark_PrintReport_json() {
@@ -93,7 +96,7 @@ func ExampleBenchmark_PrintReport_json() {
 
 	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Second)
 
-	// Output: {"totalRequests":1,"totalSuccessCodes":4,"totalErrors":3,"TotalIDmismatch":6,"totalTruncatedResponses":7,"responseRcodes":{"NOERROR":2},"questionTypes":{"A":2},"queriesPerSecond":1,"benchmarkDurationSeconds":1,"latencyStats":{"minMs":0,"meanMs":0,"stdMs":0,"maxMs":0,"p99Ms":0,"p95Ms":0,"p90Ms":0,"p75Ms":0,"p50Ms":0},"latencyDistribution":[{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1}]}
+	// Output: {"totalRequests":1,"totalSuccessCodes":4,"totalErrors":6,"TotalIDmismatch":6,"totalTruncatedResponses":7,"responseRcodes":{"NOERROR":2},"questionTypes":{"A":2},"queriesPerSecond":1,"benchmarkDurationSeconds":1,"latencyStats":{"minMs":0,"meanMs":0,"stdMs":0,"maxMs":0,"p99Ms":0,"p95Ms":0,"p90Ms":0,"p75Ms":0,"p50Ms":0},"latencyDistribution":[{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1}]}
 }
 
 func ExampleBenchmark_PrintReport_json_dnssec() {
@@ -106,7 +109,7 @@ func ExampleBenchmark_PrintReport_json_dnssec() {
 
 	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Second)
 
-	// Output: {"totalRequests":1,"totalSuccessCodes":4,"totalErrors":3,"TotalIDmismatch":6,"totalTruncatedResponses":7,"responseRcodes":{"NOERROR":2},"questionTypes":{"A":2},"queriesPerSecond":1,"benchmarkDurationSeconds":1,"latencyStats":{"minMs":0,"meanMs":0,"stdMs":0,"maxMs":0,"p99Ms":0,"p95Ms":0,"p90Ms":0,"p75Ms":0,"p50Ms":0},"latencyDistribution":[{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1}],"totalDNSSECSecuredDomains":1}
+	// Output: {"totalRequests":1,"totalSuccessCodes":4,"totalErrors":6,"TotalIDmismatch":6,"totalTruncatedResponses":7,"responseRcodes":{"NOERROR":2},"questionTypes":{"A":2},"queriesPerSecond":1,"benchmarkDurationSeconds":1,"latencyStats":{"minMs":0,"meanMs":0,"stdMs":0,"maxMs":0,"p99Ms":0,"p95Ms":0,"p90Ms":0,"p75Ms":0,"p50Ms":0},"latencyDistribution":[{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1}],"totalDNSSECSecuredDomains":1}
 }
 
 func testData() (Benchmark, ResultStats) {
@@ -119,6 +122,18 @@ func testData() (Benchmark, ResultStats) {
 	h.RecordValue(10)
 	d1 := Datapoint{5, time.Unix(0, 0)}
 	d2 := Datapoint{10, time.Unix(0, 0)}
+	addr, err := net.ResolveUDPAddr("udp", "8.8.8.8:53")
+	if err != nil {
+		panic(err)
+	}
+	saddr1, err := net.ResolveUDPAddr("udp", "127.0.0.1:65359")
+	if err != nil {
+		panic(err)
+	}
+	saddr2, err := net.ResolveUDPAddr("udp", "127.0.0.1:65360")
+	if err != nil {
+		panic(err)
+	}
 	rs := ResultStats{
 		Codes: map[int]int64{
 			dns.RcodeSuccess: 2,
@@ -135,10 +150,13 @@ func testData() (Benchmark, ResultStats) {
 			IDmismatch: 6,
 			Truncated:  7,
 		},
-		Errors: []error{
-			errors.New("test"),
-			errors.New("test2"),
-			errors.New("test"),
+		Errors: []ErrorDatapoint{
+			{Start: time.Unix(0, 0), Err: errors.New("test2")},
+			{Start: time.Unix(0, 0), Err: errors.New("test")},
+			{Start: time.Unix(0, 0), Err: &net.OpError{Op: "read", Net: udpNetwork, Addr: addr, Source: saddr1}},
+			{Start: time.Unix(0, 0), Err: &net.OpError{Op: "read", Net: udpNetwork, Addr: addr, Source: saddr2}},
+			{Start: time.Unix(0, 0), Err: errors.New("test2")},
+			{Start: time.Unix(0, 0), Err: errors.New("test2")},
 		},
 	}
 	return b, rs

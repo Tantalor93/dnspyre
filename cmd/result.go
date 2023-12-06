@@ -22,6 +22,13 @@ type Datapoint struct {
 	Start    time.Time
 }
 
+// ErrorDatapoint one datapoint representing single IO error of benchmark.
+// Datapoint one datapoint of benchmark (single DNS request).
+type ErrorDatapoint struct {
+	Start time.Time
+	Err   error
+}
+
 // ResultStats is a representation of benchmark results of single concurrent thread.
 type ResultStats struct {
 	Codes                map[int]int64
@@ -29,14 +36,14 @@ type ResultStats struct {
 	Hist                 *hdrhistogram.Histogram
 	Timings              []Datapoint
 	Counters             *Counters
-	Errors               []error
+	Errors               []ErrorDatapoint
 	AuthenticatedDomains map[string]struct{}
 }
 
 func (rs *ResultStats) record(req *dns.Msg, resp *dns.Msg, err error, time time.Time, timing time.Duration) {
 	if err != nil {
 		rs.Counters.IOError++
-		rs.Errors = append(rs.Errors, err)
+		rs.Errors = append(rs.Errors, ErrorDatapoint{time, err})
 		return
 	}
 

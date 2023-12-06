@@ -16,6 +16,10 @@ import (
 )
 
 func plotHistogramLatency(file string, times []Datapoint) {
+	if len(times) == 0 {
+		// nothing to plot
+		return
+	}
 	var values plotter.Values
 	for _, v := range times {
 		values = append(values, v.Duration)
@@ -28,9 +32,9 @@ func plotHistogramLatency(file string, times []Datapoint) {
 		panic(err)
 	}
 	p.X.Label.Text = "Latencies (ms)"
-	p.X.Tick.Marker = hplot.Ticks{N: 10, Format: "%.0f"}
+	p.X.Tick.Marker = hplot.Ticks{N: 3, Format: "%.0f"}
 	p.Y.Label.Text = "Number of requests"
-	p.Y.Tick.Marker = hplot.Ticks{N: 10, Format: "%.0f"}
+	p.Y.Tick.Marker = hplot.Ticks{N: 3, Format: "%.0f"}
 	hist.FillColor = color.RGBA{R: 175, G: 238, B: 238}
 	p.Add(hist)
 
@@ -40,6 +44,10 @@ func plotHistogramLatency(file string, times []Datapoint) {
 }
 
 func plotBoxPlotLatency(file, server string, times []Datapoint) {
+	if len(times) == 0 {
+		// nothing to plot
+		return
+	}
 	var values plotter.Values
 	for _, v := range times {
 		values = append(values, v.Duration)
@@ -47,7 +55,7 @@ func plotBoxPlotLatency(file, server string, times []Datapoint) {
 	p := plot.New()
 	p.Title.Text = "Latencies distribution"
 	p.Y.Label.Text = "Latencies (ms)"
-	p.Y.Tick.Marker = hplot.Ticks{N: 10, Format: "%.0f"}
+	p.Y.Tick.Marker = hplot.Ticks{N: 3, Format: "%.0f"}
 	p.NominalX(server)
 
 	boxplot, err := plotter.NewBoxPlot(vg.Length(120), 0, values)
@@ -63,6 +71,10 @@ func plotBoxPlotLatency(file, server string, times []Datapoint) {
 }
 
 func plotResponses(file string, rcodes map[int]int64) {
+	if len(rcodes) == 0 {
+		// nothing to plot
+		return
+	}
 	sortedKeys := make([]int, 0)
 	for k := range rcodes {
 		sortedKeys = append(sortedKeys, k)
@@ -102,7 +114,7 @@ func plotResponses(file string, rcodes map[int]int64) {
 	}
 
 	p.Y.Label.Text = "Number of requests"
-	p.Y.Tick.Marker = hplot.Ticks{N: 10, Format: "%.0f"}
+	p.Y.Tick.Marker = hplot.Ticks{N: 3, Format: "%.0f"}
 	p.Legend.Top = true
 
 	if err := p.Save(6*vg.Inch, 6*vg.Inch, file); err != nil {
@@ -111,6 +123,10 @@ func plotResponses(file string, rcodes map[int]int64) {
 }
 
 func plotLineThroughput(file string, times []Datapoint) {
+	if len(times) == 0 {
+		// nothing to plot
+		return
+	}
 	var values plotter.XYs
 	m := make(map[int64]int64)
 
@@ -137,9 +153,9 @@ func plotLineThroughput(file string, times []Datapoint) {
 	p := plot.New()
 	p.Title.Text = "Throughput per second"
 	p.X.Label.Text = "Time of test (s)"
-	p.X.Tick.Marker = hplot.Ticks{N: 10, Format: "%.0f"}
+	p.X.Tick.Marker = hplot.Ticks{N: 3, Format: "%.0f"}
 	p.Y.Label.Text = "Number of requests (per sec)"
-	p.Y.Tick.Marker = hplot.Ticks{N: 10, Format: "%.0f"}
+	p.Y.Tick.Marker = hplot.Ticks{N: 3, Format: "%.0f"}
 
 	l, err := plotter.NewLine(values)
 	l.FillColor = color.RGBA{R: 175, G: 238, B: 238}
@@ -147,6 +163,12 @@ func plotLineThroughput(file string, times []Datapoint) {
 		panic(err)
 	}
 	p.Add(l)
+
+	scatter, err := plotter.NewScatter(values)
+	if err != nil {
+		panic(err)
+	}
+	p.Add(scatter)
 
 	if err := p.Save(6*vg.Inch, 6*vg.Inch, file); err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to save plot.", err)
@@ -161,6 +183,10 @@ type latencyMeasurements struct {
 }
 
 func plotLineLatencies(file string, times []Datapoint) {
+	if len(times) == 0 {
+		// nothing to plot
+		return
+	}
 	m := make(map[int64]latencyMeasurements)
 
 	timings := make([]float64, 0)
@@ -228,9 +254,7 @@ func plotLineLatencies(file string, times []Datapoint) {
 	p := plot.New()
 	p.Title.Text = "Response latencies"
 	p.X.Label.Text = "Time of test (s)"
-	p.X.Tick.Marker = hplot.Ticks{N: 10, Format: "%.0f"}
 	p.Y.Label.Text = "Latency (ms)"
-	p.Y.Tick.Marker = hplot.Ticks{N: 10, Format: "%.0f"}
 
 	plotLine(p, p99values, plotutil.DarkColors[0], plotutil.SoftColors[0], "p99")
 	plotLine(p, p95values, plotutil.DarkColors[1], plotutil.SoftColors[1], "p95")
@@ -238,6 +262,59 @@ func plotLineLatencies(file string, times []Datapoint) {
 	plotLine(p, p50values, plotutil.DarkColors[3], plotutil.SoftColors[3], "p50")
 
 	p.Legend.Top = true
+
+	if err := p.Save(6*vg.Inch, 6*vg.Inch, file); err != nil {
+		fmt.Fprintln(os.Stderr, "Failed to save plot.", err)
+	}
+}
+
+func plotErrorRate(file string, times []ErrorDatapoint) {
+	if len(times) == 0 {
+		// nothing to plot
+		return
+	}
+	var values plotter.XYs
+	m := make(map[int64]int64)
+
+	if len(times) != 0 {
+		first := times[0].Start.Unix()
+
+		for _, v := range times {
+			unix := v.Start.Unix() - first
+			if _, ok := m[unix]; !ok {
+				m[unix] = 0
+			}
+			m[unix]++
+		}
+	}
+
+	for k, v := range m {
+		values = append(values, plotter.XY{X: float64(k), Y: float64(v)})
+	}
+
+	sort.SliceStable(values, func(i, j int) bool {
+		return values[i].X < values[j].X
+	})
+
+	p := plot.New()
+	p.Title.Text = "Error rate over time"
+	p.X.Label.Text = "Time of test (s)"
+	p.X.Tick.Marker = hplot.Ticks{N: 3, Format: "%.0f"}
+	p.Y.Label.Text = "Number of errors (per sec)"
+	p.Y.Tick.Marker = hplot.Ticks{N: 3, Format: "%.0f"}
+
+	l, err := plotter.NewLine(values)
+	l.FillColor = plotutil.SoftColors[0]
+	if err != nil {
+		panic(err)
+	}
+	p.Add(l)
+
+	scatter, err := plotter.NewScatter(values)
+	if err != nil {
+		panic(err)
+	}
+	p.Add(scatter)
 
 	if err := p.Save(6*vg.Inch, 6*vg.Inch, file); err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to save plot.", err)
@@ -253,4 +330,10 @@ func plotLine(p *plot.Plot, values plotter.XYs, color color.Color, fill color.Co
 	l.FillColor = fill
 	p.Add(l)
 	p.Legend.Add(name, l)
+	scatter, err := plotter.NewScatter(values)
+	if err != nil {
+		panic(err)
+	}
+	scatter.Color = color
+	p.Add(scatter)
 }
