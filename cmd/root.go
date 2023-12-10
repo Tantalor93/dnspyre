@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 	"time"
 
@@ -13,7 +14,7 @@ import (
 
 var (
 	// Version is set during release of project during build process.
-	Version = "development"
+	Version string
 
 	author = "Ondrej Benkovsky <obenky@gmail.com>"
 )
@@ -129,6 +130,11 @@ func init() {
 		"case, the file will be downloaded and saved in-memory. "+
 		"These data sources can be combined, for example \"google.com @data/2-domains https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/2-domains\"").
 		Required().StringsVar(&benchmark.Queries)
+
+	info, ok := debug.ReadBuildInfo()
+	if ok && len(Version) == 0 {
+		Version = info.Main.Version
+	}
 }
 
 // Execute starts main logic of command.
