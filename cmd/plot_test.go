@@ -9,28 +9,29 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var testStart = time.Now()
+
 var testDatapoints = []Datapoint{
-	{Start: time.Now(), Duration: 100},
-	{Start: time.Now().Add(time.Second), Duration: 200},
-	{Start: time.Now().Add(2 * time.Second), Duration: 300},
-	{Start: time.Now().Add(3 * time.Second), Duration: 100},
-	{Start: time.Now().Add(4 * time.Second), Duration: 150},
-	{Start: time.Now().Add(5 * time.Second), Duration: 200},
-	{Start: time.Now().Add(6 * time.Second), Duration: 200},
-	{Start: time.Now().Add(7 * time.Second), Duration: 300},
-	{Start: time.Now().Add(8 * time.Second), Duration: 350},
-	{Start: time.Now().Add(9 * time.Second), Duration: 100},
-	{Start: time.Now().Add(10 * time.Second), Duration: 200},
+	{Start: testStart, Duration: 100 * time.Millisecond},
+	{Start: testStart.Add(time.Second), Duration: 200 * time.Millisecond},
+	{Start: testStart.Add(2 * time.Second), Duration: 300 * time.Millisecond},
+	{Start: testStart.Add(3 * time.Second), Duration: 100 * time.Millisecond},
+	{Start: testStart.Add(4 * time.Second), Duration: 150 * time.Millisecond},
+	{Start: testStart.Add(5 * time.Second), Duration: 200 * time.Millisecond},
+	{Start: testStart.Add(6 * time.Second), Duration: 200 * time.Millisecond},
+	{Start: testStart.Add(7 * time.Second), Duration: 300 * time.Millisecond},
+	{Start: testStart.Add(8 * time.Second), Duration: 350 * time.Millisecond},
+	{Start: testStart.Add(9 * time.Second), Duration: 100 * time.Millisecond},
+	{Start: testStart.Add(10 * time.Second), Duration: 200 * time.Millisecond},
 }
 
 var testErrorDatapoints = []ErrorDatapoint{
-	{Start: time.Now()},
-	{Start: time.Now().Add(2 * time.Second)},
-	{Start: time.Now().Add(3 * time.Second)},
-	{Start: time.Now().Add(4 * time.Second)},
-	{Start: time.Now().Add(5 * time.Second)},
-	{Start: time.Now().Add(6 * time.Second)},
-	{Start: time.Now().Add(7 * time.Second)},
+	{Start: testStart.Add(2 * time.Second)},
+	{Start: testStart.Add(3 * time.Second)},
+	{Start: testStart.Add(4 * time.Second)},
+	{Start: testStart.Add(5 * time.Second)},
+	{Start: testStart.Add(6 * time.Second)},
+	{Start: testStart.Add(7 * time.Second)},
 }
 
 var testRcodes = map[int]int64{
@@ -42,10 +43,10 @@ var testRcodes = map[int]int64{
 func Test_plotHistogramLatency(t *testing.T) {
 	dir := t.TempDir()
 
-	file := dir + "/histogram-latency.png"
+	file := dir + "/histogram-latency.svg"
 	plotHistogramLatency(file, testDatapoints)
 
-	expected, err := os.ReadFile("test-histogram-latency.png")
+	expected, err := os.ReadFile("test-histogram-latency.svg")
 	require.NoError(t, err)
 
 	actual, err := os.ReadFile(file)
@@ -57,10 +58,10 @@ func Test_plotHistogramLatency(t *testing.T) {
 func Test_plotBoxPlotLatency(t *testing.T) {
 	dir := t.TempDir()
 
-	file := dir + "/boxplot-latency.png"
+	file := dir + "/boxplot-latency.svg"
 	plotBoxPlotLatency(file, "127.0.0.1", testDatapoints)
 
-	expected, err := os.ReadFile("test-boxplot-latency.png")
+	expected, err := os.ReadFile("test-boxplot-latency.svg")
 	require.NoError(t, err)
 
 	actual, err := os.ReadFile(file)
@@ -72,10 +73,10 @@ func Test_plotBoxPlotLatency(t *testing.T) {
 func Test_plotResponses(t *testing.T) {
 	dir := t.TempDir()
 
-	file := dir + "/responses-barchart.png"
+	file := dir + "/responses-barchart.svg"
 	plotResponses(file, testRcodes)
 
-	expected, err := os.ReadFile("test-responses-barchart.png")
+	expected, err := os.ReadFile("test-responses-barchart.svg")
 	require.NoError(t, err)
 
 	actual, err := os.ReadFile(file)
@@ -87,10 +88,10 @@ func Test_plotResponses(t *testing.T) {
 func Test_plotLineThroughput(t *testing.T) {
 	dir := t.TempDir()
 
-	file := dir + "/throughput-lineplot.png"
-	plotLineThroughput(file, testDatapoints)
+	file := dir + "/throughput-lineplot.svg"
+	plotLineThroughput(file, testStart, testDatapoints)
 
-	expected, err := os.ReadFile("test-throughput-lineplot.png")
+	expected, err := os.ReadFile("test-throughput-lineplot.svg")
 	require.NoError(t, err)
 
 	actual, err := os.ReadFile(file)
@@ -102,10 +103,10 @@ func Test_plotLineThroughput(t *testing.T) {
 func Test_plotLineLatencies(t *testing.T) {
 	dir := t.TempDir()
 
-	file := dir + "/latency-lineplot.png"
-	plotLineLatencies(file, testDatapoints)
+	file := dir + "/latency-lineplot.svg"
+	plotLineLatencies(file, testStart, testDatapoints)
 
-	expected, err := os.ReadFile("test-latency-lineplot.png")
+	expected, err := os.ReadFile("test-latency-lineplot.svg")
 	require.NoError(t, err)
 
 	actual, err := os.ReadFile(file)
@@ -117,10 +118,10 @@ func Test_plotLineLatencies(t *testing.T) {
 func Test_plotErrorRate(t *testing.T) {
 	dir := t.TempDir()
 
-	file := dir + "/errorrate-lineplot.png"
-	plotErrorRate(file, testErrorDatapoints)
+	file := dir + "/errorrate-lineplot.svg"
+	plotErrorRate(file, testStart, testErrorDatapoints)
 
-	expected, err := os.ReadFile("test-errorrate-lineplot.png")
+	expected, err := os.ReadFile("test-errorrate-lineplot.svg")
 	require.NoError(t, err)
 
 	actual, err := os.ReadFile(file)

@@ -105,8 +105,8 @@ func init() {
 	pApp.Flag("plot", "Plot benchmark results and export them to the directory.").
 		Default("").PlaceHolder("/path/to/folder").StringVar(&benchmark.PlotDir)
 
-	pApp.Flag("plotf", "Format of graphs. Supported formats: png, jpg.").
-		Default("png").EnumVar(&benchmark.PlotFormat, "png", "jpg")
+	pApp.Flag("plotf", "Format of graphs. Supported formats: svg, png and jpg.").
+		Default("svg").EnumVar(&benchmark.PlotFormat, "svg", "png", "jpg")
 
 	pApp.Flag("doh-method", "HTTP method to use for DoH requests. Supported values: get, post.").
 		Default("post").EnumVar(&benchmark.DohMethod, getMethod, postMethod)
@@ -167,7 +167,7 @@ func Execute() {
 	if err != nil {
 		errPrint(os.Stderr, "There was an error while starting benchmark: %s\n", err.Error())
 	} else {
-		if err := benchmark.PrintReport(os.Stdout, res, end.Sub(start)); err != nil {
+		if err := benchmark.PrintReport(os.Stdout, res, start, end.Sub(start)); err != nil {
 			errPrint(os.Stderr, "There was an error while printing report: %s\n", err.Error())
 		}
 	}

@@ -71,7 +71,7 @@ Flags:
       --[no-]silent            Disable stdout.
       --[no-]color             ANSI Color output. Enabled by default.
       --plot=/path/to/folder   Plot benchmark results and export them to the directory.
-      --plotf=png              Format of graphs. Supported formats: png, jpg.
+      --plotf=svg              Format of graphs. Supported formats: svg, png and jpg.
       --doh-method=post        HTTP method to use for DoH requests. Supported values: get, post.
       --doh-protocol=1.1       HTTP protocol to use for DoH requests. Supported values: 1.1, 2 and 3.
       --[no-]insecure          Disables server TLS certificate validation. Applicable for DoT, DoH and DoQ.

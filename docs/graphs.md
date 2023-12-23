@@ -25,29 +25,29 @@ generates these graphs:
 ## Latency histogram
 Shows the distribution of response latencies 
 
-![latency histogram](graphs/latency-histogram.png)
+![latency histogram](graphs/latency-histogram.svg)
 
 ## Latency boxplot
 Shows the distribution of response latencies
 
-![latency boxplot](graphs/latency-boxplot.png)
+![latency boxplot](graphs/latency-boxplot.svg)
 
 ## Response codes barchart
 Shows the distribution of DNS server response codes
 
-![responses bar](graphs/responses-barchart.png)
+![responses bar](graphs/responses-barchart.svg)
 
 ## Throughput line graph
 Shows the throughput of DNS requests during benchmark execution
 
-![throughput line](graphs/throughput-lineplot.png)
+![throughput line](graphs/throughput-lineplot.svg)
 
 ## Latency line plot
 Shows the latencies of DNS responses during benchmark execution
 
-![latency line](graphs/latency-lineplot.png)
+![latency line](graphs/latency-lineplot.svg)
 
 ## Error rate over time plot
-Shows the number of errors during benchmark execution
+Shows the number of IO errors during benchmark execution
 
-![error rate line](graphs/errorrate-lineplot.png)
+![error rate line](graphs/errorrate-lineplot.svg)

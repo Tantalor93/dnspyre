@@ -37,7 +37,7 @@ dist/
 report/
 dnspyre
 
-graphs*/
+/graphs*/
 
 # Jekyll documentation
 _site
