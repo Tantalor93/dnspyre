@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"os"
 	"sort"
+	"time"
 
 	"github.com/miekg/dns"
 	"github.com/montanaflynn/stats"
@@ -13,6 +14,7 @@ import (
 	"gonum.org/v1/plot/plotter"
 	"gonum.org/v1/plot/plotutil"
 	"gonum.org/v1/plot/vg"
+	"gonum.org/v1/plot/vg/draw"
 )
 
 func plotHistogramLatency(file string, times []Datapoint) {
@@ -22,7 +24,7 @@ func plotHistogramLatency(file string, times []Datapoint) {
 	}
 	var values plotter.Values
 	for _, v := range times {
-		values = append(values, v.Duration)
+		values = append(values, float64(v.Duration.Milliseconds()))
 	}
 	p := plot.New()
 	p.Title.Text = "Latencies distribution"
@@ -35,7 +37,7 @@ func plotHistogramLatency(file string, times []Datapoint) {
 	p.X.Tick.Marker = hplot.Ticks{N: 3, Format: "%.0f"}
 	p.Y.Label.Text = "Number of requests"
 	p.Y.Tick.Marker = hplot.Ticks{N: 3, Format: "%.0f"}
-	hist.FillColor = color.RGBA{R: 175, G: 238, B: 238}
+	hist.FillColor = color.RGBA{R: 175, G: 238, B: 238, A: 255}
 	p.Add(hist)
 
 	if err := p.Save(6*vg.Inch, 6*vg.Inch, file); err != nil {
@@ -50,7 +52,7 @@ func plotBoxPlotLatency(file, server string, times []Datapoint) {
 	}
 	var values plotter.Values
 	for _, v := range times {
-		values = append(values, v.Duration)
+		values = append(values, float64(v.Duration.Milliseconds()))
 	}
 	p := plot.New()
 	p.Title.Text = "Latencies distribution"
@@ -62,7 +64,7 @@ func plotBoxPlotLatency(file, server string, times []Datapoint) {
 	if err != nil {
 		panic(err)
 	}
-	boxplot.FillColor = color.RGBA{R: 127, G: 188, B: 165, A: 1}
+	boxplot.FillColor = color.RGBA{R: 127, G: 188, B: 165, A: 255}
 	p.Add(boxplot)
 
 	if err := p.Save(6*vg.Inch, 6*vg.Inch, file); err != nil {
@@ -82,13 +84,13 @@ func plotResponses(file string, rcodes map[int]int64) {
 	sort.Ints(sortedKeys)
 
 	colors := []color.Color{
-		color.RGBA{R: 122, G: 195, B: 106},
-		color.RGBA{R: 241, G: 90, B: 96},
-		color.RGBA{R: 90, G: 155, B: 212},
-		color.RGBA{R: 250, G: 167, B: 91},
-		color.RGBA{R: 158, G: 103, B: 171},
-		color.RGBA{R: 206, G: 112, B: 88},
-		color.RGBA{R: 215, G: 127, B: 180},
+		color.RGBA{R: 122, G: 195, B: 106, A: 255},
+		color.RGBA{R: 241, G: 90, B: 96, A: 255},
+		color.RGBA{R: 90, G: 155, B: 212, A: 255},
+		color.RGBA{R: 250, G: 167, B: 91, A: 255},
+		color.RGBA{R: 158, G: 103, B: 171, A: 255},
+		color.RGBA{R: 206, G: 112, B: 88, A: 255},
+		color.RGBA{R: 215, G: 127, B: 180, A: 255},
 	}
 	colors = append(colors, plotutil.DarkColors...)
 
@@ -122,7 +124,7 @@ func plotResponses(file string, rcodes map[int]int64) {
 	}
 }
 
-func plotLineThroughput(file string, times []Datapoint) {
+func plotLineThroughput(file string, benchStart time.Time, times []Datapoint) {
 	if len(times) == 0 {
 		// nothing to plot
 		return
@@ -131,14 +133,12 @@ func plotLineThroughput(file string, times []Datapoint) {
 	m := make(map[int64]int64)
 
 	if len(times) != 0 {
-		first := times[0].Start.Unix()
-
 		for _, v := range times {
-			unix := v.Start.Unix() - first
-			if _, ok := m[unix]; !ok {
-				m[unix] = 0
+			offset := v.Start.Unix() - benchStart.Unix()
+			if _, ok := m[offset]; !ok {
+				m[offset] = 0
 			}
-			m[unix]++
+			m[offset]++
 		}
 	}
 
@@ -158,13 +158,16 @@ func plotLineThroughput(file string, times []Datapoint) {
 	p.Y.Tick.Marker = hplot.Ticks{N: 3, Format: "%.0f"}
 
 	l, err := plotter.NewLine(values)
-	l.FillColor = color.RGBA{R: 175, G: 238, B: 238}
+	l.Width = vg.Points(0.5)
+	l.FillColor = color.RGBA{R: 175, G: 238, B: 238, A: 255}
 	if err != nil {
 		panic(err)
 	}
 	p.Add(l)
 
 	scatter, err := plotter.NewScatter(values)
+	scatter.GlyphStyle.Shape = draw.CircleGlyph{}
+
 	if err != nil {
 		panic(err)
 	}
@@ -182,58 +185,32 @@ type latencyMeasurements struct {
 	p50 float64
 }
 
-func plotLineLatencies(file string, times []Datapoint) {
+func plotLineLatencies(file string, benchStart time.Time, times []Datapoint) {
 	if len(times) == 0 {
 		// nothing to plot
 		return
 	}
-	m := make(map[int64]latencyMeasurements)
 
+	measurements := make(map[int64]latencyMeasurements)
 	timings := make([]float64, 0)
-	if len(times) != 0 {
-		first := times[0].Start.Unix()
-		last := int64(0)
+	last := times[0].Start.Unix() - benchStart.Unix()
 
-		for _, v := range times {
-			unix := v.Start.Unix() - first
-			if _, ok := m[unix]; !ok {
-				m[unix] = latencyMeasurements{}
-			}
-			if unix != last {
-				p99, err := stats.Percentile(timings, 99)
-				if err != nil {
-					panic(err)
-				}
-				p95, err := stats.Percentile(timings, 95)
-				if err != nil {
-					panic(err)
-				}
-				p90, err := stats.Percentile(timings, 90)
-				if err != nil {
-					panic(err)
-				}
-				p50, err := stats.Percentile(timings, 50)
-				if err != nil {
-					panic(err)
-				}
-				measure := m[unix]
-				measure.p99 = p99
-				measure.p95 = p95
-				measure.p90 = p90
-				measure.p50 = p50
-				m[unix] = measure
-				last = unix
-			}
-			timings = append(timings, v.Duration)
+	for _, v := range times {
+		offset := v.Start.Unix() - benchStart.Unix()
+		if offset != last {
+			collectMeasurements(timings, measurements, last)
+			last = offset
 		}
+		timings = append(timings, float64(v.Duration.Milliseconds()))
 	}
+	collectMeasurements(timings, measurements, last)
 
 	var p99values plotter.XYs
 	var p95values plotter.XYs
 	var p90values plotter.XYs
 	var p50values plotter.XYs
 
-	for k, v := range m {
+	for k, v := range measurements {
 		p99values = append(p99values, plotter.XY{X: float64(k), Y: v.p99})
 		p95values = append(p95values, plotter.XY{X: float64(k), Y: v.p95})
 		p90values = append(p90values, plotter.XY{X: float64(k), Y: v.p90})
@@ -268,7 +245,32 @@ func plotLineLatencies(file string, times []Datapoint) {
 	}
 }
 
-func plotErrorRate(file string, times []ErrorDatapoint) {
+func collectMeasurements(timings []float64, measurements map[int64]latencyMeasurements, offset int64) {
+	p99, err := stats.Percentile(timings, 99)
+	if err != nil {
+		panic(err)
+	}
+	p95, err := stats.Percentile(timings, 95)
+	if err != nil {
+		panic(err)
+	}
+	p90, err := stats.Percentile(timings, 90)
+	if err != nil {
+		panic(err)
+	}
+	p50, err := stats.Percentile(timings, 50)
+	if err != nil {
+		panic(err)
+	}
+	measure := latencyMeasurements{}
+	measure.p99 = p99
+	measure.p95 = p95
+	measure.p90 = p90
+	measure.p50 = p50
+	measurements[offset] = measure
+}
+
+func plotErrorRate(file string, benchStart time.Time, times []ErrorDatapoint) {
 	if len(times) == 0 {
 		// nothing to plot
 		return
@@ -276,16 +278,12 @@ func plotErrorRate(file string, times []ErrorDatapoint) {
 	var values plotter.XYs
 	m := make(map[int64]int64)
 
-	if len(times) != 0 {
-		first := times[0].Start.Unix()
-
-		for _, v := range times {
-			unix := v.Start.Unix() - first
-			if _, ok := m[unix]; !ok {
-				m[unix] = 0
-			}
-			m[unix]++
+	for _, v := range times {
+		offset := v.Start.Unix() - benchStart.Unix()
+		if _, ok := m[offset]; !ok {
+			m[offset] = 0
 		}
+		m[offset]++
 	}
 
 	for k, v := range m {
@@ -304,7 +302,8 @@ func plotErrorRate(file string, times []ErrorDatapoint) {
 	p.Y.Tick.Marker = hplot.Ticks{N: 3, Format: "%.0f"}
 
 	l, err := plotter.NewLine(values)
-	l.FillColor = plotutil.SoftColors[0]
+	l.Width = vg.Points(0.5)
+
 	if err != nil {
 		panic(err)
 	}
@@ -314,6 +313,9 @@ func plotErrorRate(file string, times []ErrorDatapoint) {
 	if err != nil {
 		panic(err)
 	}
+	scatter.GlyphStyle.Color = color.RGBA{R: 238, G: 46, B: 47, A: 255}
+	scatter.GlyphStyle.Shape = draw.CircleGlyph{}
+
 	p.Add(scatter)
 
 	if err := p.Save(6*vg.Inch, 6*vg.Inch, file); err != nil {
@@ -334,6 +336,7 @@ func plotLine(p *plot.Plot, values plotter.XYs, color color.Color, fill color.Co
 	if err != nil {
 		panic(err)
 	}
-	scatter.Color = color
+	scatter.GlyphStyle.Color = color
+	scatter.GlyphStyle.Shape = draw.CircleGlyph{}
 	p.Add(scatter)
 }

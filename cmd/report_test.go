@@ -13,7 +13,7 @@ import (
 func ExampleBenchmark_PrintReport() {
 	b, rs := testData()
 
-	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Second)
+	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Now(), time.Second)
 
 	// Output: Total requests:		1
 	// Read/Write errors:	3
@@ -52,7 +52,7 @@ func ExampleBenchmark_PrintReport_dnssec() {
 	b.DNSSEC = true
 	rs.AuthenticatedDomains = map[string]struct{}{"example.org.": {}}
 
-	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Second)
+	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Now(), time.Second)
 
 	// Output: Total requests:		1
 	// Read/Write errors:	3
@@ -94,7 +94,7 @@ func ExampleBenchmark_PrintReport_json() {
 	b.Rcodes = true
 	b.HistDisplay = true
 
-	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Second)
+	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Now(), time.Second)
 
 	// Output: {"totalRequests":1,"totalSuccessCodes":4,"totalErrors":6,"TotalIDmismatch":6,"totalTruncatedResponses":7,"responseRcodes":{"NOERROR":2},"questionTypes":{"A":2},"queriesPerSecond":1,"benchmarkDurationSeconds":1,"latencyStats":{"minMs":0,"meanMs":0,"stdMs":0,"maxMs":0,"p99Ms":0,"p95Ms":0,"p90Ms":0,"p75Ms":0,"p50Ms":0},"latencyDistribution":[{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1}]}
 }
@@ -107,7 +107,7 @@ func ExampleBenchmark_PrintReport_json_dnssec() {
 	b.DNSSEC = true
 	rs.AuthenticatedDomains = map[string]struct{}{"example.org.": {}}
 
-	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Second)
+	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Now(), time.Second)
 
 	// Output: {"totalRequests":1,"totalSuccessCodes":4,"totalErrors":6,"TotalIDmismatch":6,"totalTruncatedResponses":7,"responseRcodes":{"NOERROR":2},"questionTypes":{"A":2},"queriesPerSecond":1,"benchmarkDurationSeconds":1,"latencyStats":{"minMs":0,"meanMs":0,"stdMs":0,"maxMs":0,"p99Ms":0,"p95Ms":0,"p90Ms":0,"p75Ms":0,"p50Ms":0},"latencyDistribution":[{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1}],"totalDNSSECSecuredDomains":1}
 }

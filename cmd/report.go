@@ -38,7 +38,7 @@ type reportParameters struct {
 
 // PrintReport prints formatted benchmark result to stdout, exports graphs and generates CSV output if configured.
 // If there is a fatal error while printing report, an error is returned.
-func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchmarkDuration time.Duration) error {
+func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchStart time.Time, benchDuration time.Duration) error {
 	// merge all the stats here
 	timings := hdrhistogram.New(b.HistMin.Nanoseconds(), b.HistMax.Nanoseconds(), b.HistPre)
 	codeTotals := make(map[int]int64)
@@ -52,6 +52,7 @@ func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchmarkDura
 
 	var totalCounters Counters
 
+	// TODO proper coverage of plots
 	for _, s := range stats {
 		for _, err := range s.Errors {
 			errorString := errString(err)
@@ -61,9 +62,8 @@ func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchmarkDura
 			} else {
 				errs[errorString] = 1
 			}
-
-			errTimes = append(errTimes, s.Errors...)
 		}
+		errTimes = append(errTimes, s.Errors...)
 
 		timings.Merge(s.Hist)
 		times = append(times, s.Timings...)
@@ -122,9 +122,9 @@ func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchmarkDura
 		plotHistogramLatency(b.fileName(dir, "latency-histogram"), times)
 		plotBoxPlotLatency(b.fileName(dir, "latency-boxplot"), b.Server, times)
 		plotResponses(b.fileName(dir, "responses-barchart"), codeTotals)
-		plotLineThroughput(b.fileName(dir, "throughput-lineplot"), times)
-		plotLineLatencies(b.fileName(dir, "latency-lineplot"), times)
-		plotErrorRate(b.fileName(dir, "errorrate-lineplot"), errTimes)
+		plotLineThroughput(b.fileName(dir, "throughput-lineplot"), benchStart, times)
+		plotLineLatencies(b.fileName(dir, "latency-lineplot"), benchStart, times)
+		plotErrorRate(b.fileName(dir, "errorrate-lineplot"), benchStart, errTimes)
 	}
 
 	var csv *os.File
@@ -169,7 +169,7 @@ func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchmarkDura
 		qtypeTotals:          qtypeTotals,
 		topErrs:              topErrs,
 		authenticatedDomains: authenticatedDomains,
-		benchmarkDuration:    benchmarkDuration,
+		benchmarkDuration:    benchDuration,
 	}
 	if b.JSON {
 		j := jsonReporter{}

@@ -149,7 +149,7 @@ type Benchmark struct {
 
 	// PlotDir controls where the generated graphs are exported. If set to empty (""), which is default value. Then no graphs are generated.
 	PlotDir string
-	// PlotFormat controls the format of generated graphs. Supported values are "png" and "jpg".
+	// PlotFormat controls the format of generated graphs. Supported values are "svg", "png" and "jpg".
 	PlotFormat string
 
 	// DohMethod controls HTTP method used for sending DoH requests. Supported values are "post" and "get". Default is "post".
@@ -459,8 +459,6 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 							}
 							edns0.SetDo(true)
 						}
-
-						st.Counters.Total++
 
 						start := time.Now()
 

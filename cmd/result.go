@@ -18,7 +18,7 @@ type Counters struct {
 
 // Datapoint one datapoint of benchmark (single DNS request).
 type Datapoint struct {
-	Duration float64
+	Duration time.Duration
 	Start    time.Time
 }
 
@@ -40,10 +40,11 @@ type ResultStats struct {
 	AuthenticatedDomains map[string]struct{}
 }
 
-func (rs *ResultStats) record(req *dns.Msg, resp *dns.Msg, err error, time time.Time, timing time.Duration) {
+func (rs *ResultStats) record(req *dns.Msg, resp *dns.Msg, err error, time time.Time, duration time.Duration) {
+	rs.Counters.Total++
 	if err != nil {
 		rs.Counters.IOError++
-		rs.Errors = append(rs.Errors, ErrorDatapoint{time, err})
+		rs.Errors = append(rs.Errors, ErrorDatapoint{Start: time, Err: err})
 		return
 	}
 
@@ -77,6 +78,6 @@ func (rs *ResultStats) record(req *dns.Msg, resp *dns.Msg, err error, time time.
 		rs.AuthenticatedDomains[req.Question[0].Name] = struct{}{}
 	}
 
-	rs.Hist.RecordValue(timing.Nanoseconds())
-	rs.Timings = append(rs.Timings, Datapoint{float64(timing.Milliseconds()), time})
+	rs.Hist.RecordValue(duration.Nanoseconds())
+	rs.Timings = append(rs.Timings, Datapoint{Duration: duration, Start: time})
 }
