@@ -199,18 +199,6 @@ func (b *Benchmark) prepare() error {
 
 	b.addPortIfMissing()
 
-	if !b.useDoH && !b.useQuic {
-		host, port, err := net.SplitHostPort(b.Server)
-		if err != nil {
-			return errors.New("failed to parse --server")
-		}
-		addr, err := net.ResolveIPAddr("ip", host)
-		if err != nil {
-			return errors.New("failed to resolve --server address")
-		}
-		b.Server = net.JoinHostPort(addr.String(), port)
-	}
-
 	if b.Count == 0 && b.Duration == 0 {
 		b.Count = 1
 	}
