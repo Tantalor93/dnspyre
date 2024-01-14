@@ -2,7 +2,6 @@ FROM alpine:latest as certs
 RUN apk --update add ca-certificates
 
 FROM scratch
-LABEL org.opencontainers.image.source=https://github.com/tantalor93/dnspyre
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY dnspyre /dnspyre
 ENTRYPOINT ["/dnspyre"]
