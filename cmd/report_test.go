@@ -11,7 +11,7 @@ import (
 )
 
 func ExampleBenchmark_PrintReport() {
-	b, rs := testData()
+	b, rs := testReportData()
 
 	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Now(), time.Second)
 
@@ -48,7 +48,7 @@ func ExampleBenchmark_PrintReport() {
 }
 
 func ExampleBenchmark_PrintReport_dnssec() {
-	b, rs := testData()
+	b, rs := testReportData()
 	b.DNSSEC = true
 	rs.AuthenticatedDomains = map[string]struct{}{"example.org.": {}}
 
@@ -89,7 +89,7 @@ func ExampleBenchmark_PrintReport_dnssec() {
 }
 
 func ExampleBenchmark_PrintReport_json() {
-	b, rs := testData()
+	b, rs := testReportData()
 	b.JSON = true
 	b.Rcodes = true
 	b.HistDisplay = true
@@ -100,7 +100,7 @@ func ExampleBenchmark_PrintReport_json() {
 }
 
 func ExampleBenchmark_PrintReport_json_dnssec() {
-	b, rs := testData()
+	b, rs := testReportData()
 	b.JSON = true
 	b.Rcodes = true
 	b.HistDisplay = true
@@ -112,7 +112,25 @@ func ExampleBenchmark_PrintReport_json_dnssec() {
 	// Output: {"totalRequests":1,"totalSuccessCodes":4,"totalErrors":6,"TotalIDmismatch":6,"totalTruncatedResponses":7,"responseRcodes":{"NOERROR":2},"questionTypes":{"A":2},"queriesPerSecond":1,"benchmarkDurationSeconds":1,"latencyStats":{"minMs":0,"meanMs":0,"stdMs":0,"maxMs":0,"p99Ms":0,"p95Ms":0,"p90Ms":0,"p75Ms":0,"p50Ms":0},"latencyDistribution":[{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1}],"totalDNSSECSecuredDomains":1}
 }
 
-func testData() (Benchmark, ResultStats) {
+func ExampleBenchmark_PrintReport_server_dns_errors() {
+	b, rs := testReportDataWithServerDNSErrors()
+
+	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Now(), time.Second)
+
+	// Output: Total requests:		3
+	// Read/Write errors:	3
+	//
+	// DNS question types:
+	// 	A:	3
+	//
+	// Time taken for tests:	 1s
+	// Questions per second:	 3.0
+	// Total Errors: 3
+	// Top errors:
+	// no such host unknown.host.com	3 (100.00)%
+}
+
+func testReportData() (Benchmark, ResultStats) {
 	b := Benchmark{
 		HistPre: 1,
 	}
@@ -157,6 +175,31 @@ func testData() (Benchmark, ResultStats) {
 			{Start: time.Unix(0, 0), Err: &net.OpError{Op: "read", Net: udpNetwork, Addr: addr, Source: saddr2}},
 			{Start: time.Unix(0, 0), Err: errors.New("test2")},
 			{Start: time.Unix(0, 0), Err: errors.New("test2")},
+		},
+	}
+	return b, rs
+}
+
+func testReportDataWithServerDNSErrors() (Benchmark, ResultStats) {
+	b := Benchmark{
+		HistPre: 1,
+	}
+	h := hdrhistogram.New(0, 0, 1)
+	rs := ResultStats{
+		Codes: map[int]int64{},
+		Qtypes: map[string]int64{
+			"A": 3,
+		},
+		Hist:    h,
+		Timings: []Datapoint{},
+		Counters: &Counters{
+			Total:   3,
+			IOError: 3,
+		},
+		Errors: []ErrorDatapoint{
+			{Start: time.Unix(0, 0), Err: &net.DNSError{Err: "no such host", Name: "unknown.host.com"}},
+			{Start: time.Unix(0, 0), Err: &net.DNSError{Err: "no such host", Name: "unknown.host.com"}},
+			{Start: time.Unix(0, 0), Err: &net.DNSError{Err: "no such host", Name: "unknown.host.com"}},
 		},
 	}
 	return b, rs

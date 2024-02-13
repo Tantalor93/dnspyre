@@ -182,10 +182,16 @@ func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchStart ti
 func errString(err ErrorDatapoint) string {
 	var errorString string
 	var netOpErr *net.OpError
+	var resolveErr *net.DNSError
 
 	switch {
+	case errors.As(err.Err, &resolveErr):
+		errorString = resolveErr.Err + " " + resolveErr.Name
 	case errors.As(err.Err, &netOpErr):
-		errorString = netOpErr.Op + " " + netOpErr.Net + " " + netOpErr.Addr.String()
+		errorString = netOpErr.Op + " " + netOpErr.Net
+		if netOpErr.Addr != nil {
+			errorString += " " + netOpErr.Addr.String()
+		}
 	default:
 		errorString = err.Err.Error()
 	}
