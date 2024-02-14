@@ -19,3 +19,48 @@ and then check the output using
 ```
 kubectl logs dnspyre
 ```
+
+You might want to test the performance from multiple instances/pods, this can be easily achieved by deploying *dnspyre* in multiple pods,
+for example using Kubernetes Deployment :
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dnspyre-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dnspyre
+  template:
+    metadata:
+      labels:
+        app: dnspyre
+    spec:
+      containers:
+      - name: dnspyre
+        image: ghcr.io/tantalor93/dnspyre
+        command:
+        - "/dnspyre"
+        args:
+        - "https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/top-1m"
+        - "--server"
+        - "kube-dns.kube-system.svc.cluster.local"
+        - "--duration"
+        - "1m"
+        - "-c"
+        - "100"
+        resources:
+          limits:
+            cpu: "1"      
+            memory: "900Mi" 
+          requests:
+            cpu: "0.1"      
+            memory: "128Mi" 
+```
+and then applying this Deployment to your cluster:
+
+```
+kubectl apply -f dnspyre-deployment.yml
+```
