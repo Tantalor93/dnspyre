@@ -15,7 +15,7 @@ require (
 	github.com/tantalor93/doh-go v0.1.1
 	github.com/tantalor93/doq-go v0.9.0
 	go-hep.org/x/hep v0.34.1
-	go.uber.org/ratelimit v0.3.0
+	go.uber.org/ratelimit v0.3.1
 	golang.org/x/net v0.21.0
 	gonum.org/v1/plot v0.14.0
 )
