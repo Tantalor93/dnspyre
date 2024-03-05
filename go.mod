@@ -11,7 +11,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/quic-go/quic-go v0.41.0
 	github.com/schollz/progressbar/v3 v3.14.2
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	github.com/tantalor93/doh-go v0.1.1
 	github.com/tantalor93/doq-go v0.9.0
 	go-hep.org/x/hep v0.34.1
