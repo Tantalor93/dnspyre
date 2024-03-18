@@ -9,7 +9,7 @@ require (
 	github.com/miekg/dns v1.1.58
 	github.com/montanaflynn/stats v0.7.1
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/quic-go/quic-go v0.41.0
+	github.com/quic-go/quic-go v0.42.0
 	github.com/schollz/progressbar/v3 v3.14.2
 	github.com/stretchr/testify v1.9.0
 	github.com/tantalor93/doh-go v0.1.1
@@ -43,7 +43,7 @@ require (
 	github.com/quic-go/qpack v0.4.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
-	go.uber.org/mock v0.3.0 // indirect
+	go.uber.org/mock v0.4.0 // indirect
 	golang.org/x/crypto v0.21.0 // indirect
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
 	golang.org/x/image v0.13.0 // indirect
