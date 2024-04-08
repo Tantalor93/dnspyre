@@ -31,7 +31,7 @@ brews:
 - repository:
     owner: tantalor93
     name: homebrew-dnspyre
-  folder: Formula
+  directory: Formula
   homepage: https://tantalor93.github.io/dnspyre/
   install: |-
     bin.install "dnspyre"
