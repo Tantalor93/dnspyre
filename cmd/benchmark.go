@@ -349,6 +349,9 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 			st.Codes = make(map[int]int64)
 		}
 		st.Qtypes = make(map[string]int64)
+		if b.useDoH {
+			st.DoHStatusCodes = make(map[int]int64)
+		}
 		st.Counters = &Counters{}
 
 		var err error

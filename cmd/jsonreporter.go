@@ -28,18 +28,19 @@ type histogramPoint struct {
 }
 
 type jsonResult struct {
-	TotalRequests             int64            `json:"totalRequests"`
-	TotalSuccessCodes         int64            `json:"totalSuccessCodes"`
-	TotalErrors               int64            `json:"totalErrors"`
-	TotalIDmismatch           int64            `json:"TotalIDmismatch"`
-	TotalTruncatedResponses   int64            `json:"totalTruncatedResponses"`
-	ResponseRcodes            map[string]int64 `json:"responseRcodes,omitempty"`
-	QuestionTypes             map[string]int64 `json:"questionTypes"`
-	QueriesPerSecond          float64          `json:"queriesPerSecond"`
-	BenchmarkDurationSeconds  float64          `json:"benchmarkDurationSeconds"`
-	LatencyStats              latencyStats     `json:"latencyStats"`
-	LatencyDistribution       []histogramPoint `json:"latencyDistribution,omitempty"`
-	TotalDNSSECSecuredDomains *int             `json:"totalDNSSECSecuredDomains,omitempty"`
+	TotalRequests              int64            `json:"totalRequests"`
+	TotalSuccessCodes          int64            `json:"totalSuccessCodes"`
+	TotalErrors                int64            `json:"totalErrors"`
+	TotalIDmismatch            int64            `json:"TotalIDmismatch"`
+	TotalTruncatedResponses    int64            `json:"totalTruncatedResponses"`
+	ResponseRcodes             map[string]int64 `json:"responseRcodes,omitempty"`
+	QuestionTypes              map[string]int64 `json:"questionTypes"`
+	QueriesPerSecond           float64          `json:"queriesPerSecond"`
+	BenchmarkDurationSeconds   float64          `json:"benchmarkDurationSeconds"`
+	LatencyStats               latencyStats     `json:"latencyStats"`
+	LatencyDistribution        []histogramPoint `json:"latencyDistribution,omitempty"`
+	TotalDNSSECSecuredDomains  *int             `json:"totalDNSSECSecuredDomains,omitempty"`
+	DohHTTPResponseStatusCodes map[int]int64    `json:"dohHTTPResponseStatusCodes,omitempty"`
 }
 
 func (s *jsonReporter) print(params reportParameters) error {
@@ -104,7 +105,8 @@ func (s *jsonReporter) print(params reportParameters) error {
 			P75Ms:  time.Duration(params.timings.ValueAtQuantile(75)).Milliseconds(),
 			P50Ms:  time.Duration(params.timings.ValueAtQuantile(50)).Milliseconds(),
 		},
-		LatencyDistribution: res,
+		LatencyDistribution:        res,
+		DohHTTPResponseStatusCodes: params.dohResponseStatusesTotals,
 	}
 	if params.benchmark.DNSSEC {
 		totalDNSSECSecuredDomains := len(params.authenticatedDomains)
