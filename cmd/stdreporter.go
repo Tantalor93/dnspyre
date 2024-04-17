@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -31,6 +32,24 @@ func (s *standardReporter) print(params reportParameters) error {
 		}
 	}
 
+	var dohResponseStatuses []int
+	for key := range params.dohResponseStatusesTotals {
+		dohResponseStatuses = append(dohResponseStatuses, key)
+	}
+	sort.Ints(dohResponseStatuses)
+
+	if len(params.dohResponseStatusesTotals) > 0 {
+		fmt.Println()
+		fmt.Println("DoH HTTP response status codes:")
+		for _, st := range dohResponseStatuses {
+			if st == 200 {
+				successPrint(params.outputWriter, "\t%d:\t%d\n", st, params.dohResponseStatusesTotals[st])
+			} else {
+				errPrint(params.outputWriter, "\t%d:\t%d\n", st, params.dohResponseStatusesTotals[st])
+			}
+		}
+	}
+
 	if len(params.qtypeTotals) > 0 {
 		fmt.Println()
 		fmt.Println("DNS question types:")
@@ -48,7 +67,7 @@ func (s *standardReporter) print(params reportParameters) error {
 
 	fmt.Println("Time taken for tests:\t", highlightStr(roundDuration(params.benchmarkDuration).String()))
 	fmt.Printf("Questions per second:\t %s", highlightStr(fmt.Sprintf("%0.1f", float64(params.totalCounters.Total)/params.benchmarkDuration.Seconds())))
-
+	fmt.Println()
 	min := time.Duration(params.timings.Min())
 	mean := time.Duration(params.timings.Mean())
 	sd := time.Duration(params.timings.StdDev())
@@ -60,7 +79,6 @@ func (s *standardReporter) print(params reportParameters) error {
 	p50 := time.Duration(params.timings.ValueAtQuantile(50))
 
 	if tc := params.timings.TotalCount(); tc > 0 {
-		fmt.Println()
 		fmt.Println("DNS timings,", highlightStr(tc), "datapoints")
 		fmt.Println("\t min:\t\t", highlightStr(roundDuration(min)))
 		fmt.Println("\t mean:\t\t", highlightStr(roundDuration(mean)))
@@ -98,7 +116,7 @@ func (s *standardReporter) print(params reportParameters) error {
 }
 
 func (b *Benchmark) printProgress(w io.Writer, c Counters) {
-	fmt.Printf("\n\nTotal requests:\t\t%s\n", highlightStr(c.Total))
+	fmt.Printf("\nTotal requests:\t\t%s\n", highlightStr(c.Total))
 
 	if c.IOError > 0 {
 		errPrint(w, "Read/Write errors:\t%d\n", c.IOError)

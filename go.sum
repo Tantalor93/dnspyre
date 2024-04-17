@@ -109,8 +109,8 @@ github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
-github.com/tantalor93/doh-go v0.1.1 h1:yhdu+FfK54w6Wv/XGyZM5rFuofnZCxiGYPbJXY5vAkg=
-github.com/tantalor93/doh-go v0.1.1/go.mod h1:/BofzWjI0lSfO4dANJrHN/6opCJjlpHkdm/p5XkbQSM=
+github.com/tantalor93/doh-go v0.2.0 h1:yXFf7DM3Pij2r+fS6E/RFF/iO8trks/sZa3tZqPZpKw=
+github.com/tantalor93/doh-go v0.2.0/go.mod h1:dQ224IhiJ3xD9LIvYxdBd0Brjp7kdOuh535dppqwSb4=
 github.com/tantalor93/doq-go v0.10.0 h1:wQ2DYyIapOzTz/GvfrUHTdvE+mlzV8pdgNeVqsA5zm8=
 github.com/tantalor93/doq-go v0.10.0/go.mod h1:v0Li1QQ8uu2c//7RQu+P0bkna1yBC6h5hjnhNUyCdBg=
 github.com/teambition/rrule-go v1.8.2 h1:lIjpjvWTj9fFUZCmuoVDrKVOtdiyzbzc93qTmRVe/J8=

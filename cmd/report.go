@@ -25,15 +25,16 @@ type orderedMap struct {
 }
 
 type reportParameters struct {
-	benchmark            *Benchmark
-	outputWriter         io.Writer
-	timings              *hdrhistogram.Histogram
-	codeTotals           map[int]int64
-	totalCounters        Counters
-	qtypeTotals          map[string]int64
-	topErrs              orderedMap
-	authenticatedDomains map[string]struct{}
-	benchmarkDuration    time.Duration
+	benchmark                 *Benchmark
+	outputWriter              io.Writer
+	timings                   *hdrhistogram.Histogram
+	codeTotals                map[int]int64
+	totalCounters             Counters
+	qtypeTotals               map[string]int64
+	topErrs                   orderedMap
+	authenticatedDomains      map[string]struct{}
+	benchmarkDuration         time.Duration
+	dohResponseStatusesTotals map[int]int64
 }
 
 // PrintReport prints formatted benchmark result to stdout, exports graphs and generates CSV output if configured.
@@ -43,6 +44,8 @@ func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchStart ti
 	timings := hdrhistogram.New(b.HistMin.Nanoseconds(), b.HistMax.Nanoseconds(), b.HistPre)
 	codeTotals := make(map[int]int64)
 	qtypeTotals := make(map[string]int64)
+	dohResponseStatusesTotals := make(map[int]int64)
+
 	times := make([]Datapoint, 0)
 	errTimes := make([]ErrorDatapoint, 0)
 
@@ -75,6 +78,11 @@ func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchStart ti
 		if s.Qtypes != nil {
 			for k, v := range s.Qtypes {
 				qtypeTotals[k] += v
+			}
+		}
+		if s.DoHStatusCodes != nil {
+			for k, v := range s.DoHStatusCodes {
+				dohResponseStatusesTotals[k] += v
 			}
 		}
 		if s.Counters != nil {
@@ -161,15 +169,16 @@ func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchStart ti
 	}
 	topErrs := orderedMap{m: top3errs, order: top3errorsInOrder}
 	params := reportParameters{
-		benchmark:            b,
-		outputWriter:         w,
-		timings:              timings,
-		codeTotals:           codeTotals,
-		totalCounters:        totalCounters,
-		qtypeTotals:          qtypeTotals,
-		topErrs:              topErrs,
-		authenticatedDomains: authenticatedDomains,
-		benchmarkDuration:    benchDuration,
+		benchmark:                 b,
+		outputWriter:              w,
+		timings:                   timings,
+		codeTotals:                codeTotals,
+		totalCounters:             totalCounters,
+		qtypeTotals:               qtypeTotals,
+		topErrs:                   topErrs,
+		authenticatedDomains:      authenticatedDomains,
+		benchmarkDuration:         benchDuration,
+		dohResponseStatusesTotals: dohResponseStatusesTotals,
 	}
 	if b.JSON {
 		j := jsonReporter{}
