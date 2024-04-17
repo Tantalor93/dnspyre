@@ -20,6 +20,8 @@ This tool supports wide variety of options to customize DNS benchmark and benchm
 * benchmark DNS servers with uneven random load from provided high volume resources (see `--probability` option)
 * plot benchmark results via CLI histogram or plot the benchmark results as boxplot, histogram, line graphs and export them via all kind of image formats like png, svg and pdf. (see `--plot` and `--plotf` options) 
 
+![demo](assets/demo.gif)
+
 ## Usage
 
 ```
