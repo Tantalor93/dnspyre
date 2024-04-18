@@ -90,6 +90,8 @@ func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchStart ti
 				Total:      totalCounters.Total + s.Counters.Total,
 				IOError:    totalCounters.IOError + s.Counters.IOError,
 				Success:    totalCounters.Success + s.Counters.Success,
+				Negative:   totalCounters.Negative + s.Counters.Negative,
+				Error:      totalCounters.Error + s.Counters.Error,
 				IDmismatch: totalCounters.IDmismatch + s.Counters.IDmismatch,
 				Truncated:  totalCounters.Truncated + s.Counters.Truncated,
 			}

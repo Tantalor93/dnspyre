@@ -16,7 +16,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/HdrHistogram/hdrhistogram-go"
 	"github.com/fatih/color"
 	"github.com/miekg/dns"
 	"github.com/quic-go/quic-go/http3"
@@ -343,16 +342,8 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	var wg sync.WaitGroup
 	var w uint32
 	for w = 0; w < b.Concurrency; w++ {
-		st := &ResultStats{Hist: hdrhistogram.New(b.HistMin.Nanoseconds(), b.HistMax.Nanoseconds(), b.HistPre)}
+		st := newResultStats(b)
 		stats[w] = st
-		if b.Rcodes {
-			st.Codes = make(map[int]int64)
-		}
-		st.Qtypes = make(map[string]int64)
-		if b.useDoH {
-			st.DoHStatusCodes = make(map[int]int64)
-		}
-		st.Counters = &Counters{}
 
 		var err error
 		wg.Add(1)

@@ -116,7 +116,7 @@ func (s *standardReporter) print(params reportParameters) error {
 }
 
 func (b *Benchmark) printProgress(w io.Writer, c Counters) {
-	fmt.Printf("\nTotal requests:\t\t%s\n", highlightStr(c.Total))
+	fmt.Fprintf(w, "\nTotal requests:\t\t%s\n", highlightStr(c.Total))
 
 	if c.IOError > 0 {
 		errPrint(w, "Read/Write errors:\t%d\n", c.IOError)
@@ -127,7 +127,13 @@ func (b *Benchmark) printProgress(w io.Writer, c Counters) {
 	}
 
 	if c.Success > 0 {
-		successPrint(w, "DNS success codes:\t%d\n", c.Success)
+		successPrint(w, "DNS success responses:\t%d\n", c.Success)
+	}
+	if c.Negative > 0 {
+		fmt.Fprintf(w, "DNS negative responses:\t%d\n", c.Negative)
+	}
+	if c.Error > 0 {
+		errPrint(w, "DNS error responses:\t%d\n", c.Error)
 	}
 
 	if c.Truncated > 0 {

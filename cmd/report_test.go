@@ -16,9 +16,11 @@ func ExampleBenchmark_PrintReport() {
 	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Now(), time.Second)
 
 	// Output: Total requests:		1
-	// Read/Write errors:	3
-	// ID mismatch errors:	6
-	// DNS success codes:	4
+	// Read/Write errors:	6
+	// ID mismatch errors:	10
+	// DNS success responses:	4
+	// DNS negative responses:	8
+	// DNS error responses:	9
 	// Truncated responses:	7
 	//
 	// DNS response codes:
@@ -55,9 +57,11 @@ func ExampleBenchmark_PrintReport_dnssec() {
 	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Now(), time.Second)
 
 	// Output: Total requests:		1
-	// Read/Write errors:	3
-	// ID mismatch errors:	6
-	// DNS success codes:	4
+	// Read/Write errors:	6
+	// ID mismatch errors:	10
+	// DNS success responses:	4
+	// DNS negative responses:	8
+	// DNS error responses:	9
 	// Truncated responses:	7
 	//
 	// DNS response codes:
@@ -98,9 +102,11 @@ func ExampleBenchmark_PrintReport_doh() {
 	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Now(), time.Second)
 
 	// Output: Total requests:		1
-	// Read/Write errors:	3
-	// ID mismatch errors:	6
-	// DNS success codes:	4
+	// Read/Write errors:	6
+	// ID mismatch errors:	10
+	// DNS success responses:	4
+	// DNS negative responses:	8
+	// DNS error responses:	9
 	// Truncated responses:	7
 	//
 	// DNS response codes:
@@ -141,7 +147,7 @@ func ExampleBenchmark_PrintReport_json() {
 
 	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Now(), time.Second)
 
-	// Output: {"totalRequests":1,"totalSuccessCodes":4,"totalErrors":6,"TotalIDmismatch":6,"totalTruncatedResponses":7,"responseRcodes":{"NOERROR":2},"questionTypes":{"A":2},"queriesPerSecond":1,"benchmarkDurationSeconds":1,"latencyStats":{"minMs":0,"meanMs":0,"stdMs":0,"maxMs":0,"p99Ms":0,"p95Ms":0,"p90Ms":0,"p75Ms":0,"p50Ms":0},"latencyDistribution":[{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1}]}
+	// Output: {"totalRequests":1,"totalSuccessResponses":4,"totalNegativeResponses":8,"totalErrorResponses":9,"totalIOErrors":6,"TotalIDmismatch":10,"totalTruncatedResponses":7,"responseRcodes":{"NOERROR":2},"questionTypes":{"A":2},"queriesPerSecond":1,"benchmarkDurationSeconds":1,"latencyStats":{"minMs":0,"meanMs":0,"stdMs":0,"maxMs":0,"p99Ms":0,"p95Ms":0,"p90Ms":0,"p75Ms":0,"p50Ms":0},"latencyDistribution":[{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1}]}
 }
 
 func ExampleBenchmark_PrintReport_json_dnssec() {
@@ -154,7 +160,7 @@ func ExampleBenchmark_PrintReport_json_dnssec() {
 
 	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Now(), time.Second)
 
-	// Output: {"totalRequests":1,"totalSuccessCodes":4,"totalErrors":6,"TotalIDmismatch":6,"totalTruncatedResponses":7,"responseRcodes":{"NOERROR":2},"questionTypes":{"A":2},"queriesPerSecond":1,"benchmarkDurationSeconds":1,"latencyStats":{"minMs":0,"meanMs":0,"stdMs":0,"maxMs":0,"p99Ms":0,"p95Ms":0,"p90Ms":0,"p75Ms":0,"p50Ms":0},"latencyDistribution":[{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1}],"totalDNSSECSecuredDomains":1}
+	// Output: {"totalRequests":1,"totalSuccessResponses":4,"totalNegativeResponses":8,"totalErrorResponses":9,"totalIOErrors":6,"TotalIDmismatch":10,"totalTruncatedResponses":7,"responseRcodes":{"NOERROR":2},"questionTypes":{"A":2},"queriesPerSecond":1,"benchmarkDurationSeconds":1,"latencyStats":{"minMs":0,"meanMs":0,"stdMs":0,"maxMs":0,"p99Ms":0,"p95Ms":0,"p90Ms":0,"p75Ms":0,"p50Ms":0},"latencyDistribution":[{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1}],"totalDNSSECSecuredDomains":1}
 }
 
 func ExampleBenchmark_PrintReport_json_doh() {
@@ -168,7 +174,7 @@ func ExampleBenchmark_PrintReport_json_doh() {
 
 	b.PrintReport(os.Stdout, []*ResultStats{&rs}, time.Now(), time.Second)
 
-	// Output: {"totalRequests":1,"totalSuccessCodes":4,"totalErrors":6,"TotalIDmismatch":6,"totalTruncatedResponses":7,"responseRcodes":{"NOERROR":2},"questionTypes":{"A":2},"queriesPerSecond":1,"benchmarkDurationSeconds":1,"latencyStats":{"minMs":0,"meanMs":0,"stdMs":0,"maxMs":0,"p99Ms":0,"p95Ms":0,"p90Ms":0,"p75Ms":0,"p50Ms":0},"latencyDistribution":[{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1}],"dohHTTPResponseStatusCodes":{"200":2}}
+	// Output: {"totalRequests":1,"totalSuccessResponses":4,"totalNegativeResponses":8,"totalErrorResponses":9,"totalIOErrors":6,"TotalIDmismatch":10,"totalTruncatedResponses":7,"responseRcodes":{"NOERROR":2},"questionTypes":{"A":2},"queriesPerSecond":1,"benchmarkDurationSeconds":1,"latencyStats":{"minMs":0,"meanMs":0,"stdMs":0,"maxMs":0,"p99Ms":0,"p95Ms":0,"p90Ms":0,"p75Ms":0,"p50Ms":0},"latencyDistribution":[{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":0},{"latencyMs":0,"count":1}],"dohHTTPResponseStatusCodes":{"200":2}}
 }
 
 func ExampleBenchmark_PrintReport_server_dns_errors() {
@@ -223,10 +229,12 @@ func testReportData() (Benchmark, ResultStats) {
 		Timings: []Datapoint{d1, d2},
 		Counters: &Counters{
 			Total:      1,
-			IOError:    3,
+			IOError:    6,
 			Success:    4,
-			IDmismatch: 6,
+			IDmismatch: 10,
 			Truncated:  7,
+			Negative:   8,
+			Error:      9,
 		},
 		Errors: []ErrorDatapoint{
 			{Start: time.Unix(0, 0), Err: errors.New("test2")},

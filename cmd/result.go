@@ -11,11 +11,20 @@ import (
 
 // Counters represents various counters of benchmark results.
 type Counters struct {
-	Total      int64
-	IOError    int64
-	Success    int64
+	// Total is counter of all requests.
+	Total int64
+	// IOError is counter of all requests for which there was no answer.
+	IOError int64
+	// Success is counter of all responses which were successful (NOERROR, but not NODATA!).
+	Success int64
+	// Negative is counter of all responses which were negative (NODATA/NXDOMAIN).
+	Negative int64
+	// Error is counter of all responses which were not negative (NODATA/NXDOMAIN) or success (NOERROR response).
+	Error int64
+	// IDmismatch is counter of all responses which ID mismatched the request ID.
 	IDmismatch int64
-	Truncated  int64
+	// Truncated is counter of all responses which had truncated flag.
+	Truncated int64
 }
 
 // Datapoint one datapoint of benchmark (single DNS request).
@@ -41,6 +50,19 @@ type ResultStats struct {
 	Errors               []ErrorDatapoint
 	AuthenticatedDomains map[string]struct{}
 	DoHStatusCodes       map[int]int64
+}
+
+func newResultStats(b *Benchmark) *ResultStats {
+	st := &ResultStats{Hist: hdrhistogram.New(b.HistMin.Nanoseconds(), b.HistMax.Nanoseconds(), b.HistPre)}
+	if b.Rcodes {
+		st.Codes = make(map[int]int64)
+	}
+	st.Qtypes = make(map[string]int64)
+	if b.useDoH {
+		st.DoHStatusCodes = make(map[int]int64)
+	}
+	st.Counters = &Counters{}
+	return st
 }
 
 func (rs *ResultStats) record(req *dns.Msg, resp *dns.Msg, err error, time time.Time, duration time.Duration) {
@@ -75,7 +97,19 @@ func (rs *ResultStats) record(req *dns.Msg, resp *dns.Msg, err error, time time.
 			rs.Counters.IDmismatch++
 			return
 		}
-		rs.Counters.Success++
+		if len(resp.Answer) == 0 {
+			// NODATA negative response
+			rs.Counters.Negative++
+		} else {
+			rs.Counters.Success++
+		}
+	}
+	if resp.Rcode == dns.RcodeNameError {
+		rs.Counters.Negative++
+	}
+	if resp.Rcode != dns.RcodeSuccess && resp.Rcode != dns.RcodeNameError {
+		// assume every rcode not NOERROR or NXDOMAIN is error
+		rs.Counters.Error++
 	}
 
 	if rs.Codes != nil {
