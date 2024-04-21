@@ -29,8 +29,10 @@ type histogramPoint struct {
 
 type jsonResult struct {
 	TotalRequests              int64            `json:"totalRequests"`
-	TotalSuccessCodes          int64            `json:"totalSuccessCodes"`
-	TotalErrors                int64            `json:"totalErrors"`
+	TotalSuccessResponses      int64            `json:"totalSuccessResponses"`
+	TotalNegativeResponses     int64            `json:"totalNegativeResponses"`
+	TotalErrorResponses        int64            `json:"totalErrorResponses"`
+	TotalIOErrors              int64            `json:"totalIOErrors"`
 	TotalIDmismatch            int64            `json:"TotalIDmismatch"`
 	TotalTruncatedResponses    int64            `json:"totalTruncatedResponses"`
 	ResponseRcodes             map[string]int64 `json:"responseRcodes,omitempty"`
@@ -44,11 +46,6 @@ type jsonResult struct {
 }
 
 func (s *jsonReporter) print(params reportParameters) error {
-	sumerrs := int64(0)
-	for _, v := range params.topErrs.m {
-		sumerrs += int64(v)
-	}
-
 	codeTotalsMapped := make(map[string]int64)
 	if params.benchmark.Rcodes {
 		for k, v := range params.codeTotals {
@@ -86,8 +83,10 @@ func (s *jsonReporter) print(params reportParameters) error {
 
 	result := jsonResult{
 		TotalRequests:            params.totalCounters.Total,
-		TotalSuccessCodes:        params.totalCounters.Success,
-		TotalErrors:              sumerrs,
+		TotalSuccessResponses:    params.totalCounters.Success,
+		TotalNegativeResponses:   params.totalCounters.Negative,
+		TotalErrorResponses:      params.totalCounters.Error,
+		TotalIOErrors:            params.totalCounters.IOError,
 		TotalIDmismatch:          params.totalCounters.IDmismatch,
 		TotalTruncatedResponses:  params.totalCounters.Truncated,
 		QueriesPerSecond:         math.Round(float64(params.totalCounters.Total)/params.benchmarkDuration.Seconds()*100) / 100,
