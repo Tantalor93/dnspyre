@@ -85,12 +85,12 @@ func (d *doqServer) stop() {
 }
 
 func generateTLSConfig() *tls.Config {
-	cert, err := tls.LoadX509KeyPair("test.crt", "test.key")
+	cert, err := tls.LoadX509KeyPair("testdata/test.crt", "testdata/test.key")
 	if err != nil {
 		panic(err)
 	}
 
-	certs, err := os.ReadFile("test.crt")
+	certs, err := os.ReadFile("testdata/test.crt")
 	if err != nil {
 		panic(err)
 	}

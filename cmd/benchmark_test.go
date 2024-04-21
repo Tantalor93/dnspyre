@@ -297,10 +297,10 @@ func TestBenchmark_Run_DoH_http1(t *testing.T) {
 }
 
 func TestBenchmark_Run_DoH_http2(t *testing.T) {
-	cert, err := tls.LoadX509KeyPair("test.crt", "test.key")
+	cert, err := tls.LoadX509KeyPair("testdata/test.crt", "testdata/test.key")
 	require.NoError(t, err)
 
-	certs, err := os.ReadFile("test.crt")
+	certs, err := os.ReadFile("testdata/test.crt")
 	require.NoError(t, err)
 
 	pool, err := x509.SystemCertPool()
@@ -565,10 +565,10 @@ func TestBenchmark_Run_DoQ(t *testing.T) {
 }
 
 func TestBenchmark_Run_DoT(t *testing.T) {
-	cert, err := tls.LoadX509KeyPair("test.crt", "test.key")
+	cert, err := tls.LoadX509KeyPair("testdata/test.crt", "testdata/test.key")
 	require.NoError(t, err)
 
-	certs, err := os.ReadFile("test.crt")
+	certs, err := os.ReadFile("testdata/test.crt")
 	require.NoError(t, err)
 
 	pool, err := x509.SystemCertPool()
@@ -816,10 +816,10 @@ func TestBenchmark_Run_PlainDNS_error(t *testing.T) {
 }
 
 func TestBenchmark_Run_DoT_error(t *testing.T) {
-	cert, err := tls.LoadX509KeyPair("test.crt", "test.key")
+	cert, err := tls.LoadX509KeyPair("testdata/test.crt", "testdata/test.key")
 	require.NoError(t, err)
 
-	certs, err := os.ReadFile("test.crt")
+	certs, err := os.ReadFile("testdata/test.crt")
 	require.NoError(t, err)
 
 	pool, err := x509.SystemCertPool()
@@ -929,10 +929,10 @@ func TestBenchmark_Run_PlainDNS_truncated(t *testing.T) {
 }
 
 func TestBenchmark_Run_DoT_truncated(t *testing.T) {
-	cert, err := tls.LoadX509KeyPair("test.crt", "test.key")
+	cert, err := tls.LoadX509KeyPair("testdata/test.crt", "testdata/test.key")
 	require.NoError(t, err)
 
-	certs, err := os.ReadFile("test.crt")
+	certs, err := os.ReadFile("testdata/test.crt")
 	require.NoError(t, err)
 
 	pool, err := x509.SystemCertPool()

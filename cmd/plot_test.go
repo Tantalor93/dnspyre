@@ -46,7 +46,7 @@ func Test_plotHistogramLatency(t *testing.T) {
 	file := dir + "/histogram-latency.svg"
 	plotHistogramLatency(file, testDatapoints)
 
-	expected, err := os.ReadFile("test-histogram-latency.svg")
+	expected, err := os.ReadFile("testdata/test-histogram-latency.svg")
 	require.NoError(t, err)
 
 	actual, err := os.ReadFile(file)
@@ -61,7 +61,7 @@ func Test_plotBoxPlotLatency(t *testing.T) {
 	file := dir + "/boxplot-latency.svg"
 	plotBoxPlotLatency(file, "127.0.0.1", testDatapoints)
 
-	expected, err := os.ReadFile("test-boxplot-latency.svg")
+	expected, err := os.ReadFile("testdata/test-boxplot-latency.svg")
 	require.NoError(t, err)
 
 	actual, err := os.ReadFile(file)
@@ -76,7 +76,7 @@ func Test_plotResponses(t *testing.T) {
 	file := dir + "/responses-barchart.svg"
 	plotResponses(file, testRcodes)
 
-	expected, err := os.ReadFile("test-responses-barchart.svg")
+	expected, err := os.ReadFile("testdata/test-responses-barchart.svg")
 	require.NoError(t, err)
 
 	actual, err := os.ReadFile(file)
@@ -91,7 +91,7 @@ func Test_plotLineThroughput(t *testing.T) {
 	file := dir + "/throughput-lineplot.svg"
 	plotLineThroughput(file, testStart, testDatapoints)
 
-	expected, err := os.ReadFile("test-throughput-lineplot.svg")
+	expected, err := os.ReadFile("testdata/test-throughput-lineplot.svg")
 	require.NoError(t, err)
 
 	actual, err := os.ReadFile(file)
@@ -106,7 +106,7 @@ func Test_plotLineLatencies(t *testing.T) {
 	file := dir + "/latency-lineplot.svg"
 	plotLineLatencies(file, testStart, testDatapoints)
 
-	expected, err := os.ReadFile("test-latency-lineplot.svg")
+	expected, err := os.ReadFile("testdata/test-latency-lineplot.svg")
 	require.NoError(t, err)
 
 	actual, err := os.ReadFile(file)
@@ -121,7 +121,7 @@ func Test_plotErrorRate(t *testing.T) {
 	file := dir + "/errorrate-lineplot.svg"
 	plotErrorRate(file, testStart, testErrorDatapoints)
 
-	expected, err := os.ReadFile("test-errorrate-lineplot.svg")
+	expected, err := os.ReadFile("testdata/test-errorrate-lineplot.svg")
 	require.NoError(t, err)
 
 	actual, err := os.ReadFile(file)

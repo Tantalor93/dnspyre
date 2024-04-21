@@ -11,7 +11,7 @@ the internal DNS server from inside of your Kubernetes cluster. This can be achi
 for example by running a kubectl command like this:
 
 ```
-kubectl run dnspyre --restart=Never --image=ghcr.io/tantalor93/dnspyre -- https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/top-1m --server kube-dns.kube-system.svc.cluster.local --duration 1m
+kubectl run dnspyre --restart=Never --image=ghcr.io/tantalor93/dnspyre -- https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/alexa --server kube-dns.kube-system.svc.cluster.local --duration 1m
 ```
 
 and then check the output using
@@ -44,7 +44,7 @@ spec:
         command:
         - "/dnspyre"
         args:
-        - "https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/top-1m"
+        - "https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/alexa"
         - "--server"
         - "kube-dns.kube-system.svc.cluster.local"
         - "--duration"
