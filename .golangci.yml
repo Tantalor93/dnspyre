@@ -3,22 +3,29 @@ run:
 linters:
   disable-all: true
   enable:
+  - gci
+  - gocritic
+  - godot
+  - gofmt
+  - gofumpt
+  - goimports
+  - gomoddirectives
+  - gomodguard
+  - gosec
   - gosimple
   - govet
   - ineffassign
-  - staticcheck
-  - typecheck
-  - unused
-  - gofmt
   - revive
-  - gci
-  - gofumpt
-  - whitespace
-  - godot
-  - unparam
-  - gocritic
+  - staticcheck
+  - stylecheck
+  - testifylint
+  - typecheck
   - unconvert
-  - gosec
+  - unparam
+  - unused
+  - usestdlibvars
+  - wastedassign
+  - whitespace
 
 issues:
   include:

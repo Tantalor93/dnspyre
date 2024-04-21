@@ -1,6 +1,7 @@
-package cmd
+package dnsbench_test
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -18,6 +19,7 @@ import (
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tantalor93/dnspyre/v3/pkg/dnsbench"
 )
 
 func TestBenchmark_Run_PlainDNS(t *testing.T) {
@@ -25,20 +27,23 @@ func TestBenchmark_Run_PlainDNS(t *testing.T) {
 		protocol string
 	}
 	tests := []struct {
-		name string
-		args args
+		name               string
+		args               args
+		wantOutputTemplate string
 	}{
 		{
-			"DNS over UDP",
-			args{
-				protocol: udpNetwork,
+			name: "DNS over UDP",
+			args: args{
+				protocol: dnsbench.UDPTransport,
 			},
+			wantOutputTemplate: "Using 1 hostnames\nBenchmarking %s via udp with 2 concurrent requests \n",
 		},
 		{
-			"DNS over TCP",
-			args{
-				protocol: tcpNetwork,
+			name: "DNS over TCP",
+			args: args{
+				protocol: dnsbench.TCPTransport,
 			},
+			wantOutputTemplate: "Using 1 hostnames\nBenchmarking %s via tcp with 2 concurrent requests \n",
 		},
 	}
 	for _, tt := range tests {
@@ -55,7 +60,23 @@ func TestBenchmark_Run_PlainDNS(t *testing.T) {
 			})
 			defer s.Close()
 
-			bench := createBenchmark(s.Addr, tt.args.protocol == tcpNetwork, 1)
+			buf := bytes.Buffer{}
+			bench := dnsbench.Benchmark{
+				Queries:        []string{"example.org"},
+				Types:          []string{"A", "AAAA"},
+				Server:         s.Addr,
+				TCP:            tt.args.protocol == dnsbench.TCPTransport,
+				Concurrency:    2,
+				Count:          1,
+				Probability:    1,
+				WriteTimeout:   1 * time.Second,
+				ReadTimeout:    3 * time.Second,
+				ConnectTimeout: 1 * time.Second,
+				RequestTimeout: 5 * time.Second,
+				Rcodes:         true,
+				Recurse:        true,
+				Writer:         &buf,
+			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
@@ -63,12 +84,13 @@ func TestBenchmark_Run_PlainDNS(t *testing.T) {
 
 			require.NoError(t, err, "expected no error from benchmark run")
 			assertResult(t, rs)
+			assert.Equal(t, fmt.Sprintf(tt.wantOutputTemplate, s.Addr), buf.String())
 		})
 	}
 }
 
 func TestBenchmark_Run_PlainDNS_dnssec(t *testing.T) {
-	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		edns0 := ret.SetEdns0(512, false)
@@ -82,8 +104,22 @@ func TestBenchmark_Run_PlainDNS_dnssec(t *testing.T) {
 	})
 	defer s.Close()
 
-	bench := createBenchmark(s.Addr, false, 1)
-	bench.DNSSEC = true
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         s.Addr,
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		DNSSEC:         true,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -92,12 +128,12 @@ func TestBenchmark_Run_PlainDNS_dnssec(t *testing.T) {
 	require.NoError(t, err, "expected no error from benchmark run")
 	assertResult(t, rs)
 	for _, r := range rs {
-		assert.Equal(t, r.AuthenticatedDomains, map[string]struct{}{"example.org.": {}})
+		assert.Equal(t, map[string]struct{}{"example.org.": {}}, r.AuthenticatedDomains)
 	}
 }
 
 func TestBenchmark_Run_PlainDNS_edns0(t *testing.T) {
-	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		opt := r.IsEdns0()
 		if assert.NotNil(t, opt) {
 			assert.EqualValues(t, opt.UDPSize(), 1024)
@@ -105,7 +141,7 @@ func TestBenchmark_Run_PlainDNS_edns0(t *testing.T) {
 
 		ret := new(dns.Msg)
 		ret.SetReply(r)
-		ret.SetEdns0(defaultEdns0BufferSize, false)
+		ret.SetEdns0(dnsbench.DefaultEdns0BufferSize, false)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
 
 		// wait some time to actually have some observable duration
@@ -115,8 +151,22 @@ func TestBenchmark_Run_PlainDNS_edns0(t *testing.T) {
 	})
 	defer s.Close()
 
-	bench := createBenchmark(s.Addr, false, 1)
-	bench.Edns0 = 1024
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         s.Addr,
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		Edns0:          1024,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -131,7 +181,7 @@ func TestBenchmark_Run_PlainDNS_edns0_ednsopt(t *testing.T) {
 	testOptData := "test"
 	testHexOptData := hex.EncodeToString([]byte(testOptData))
 
-	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		opt := r.IsEdns0()
 		if assert.NotNil(t, opt) {
 			assert.EqualValues(t, opt.UDPSize(), 1024)
@@ -149,7 +199,7 @@ func TestBenchmark_Run_PlainDNS_edns0_ednsopt(t *testing.T) {
 
 		ret := new(dns.Msg)
 		ret.SetReply(r)
-		ret.SetEdns0(defaultEdns0BufferSize, false)
+		ret.SetEdns0(dnsbench.DefaultEdns0BufferSize, false)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
 
 		// wait some time to actually have some observable duration
@@ -159,9 +209,23 @@ func TestBenchmark_Run_PlainDNS_edns0_ednsopt(t *testing.T) {
 	})
 	defer s.Close()
 
-	bench := createBenchmark(s.Addr, false, 1)
-	bench.Edns0 = 1024
-	bench.EdnsOpt = strconv.Itoa(int(testOpt)) + ":" + testHexOptData
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         s.Addr,
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		Edns0:          1024,
+		EdnsOpt:        strconv.Itoa(int(testOpt)) + ":" + testHexOptData,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -201,8 +265,24 @@ func TestBenchmark_Run_DoH_post(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	bench := createBenchmark(ts.URL, true, 1)
-	bench.DohMethod = postMethod
+	buf := bytes.Buffer{}
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         ts.URL,
+		TCP:            true,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		DohMethod:      dnsbench.PostHTTPMethod,
+		Writer:         &buf,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -210,6 +290,7 @@ func TestBenchmark_Run_DoH_post(t *testing.T) {
 
 	require.NoError(t, err, "expected no error from benchmark run")
 	assertResult(t, rs)
+	assert.Equal(t, fmt.Sprintf("Using 1 hostnames\nBenchmarking %s/dns-query via http/1.1 (POST) with 2 concurrent requests \n", ts.URL), buf.String())
 }
 
 func TestBenchmark_Run_DoH_get(t *testing.T) {
@@ -244,8 +325,24 @@ func TestBenchmark_Run_DoH_get(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	bench := createBenchmark(ts.URL, true, 1)
-	bench.DohMethod = getMethod
+	buf := bytes.Buffer{}
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         ts.URL,
+		TCP:            true,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		DohMethod:      dnsbench.GetHTTPMethod,
+		Writer:         &buf,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -253,6 +350,7 @@ func TestBenchmark_Run_DoH_get(t *testing.T) {
 
 	require.NoError(t, err, "expected no error from benchmark run")
 	assertResult(t, rs)
+	assert.Equal(t, fmt.Sprintf("Using 1 hostnames\nBenchmarking %s/dns-query via http/1.1 (GET) with 2 concurrent requests \n", ts.URL), buf.String())
 }
 
 func TestBenchmark_Run_DoH_http1(t *testing.T) {
@@ -285,8 +383,22 @@ func TestBenchmark_Run_DoH_http1(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	bench := createBenchmark(ts.URL, true, 1)
-	bench.DohProtocol = http1Proto
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         ts.URL,
+		TCP:            true,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		DohProtocol:    dnsbench.HTTP1Proto,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -346,9 +458,25 @@ func TestBenchmark_Run_DoH_http2(t *testing.T) {
 	ts.StartTLS()
 	defer ts.Close()
 
-	bench := createBenchmark(ts.URL, true, 1)
-	bench.DohProtocol = http2Proto
-	bench.Insecure = true
+	buf := bytes.Buffer{}
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         ts.URL,
+		TCP:            true,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		DohProtocol:    dnsbench.HTTP2Proto,
+		Insecure:       true,
+		Writer:         &buf,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -356,10 +484,11 @@ func TestBenchmark_Run_DoH_http2(t *testing.T) {
 
 	require.NoError(t, err, "expected no error from benchmark run")
 	assertResult(t, rs)
+	assert.Equal(t, fmt.Sprintf("Using 1 hostnames\nBenchmarking %s/dns-query via https/2 (POST) with 2 concurrent requests \n", ts.URL), buf.String())
 }
 
 func TestBenchmark_Run_PlainDNS_probability(t *testing.T) {
-	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -371,7 +500,21 @@ func TestBenchmark_Run_PlainDNS_probability(t *testing.T) {
 	})
 	defer s.Close()
 
-	bench := createBenchmark(s.Addr, false, 0)
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         s.Addr,
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    0,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -384,7 +527,7 @@ func TestBenchmark_Run_PlainDNS_probability(t *testing.T) {
 }
 
 func TestBenchmark_Run_PlainDNS_download_external_datasource_using_http(t *testing.T) {
-	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -404,8 +547,21 @@ func TestBenchmark_Run_PlainDNS_download_external_datasource_using_http(t *testi
 	}))
 	defer ts.Close()
 
-	bench := createBenchmark(s.Addr, false, 1)
-	bench.Queries = []string{ts.URL}
+	bench := dnsbench.Benchmark{
+		Queries:        []string{ts.URL},
+		Types:          []string{"A", "AAAA"},
+		Server:         s.Addr,
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -421,8 +577,21 @@ func TestBenchmark_Run_PlainDNS_download_external_datasource_using_http_not_avai
 	// close right away to get dead port
 	ts.Close()
 
-	bench := createBenchmark("8.8.8.8", false, 1)
-	bench.Queries = []string{ts.URL}
+	bench := dnsbench.Benchmark{
+		Queries:        []string{ts.URL},
+		Types:          []string{"A", "AAAA"},
+		Server:         "8.8.8.8",
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -437,8 +606,21 @@ func TestBenchmark_Run_PlainDNS_download_external_datasource_using_http_wrong_re
 	}))
 	defer ts.Close()
 
-	bench := createBenchmark("8.8.8.8", false, 1)
-	bench.Queries = []string{ts.URL}
+	bench := dnsbench.Benchmark{
+		Queries:        []string{ts.URL},
+		Types:          []string{"A", "AAAA"},
+		Server:         "8.8.8.8",
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -448,7 +630,7 @@ func TestBenchmark_Run_PlainDNS_download_external_datasource_using_http_wrong_re
 }
 
 func TestBenchmark_Run_PlainDNS_duration(t *testing.T) {
-	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -456,7 +638,7 @@ func TestBenchmark_Run_PlainDNS_duration(t *testing.T) {
 	})
 	defer s.Close()
 
-	bench := Benchmark{
+	bench := dnsbench.Benchmark{
 		Queries:        []string{"example.org"},
 		Types:          []string{"A"},
 		Server:         s.Addr,
@@ -480,7 +662,7 @@ func TestBenchmark_Run_PlainDNS_duration(t *testing.T) {
 }
 
 func TestBenchmark_Run_PlainDNS_duration_and_count_specified_at_once(t *testing.T) {
-	bench := Benchmark{
+	bench := dnsbench.Benchmark{
 		Queries:        []string{"example.org"},
 		Types:          []string{"A"},
 		Server:         "8.8.8.8",
@@ -504,7 +686,7 @@ func TestBenchmark_Run_PlainDNS_duration_and_count_specified_at_once(t *testing.
 }
 
 func TestBenchmark_Run_PlainDNS_default_count(t *testing.T) {
-	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -516,7 +698,7 @@ func TestBenchmark_Run_PlainDNS_default_count(t *testing.T) {
 	})
 	defer s.Close()
 
-	bench := Benchmark{
+	bench := dnsbench.Benchmark{
 		Queries:        []string{"example.org"},
 		Types:          []string{"A"},
 		Server:         s.Addr,
@@ -530,6 +712,7 @@ func TestBenchmark_Run_PlainDNS_default_count(t *testing.T) {
 		Rcodes:         true,
 		Recurse:        true,
 	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	rs, err := bench.Run(ctx)
@@ -553,8 +736,24 @@ func TestBenchmark_Run_DoQ(t *testing.T) {
 	server.start()
 	defer server.stop()
 
-	bench := createBenchmark("quic://"+server.addr, true, 1)
-	bench.Insecure = true
+	buf := bytes.Buffer{}
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         "quic://" + server.addr,
+		TCP:            true,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		Insecure:       true,
+		Writer:         &buf,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -562,6 +761,7 @@ func TestBenchmark_Run_DoQ(t *testing.T) {
 
 	require.NoError(t, err, "expected no error from benchmark run")
 	assertResult(t, rs)
+	assert.Equal(t, fmt.Sprintf("Using 1 hostnames\nBenchmarking %s via quic with 2 concurrent requests \n", server.addr), buf.String())
 }
 
 func TestBenchmark_Run_DoT(t *testing.T) {
@@ -582,7 +782,7 @@ func TestBenchmark_Run_DoT(t *testing.T) {
 		MinVersion:   tls.VersionTLS12,
 	}
 
-	server := NewServer(tcptlsNetwork, &config, func(w dns.ResponseWriter, r *dns.Msg) {
+	server := NewServer(dnsbench.TLSTransport, &config, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -594,9 +794,25 @@ func TestBenchmark_Run_DoT(t *testing.T) {
 	})
 	defer server.Close()
 
-	bench := createBenchmark(server.Addr, false, 1)
-	bench.Insecure = true
-	bench.DOT = true
+	buf := bytes.Buffer{}
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         server.Addr,
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		Insecure:       true,
+		DOT:            true,
+		Writer:         &buf,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -604,115 +820,11 @@ func TestBenchmark_Run_DoT(t *testing.T) {
 
 	require.NoError(t, err, "expected no error from benchmark run")
 	assertResult(t, rs)
-}
-
-func TestBenchmark_prepare(t *testing.T) {
-	tests := []struct {
-		name       string
-		benchmark  Benchmark
-		wantServer string
-		wantErr    bool
-	}{
-		{
-			name:       "server - IPv4",
-			benchmark:  Benchmark{Server: "8.8.8.8"},
-			wantServer: "8.8.8.8:53",
-		},
-		{
-			name:       "server - IPv4 with port",
-			benchmark:  Benchmark{Server: "8.8.8.8:53"},
-			wantServer: "8.8.8.8:53",
-		},
-		{
-			name:       "server - IPv6",
-			benchmark:  Benchmark{Server: "fddd:dddd::"},
-			wantServer: "[fddd:dddd::]:53",
-		},
-		{
-			name:       "server - IPv6",
-			benchmark:  Benchmark{Server: "fddd:dddd::"},
-			wantServer: "[fddd:dddd::]:53",
-		},
-		{
-			name:       "server - IPv6 with port",
-			benchmark:  Benchmark{Server: "fddd:dddd::"},
-			wantServer: "[fddd:dddd::]:53",
-		},
-		{
-			name:       "server - DoT with IP address",
-			benchmark:  Benchmark{Server: "8.8.8.8", DOT: true},
-			wantServer: "8.8.8.8:853",
-		},
-		{
-			name:       "server - HTTPS url",
-			benchmark:  Benchmark{Server: "https://1.1.1.1"},
-			wantServer: "https://1.1.1.1/dns-query",
-		},
-		{
-			name:       "server - HTTP url",
-			benchmark:  Benchmark{Server: "http://127.0.0.1"},
-			wantServer: "http://127.0.0.1/dns-query",
-		},
-		{
-			name:       "server - custom HTTP url",
-			benchmark:  Benchmark{Server: "http://127.0.0.1/custom/dns-query"},
-			wantServer: "http://127.0.0.1/custom/dns-query",
-		},
-		{
-			name:       "server - QUIC url",
-			benchmark:  Benchmark{Server: "quic://dns.adguard-dns.com"},
-			wantServer: "dns.adguard-dns.com:853",
-		},
-		{
-			name:       "server - QUIC url with port",
-			benchmark:  Benchmark{Server: "quic://localhost:853"},
-			wantServer: "localhost:853",
-		},
-		{
-			name:      "count and duration specified at once",
-			benchmark: Benchmark{Server: "8.8.8.8", Count: 10, Duration: time.Minute},
-			wantErr:   true,
-		},
-		{
-			name:      "invalid EDNS0 buffer size",
-			benchmark: Benchmark{Server: "8.8.8.8", Edns0: 1},
-			wantErr:   true,
-		},
-		{
-			name:      "Missing server",
-			benchmark: Benchmark{},
-			wantErr:   true,
-		},
-		{
-			name:      "invalid format of ednsopt",
-			benchmark: Benchmark{Server: "8.8.8.8", EdnsOpt: "test"},
-			wantErr:   true,
-		},
-		{
-			name:      "invalid format of ednsopt, code is not decimal",
-			benchmark: Benchmark{Server: "8.8.8.8", EdnsOpt: "test:74657374"},
-			wantErr:   true,
-		},
-		{
-			name:      "invalid format of ednsopt, data is not hexadecimal string",
-			benchmark: Benchmark{Server: "8.8.8.8", EdnsOpt: "65518:test"},
-			wantErr:   true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := tt.benchmark.prepare()
-
-			require.Equal(t, tt.wantErr, err != nil)
-			if !tt.wantErr {
-				assert.Equal(t, tt.wantServer, tt.benchmark.Server)
-			}
-		})
-	}
+	assert.Equal(t, fmt.Sprintf("Using 1 hostnames\nBenchmarking %s via tcp-tls with 2 concurrent requests \n", server.Addr), buf.String())
 }
 
 func TestBenchmark_Run_global_ratelimit(t *testing.T) {
-	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -724,7 +836,7 @@ func TestBenchmark_Run_global_ratelimit(t *testing.T) {
 	})
 	defer s.Close()
 
-	bench := Benchmark{
+	bench := dnsbench.Benchmark{
 		Queries:        []string{"example.org"},
 		Types:          []string{"A"},
 		Server:         s.Addr,
@@ -753,7 +865,7 @@ func TestBenchmark_Run_global_ratelimit(t *testing.T) {
 }
 
 func TestBenchmark_Run_worker_ratelimit(t *testing.T) {
-	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -765,7 +877,7 @@ func TestBenchmark_Run_worker_ratelimit(t *testing.T) {
 	})
 	defer s.Close()
 
-	bench := Benchmark{
+	bench := dnsbench.Benchmark{
 		Queries:         []string{"example.org"},
 		Types:           []string{"A"},
 		Server:          s.Addr,
@@ -796,11 +908,25 @@ func TestBenchmark_Run_worker_ratelimit(t *testing.T) {
 }
 
 func TestBenchmark_Run_PlainDNS_error(t *testing.T) {
-	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 	})
 	defer s.Close()
 
-	bench := createBenchmark(s.Addr, false, 1)
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         s.Addr,
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -809,10 +935,10 @@ func TestBenchmark_Run_PlainDNS_error(t *testing.T) {
 	require.NoError(t, err, "expected no error from benchmark run")
 	require.Len(t, rs, 2, "expected results from two workers")
 
-	assert.Equal(t, rs[0].Counters.Total, int64(2), "there should be executions")
-	assert.Equal(t, rs[0].Counters.IOError, int64(2), "there should be errors")
-	assert.Equal(t, rs[1].Counters.Total, int64(2), "there should be executions")
-	assert.Equal(t, rs[1].Counters.IOError, int64(2), "there should be errors")
+	assert.Equal(t, int64(2), rs[0].Counters.Total, "there should be executions")
+	assert.Equal(t, int64(2), rs[0].Counters.IOError, "there should be errors")
+	assert.Equal(t, int64(2), rs[1].Counters.Total, "there should be executions")
+	assert.Equal(t, int64(2), rs[1].Counters.IOError, "there should be errors")
 }
 
 func TestBenchmark_Run_DoT_error(t *testing.T) {
@@ -833,13 +959,27 @@ func TestBenchmark_Run_DoT_error(t *testing.T) {
 		MinVersion:   tls.VersionTLS12,
 	}
 
-	server := NewServer(tcptlsNetwork, &config, func(w dns.ResponseWriter, r *dns.Msg) {
+	server := NewServer(dnsbench.TLSTransport, &config, func(w dns.ResponseWriter, r *dns.Msg) {
 	})
 	defer server.Close()
 
-	bench := createBenchmark(server.Addr, false, 1)
-	bench.Insecure = true
-	bench.DOT = true
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         server.Addr,
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		Insecure:       true,
+		DOT:            true,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -848,20 +988,34 @@ func TestBenchmark_Run_DoT_error(t *testing.T) {
 	require.NoError(t, err, "expected no error from benchmark run")
 	require.Len(t, rs, 2, "expected results from two workers")
 
-	assert.Equal(t, rs[0].Counters.Total, int64(2), "there should be executions")
-	assert.Equal(t, rs[0].Counters.IOError, int64(2), "there should be errors")
-	assert.Equal(t, rs[1].Counters.Total, int64(2), "there should be executions")
-	assert.Equal(t, rs[1].Counters.IOError, int64(2), "there should be errors")
+	assert.Equal(t, int64(2), rs[0].Counters.Total, "there should be executions")
+	assert.Equal(t, int64(2), rs[0].Counters.IOError, "there should be errors")
+	assert.Equal(t, int64(2), rs[1].Counters.Total, "there should be executions")
+	assert.Equal(t, int64(2), rs[1].Counters.IOError, "there should be errors")
 }
 
 func TestBenchmark_Run_DoH_error(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 	}))
 	defer ts.Close()
 
-	bench := createBenchmark(ts.URL, true, 1)
-	bench.DohMethod = postMethod
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         ts.URL,
+		TCP:            true,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		DohMethod:      dnsbench.PostHTTPMethod,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -870,10 +1024,10 @@ func TestBenchmark_Run_DoH_error(t *testing.T) {
 	require.NoError(t, err, "expected no error from benchmark run")
 	require.Len(t, rs, 2, "expected results from two workers")
 
-	assert.Equal(t, rs[0].Counters.Total, int64(2), "there should be executions")
-	assert.Equal(t, rs[0].Counters.IOError, int64(2), "there should be errors")
-	assert.Equal(t, rs[1].Counters.Total, int64(2), "there should be executions")
-	assert.Equal(t, rs[1].Counters.IOError, int64(2), "there should be errors")
+	assert.Equal(t, int64(2), rs[0].Counters.Total, "there should be executions")
+	assert.Equal(t, int64(2), rs[0].Counters.IOError, "there should be errors")
+	assert.Equal(t, int64(2), rs[1].Counters.Total, "there should be executions")
+	assert.Equal(t, int64(2), rs[1].Counters.IOError, "there should be errors")
 }
 
 func TestBenchmark_Run_DoQ_error(t *testing.T) {
@@ -883,8 +1037,22 @@ func TestBenchmark_Run_DoQ_error(t *testing.T) {
 	server.start()
 	defer server.stop()
 
-	bench := createBenchmark("quic://"+server.addr, true, 1)
-	bench.Insecure = true
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         "quic://" + server.addr,
+		TCP:            true,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		Insecure:       true,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -893,14 +1061,14 @@ func TestBenchmark_Run_DoQ_error(t *testing.T) {
 	require.NoError(t, err, "expected no error from benchmark run")
 	require.Len(t, rs, 2, "expected results from two workers")
 
-	assert.Equal(t, rs[0].Counters.Total, int64(2), "there should be executions")
-	assert.Equal(t, rs[0].Counters.IOError, int64(2), "there should be errors")
-	assert.Equal(t, rs[1].Counters.Total, int64(2), "there should be executions")
-	assert.Equal(t, rs[1].Counters.IOError, int64(2), "there should be errors")
+	assert.Equal(t, int64(2), rs[0].Counters.Total, "there should be executions")
+	assert.Equal(t, int64(2), rs[0].Counters.IOError, "there should be errors")
+	assert.Equal(t, int64(2), rs[1].Counters.Total, "there should be executions")
+	assert.Equal(t, int64(2), rs[1].Counters.IOError, "there should be errors")
 }
 
 func TestBenchmark_Run_PlainDNS_truncated(t *testing.T) {
-	s := NewServer(udpNetwork, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -913,7 +1081,21 @@ func TestBenchmark_Run_PlainDNS_truncated(t *testing.T) {
 	})
 	defer s.Close()
 
-	bench := createBenchmark(s.Addr, false, 1)
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         s.Addr,
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -922,10 +1104,10 @@ func TestBenchmark_Run_PlainDNS_truncated(t *testing.T) {
 	require.NoError(t, err, "expected no error from benchmark run")
 	require.Len(t, rs, 2, "expected results from two workers")
 
-	assert.Equal(t, rs[0].Counters.Total, int64(2), "there should be executions")
-	assert.Equal(t, rs[0].Counters.Truncated, int64(2), "there should be truncated messages")
-	assert.Equal(t, rs[1].Counters.Total, int64(2), "there should be executions")
-	assert.Equal(t, rs[1].Counters.Truncated, int64(2), "there should be truncated messages")
+	assert.Equal(t, int64(2), rs[0].Counters.Total, "there should be executions")
+	assert.Equal(t, int64(2), rs[0].Counters.Truncated, "there should be truncated messages")
+	assert.Equal(t, int64(2), rs[1].Counters.Total, "there should be executions")
+	assert.Equal(t, int64(2), rs[1].Counters.Truncated, "there should be truncated messages")
 }
 
 func TestBenchmark_Run_DoT_truncated(t *testing.T) {
@@ -946,7 +1128,7 @@ func TestBenchmark_Run_DoT_truncated(t *testing.T) {
 		MinVersion:   tls.VersionTLS12,
 	}
 
-	server := NewServer(tcptlsNetwork, &config, func(w dns.ResponseWriter, r *dns.Msg) {
+	server := NewServer(dnsbench.TLSTransport, &config, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -959,9 +1141,23 @@ func TestBenchmark_Run_DoT_truncated(t *testing.T) {
 	})
 	defer server.Close()
 
-	bench := createBenchmark(server.Addr, false, 1)
-	bench.Insecure = true
-	bench.DOT = true
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         server.Addr,
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		Insecure:       true,
+		DOT:            true,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -970,10 +1166,10 @@ func TestBenchmark_Run_DoT_truncated(t *testing.T) {
 	require.NoError(t, err, "expected no error from benchmark run")
 	require.Len(t, rs, 2, "expected results from two workers")
 
-	assert.Equal(t, rs[0].Counters.Total, int64(2), "there should be executions")
-	assert.Equal(t, rs[0].Counters.Truncated, int64(2), "there should be truncated messages")
-	assert.Equal(t, rs[1].Counters.Total, int64(2), "there should be executions")
-	assert.Equal(t, rs[1].Counters.Truncated, int64(2), "there should be truncated messages")
+	assert.Equal(t, int64(2), rs[0].Counters.Total, "there should be executions")
+	assert.Equal(t, int64(2), rs[0].Counters.Truncated, "there should be truncated messages")
+	assert.Equal(t, int64(2), rs[1].Counters.Total, "there should be executions")
+	assert.Equal(t, int64(2), rs[1].Counters.Truncated, "there should be truncated messages")
 }
 
 func TestBenchmark_Run_DoH_truncated(t *testing.T) {
@@ -1009,8 +1205,22 @@ func TestBenchmark_Run_DoH_truncated(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	bench := createBenchmark(ts.URL, true, 1)
-	bench.DohMethod = postMethod
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         ts.URL,
+		TCP:            true,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		DohMethod:      dnsbench.PostHTTPMethod,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -1019,10 +1229,10 @@ func TestBenchmark_Run_DoH_truncated(t *testing.T) {
 	require.NoError(t, err, "expected no error from benchmark run")
 	require.Len(t, rs, 2, "expected results from two workers")
 
-	assert.Equal(t, rs[0].Counters.Total, int64(2), "there should be executions")
-	assert.Equal(t, rs[0].Counters.Truncated, int64(2), "there should be truncated messages")
-	assert.Equal(t, rs[1].Counters.Total, int64(2), "there should be executions")
-	assert.Equal(t, rs[1].Counters.Truncated, int64(2), "there should be truncated messages")
+	assert.Equal(t, int64(2), rs[0].Counters.Total, "there should be executions")
+	assert.Equal(t, int64(2), rs[0].Counters.Truncated, "there should be truncated messages")
+	assert.Equal(t, int64(2), rs[1].Counters.Total, "there should be executions")
+	assert.Equal(t, int64(2), rs[1].Counters.Truncated, "there should be truncated messages")
 }
 
 func TestBenchmark_Run_DoQ_truncated(t *testing.T) {
@@ -1039,8 +1249,22 @@ func TestBenchmark_Run_DoQ_truncated(t *testing.T) {
 	server.start()
 	defer server.stop()
 
-	bench := createBenchmark("quic://"+server.addr, true, 1)
-	bench.Insecure = true
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         "quic://" + server.addr,
+		TCP:            true,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		Insecure:       true,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -1049,105 +1273,13 @@ func TestBenchmark_Run_DoQ_truncated(t *testing.T) {
 	require.NoError(t, err, "expected no error from benchmark run")
 	require.Len(t, rs, 2, "expected results from two workers")
 
-	assert.Equal(t, rs[0].Counters.Total, int64(2), "there should be executions")
-	assert.Equal(t, rs[0].Counters.Truncated, int64(2), "there should be truncated messages")
-	assert.Equal(t, rs[1].Counters.Total, int64(2), "there should be executions")
-	assert.Equal(t, rs[1].Counters.Truncated, int64(2), "there should be truncated messages")
+	assert.Equal(t, int64(2), rs[0].Counters.Total, "there should be executions")
+	assert.Equal(t, int64(2), rs[0].Counters.Truncated, "there should be truncated messages")
+	assert.Equal(t, int64(2), rs[1].Counters.Total, "there should be executions")
+	assert.Equal(t, int64(2), rs[1].Counters.Truncated, "there should be truncated messages")
 }
 
-func ExampleBenchmark_Run_plainDNS_udp() {
-	bench := createBenchmark("8.8.8.8", false, 1)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	bench.Run(ctx)
-
-	// Output: Using 1 hostnames
-	// Benchmarking 8.8.8.8:53 via udp with 2 concurrent requests
-}
-
-func ExampleBenchmark_Run_plainDNS_tcp() {
-	bench := createBenchmark("8.8.8.8", true, 1)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	bench.Run(ctx)
-
-	// Output: Using 1 hostnames
-	// Benchmarking 8.8.8.8:53 via tcp with 2 concurrent requests
-}
-
-func ExampleBenchmark_Run_dot() {
-	bench := createBenchmark("8.8.8.8", true, 1)
-	bench.DOT = true
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	bench.Run(ctx)
-
-	// Output: Using 1 hostnames
-	// Benchmarking 8.8.8.8:853 via tcp-tls with 2 concurrent requests
-}
-
-func ExampleBenchmark_Run_doh() {
-	bench := createBenchmark("https://1.1.1.1", true, 1)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	bench.Run(ctx)
-
-	// Output: Using 1 hostnames
-	// Benchmarking https://1.1.1.1/dns-query via https/1.1 (POST) with 2 concurrent requests
-}
-
-func ExampleBenchmark_Run_doh_get() {
-	bench := createBenchmark("https://1.1.1.1", true, 1)
-	bench.DohMethod = getMethod
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	bench.Run(ctx)
-
-	// Output: Using 1 hostnames
-	// Benchmarking https://1.1.1.1/dns-query via https/1.1 (GET) with 2 concurrent requests
-}
-
-func ExampleBenchmark_Run_doh_http2() {
-	bench := createBenchmark("https://1.1.1.1", true, 1)
-	bench.DohProtocol = http2Proto
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	bench.Run(ctx)
-
-	// Output: Using 1 hostnames
-	// Benchmarking https://1.1.1.1/dns-query via https/2 (POST) with 2 concurrent requests
-}
-
-func ExampleBenchmark_Run_doh_http3() {
-	bench := createBenchmark("https://1.1.1.1", true, 1)
-	bench.DohProtocol = http3Proto
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	bench.Run(ctx)
-
-	// Output: Using 1 hostnames
-	// Benchmarking https://1.1.1.1/dns-query via https/3 (POST) with 2 concurrent requests
-}
-
-func ExampleBenchmark_Run_doq() {
-	bench := createBenchmark("quic://dns.adguard-dns.com", true, 1)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	bench.Run(ctx)
-
-	// Output: Using 1 hostnames
-	// Benchmarking dns.adguard-dns.com:853 via quic with 2 concurrent requests
-}
-
-func assertResult(t *testing.T, rs []*ResultStats) {
+func assertResult(t *testing.T, rs []*dnsbench.ResultStats) {
 	if assert.Len(t, rs, 2, "Run(ctx) rstats") {
 		rs0 := rs[0]
 		rs1 := rs[1]
@@ -1158,7 +1290,7 @@ func assertResult(t *testing.T, rs []*ResultStats) {
 	}
 }
 
-func assertResultStats(t *testing.T, rs *ResultStats) {
+func assertResultStats(t *testing.T, rs *dnsbench.ResultStats) {
 	assert.NotNil(t, rs.Hist, "Run(ctx) rstats histogram")
 
 	if assert.NotNil(t, rs.Codes, "Run(ctx) rstats codes") {
@@ -1177,7 +1309,7 @@ func assertResultStats(t *testing.T, rs *ResultStats) {
 	assert.Zero(t, rs.Counters.Truncated, "Run(ctx) truncated counter")
 }
 
-func assertTimings(t *testing.T, rs *ResultStats) {
+func assertTimings(t *testing.T, rs *dnsbench.ResultStats) {
 	if assert.Len(t, rs.Timings, 2, "Run(ctx) rstats timings") {
 		t0 := rs.Timings[0]
 		t1 := rs.Timings[1]
@@ -1185,24 +1317,6 @@ func assertTimings(t *testing.T, rs *ResultStats) {
 		assert.NotZero(t, t0.Start, "Run(ctx) rstats timings start")
 		assert.NotZero(t, t1.Duration, "Run(ctx) rstats timings duration")
 		assert.NotZero(t, t1.Start, "Run(ctx) rstats timings start")
-	}
-}
-
-func createBenchmark(server string, tcp bool, prob float64) Benchmark {
-	return Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         server,
-		TCP:            tcp,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    prob,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
 	}
 }
 

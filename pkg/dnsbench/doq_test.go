@@ -1,4 +1,4 @@
-package cmd
+package dnsbench_test
 
 import (
 	"context"

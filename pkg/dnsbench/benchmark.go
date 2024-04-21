@@ -1,4 +1,4 @@
-package cmd
+package dnsbench
 
 import (
 	"bufio"
@@ -7,10 +7,12 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"math/rand"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -20,6 +22,7 @@ import (
 	"github.com/miekg/dns"
 	"github.com/quic-go/quic-go/http3"
 	"github.com/schollz/progressbar/v3"
+	"github.com/tantalor93/dnspyre/v3/pkg/printutils"
 	"github.com/tantalor93/doh-go/doh"
 	"github.com/tantalor93/doq-go/doq"
 	"go.uber.org/ratelimit"
@@ -30,21 +33,30 @@ var client = http.Client{
 	Timeout: 120 * time.Second,
 }
 
-// defaultEdns0BufferSize default EDNS0 buffer size according to the http://www.dnsflagday.net/2020/
-const defaultEdns0BufferSize = 1232
-
 const (
-	udpNetwork    = "udp"
-	tcpNetwork    = "tcp"
-	tcptlsNetwork = "tcp-tls"
-	quicNetwork   = "quic"
+	// UDPTransport represents plain DNS over UDP.
+	UDPTransport = "udp"
+	// TCPTransport represents plain DNS over TCP.
+	TCPTransport = "tcp"
+	// TLSTransport represents DNS over TLS.
+	TLSTransport = "tcp-tls"
+	// QUICTransport represents DNS over QUIC.
+	QUICTransport = "quic"
 
-	getMethod  = "get"
-	postMethod = "post"
+	// GetHTTPMethod represents GET HTTP Method for DoH.
+	GetHTTPMethod = "get"
+	// PostHTTPMethod represents GET POST Method for DoH.
+	PostHTTPMethod = "post"
 
-	http1Proto = "1.1"
-	http2Proto = "2"
-	http3Proto = "3"
+	// HTTP1Proto represents HTTP/1.1 protocol for DoH.
+	HTTP1Proto = "1.1"
+	// HTTP2Proto represents HTTP/2 protocol for DoH.
+	HTTP2Proto = "2"
+	// HTTP3Proto represents HTTP/3 protocol for DoH.
+	HTTP3Proto = "3"
+
+	// DefaultEdns0BufferSize default EDNS0 buffer size according to the http://www.dnsflagday.net/2020/
+	DefaultEdns0BufferSize = 1232
 )
 
 // Benchmark is representation of runnable DNS benchmark scenario.
@@ -167,6 +179,9 @@ type Benchmark struct {
 	// These data sources can be combined, for example "google.com @data/2-domains https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/2-domains".
 	Queries []string
 
+	// Writer used for writing benchmark execution logs and results. Default is os.Stdout.
+	Writer io.Writer
+
 	// internal variable so we do not have to parse the address with each request.
 	useDoH  bool
 	useQuic bool
@@ -176,6 +191,10 @@ type queryFunc func(context.Context, string, *dns.Msg) (*dns.Msg, error)
 
 // prepare validates and normalizes Benchmark settings.
 func (b *Benchmark) prepare() error {
+	if b.Writer == nil {
+		b.Writer = os.Stdout
+	}
+
 	if len(b.Server) == 0 {
 		return errors.New("server for benchmarking must not be empty")
 	}
@@ -252,7 +271,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	}
 
 	if !b.Silent && !b.JSON {
-		fmt.Printf("Using %s hostnames\n", highlightStr(len(questions)))
+		fmt.Fprintf(b.Writer, "Using %s hostnames\n", printutils.HighlightStr(len(questions)))
 	}
 
 	var qTypes []uint16
@@ -260,12 +279,12 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		qTypes = append(qTypes, dns.StringToType[v])
 	}
 
-	network := udpNetwork
+	network := UDPTransport
 	if b.TCP {
-		network = tcpNetwork
+		network = TCPTransport
 	}
 	if b.DOT {
-		network = tcptlsNetwork
+		network = TLSTransport
 	}
 
 	var query queryFunc
@@ -289,7 +308,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		query = func(ctx context.Context, _ string, msg *dns.Msg) (*dns.Msg, error) {
 			return quicClient.Send(ctx, msg)
 		}
-		network = quicNetwork
+		network = QUICTransport
 	}
 
 	limits := ""
@@ -297,23 +316,23 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	if b.Rate > 0 {
 		limit = ratelimit.New(b.Rate)
 		if b.RateLimitWorker == 0 {
-			limits = fmt.Sprintf("(limited to %s QPS overall)", highlightStr(b.Rate))
+			limits = fmt.Sprintf("(limited to %s QPS overall)", printutils.HighlightStr(b.Rate))
 		} else {
-			limits = fmt.Sprintf("(limited to %s QPS overall and %s QPS per concurrent worker)", highlightStr(b.Rate), highlightStr(b.RateLimitWorker))
+			limits = fmt.Sprintf("(limited to %s QPS overall and %s QPS per concurrent worker)", printutils.HighlightStr(b.Rate), printutils.HighlightStr(b.RateLimitWorker))
 		}
 	}
 	if b.Rate == 0 && b.RateLimitWorker > 0 {
-		limits = fmt.Sprintf("(limited to %s QPS per concurrent worker)", highlightStr(b.RateLimitWorker))
+		limits = fmt.Sprintf("(limited to %s QPS per concurrent worker)", printutils.HighlightStr(b.RateLimitWorker))
 	}
 
 	if !b.Silent && !b.JSON {
-		fmt.Printf("Benchmarking %s via %s with %s concurrent requests %s\n", highlightStr(b.Server), highlightStr(network), highlightStr(b.Concurrency), limits)
+		fmt.Fprintf(b.Writer, "Benchmarking %s via %s with %s concurrent requests %s\n", printutils.HighlightStr(b.Server), printutils.HighlightStr(network), printutils.HighlightStr(b.Concurrency), limits)
 	}
 
 	var bar *progressbar.ProgressBar
 	var incrementBar bool
 	if repetitions := b.Count * int64(b.Concurrency) * int64(len(b.Types)) * int64(len(questions)); !b.Silent && b.ProgressBar && repetitions >= 100 {
-		fmt.Println()
+		fmt.Fprintln(b.Writer)
 		if b.Probability < 1.0 {
 			// show spinner when Benchmark.Probability is less than 1.0, because the actual number of repetitions is not known
 			repetitions = -1
@@ -322,7 +341,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		incrementBar = true
 	}
 	if !b.Silent && b.ProgressBar && b.Duration >= 10*time.Second {
-		fmt.Println()
+		fmt.Fprintln(b.Writer)
 		bar = progressbar.Default(int64(b.Duration.Seconds()), "Progress:")
 		ticker := time.NewTicker(time.Second)
 		go func() {
@@ -436,7 +455,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 						if b.DNSSEC {
 							edns0 := m.IsEdns0()
 							if edns0 == nil {
-								m.SetEdns0(defaultEdns0BufferSize, false)
+								m.SetEdns0(DefaultEdns0BufferSize, false)
 								edns0 = m.IsEdns0()
 							}
 							edns0.SetDo(true)
@@ -466,7 +485,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 func addEdnsOpt(m *dns.Msg, ednsOpt string) {
 	o := m.IsEdns0()
 	if o == nil {
-		m.SetEdns0(defaultEdns0BufferSize, false)
+		m.SetEdns0(DefaultEdns0BufferSize, false)
 		o = m.IsEdns0()
 	}
 	s := strings.Split(ednsOpt, ":")
@@ -511,18 +530,18 @@ func (b *Benchmark) getDoHClient() (queryFunc, string) {
 	var tr http.RoundTripper
 	network += "/"
 	switch b.DohProtocol {
-	case http3Proto:
-		network += http3Proto
+	case HTTP3Proto:
+		network += HTTP3Proto
 		// nolint:gosec
 		tr = &http3.RoundTripper{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
-	case http2Proto:
-		network += http2Proto
+	case HTTP2Proto:
+		network += HTTP2Proto
 		// nolint:gosec
 		tr = &http2.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
-	case http1Proto:
+	case HTTP1Proto:
 		fallthrough
 	default:
-		network += http1Proto
+		network += HTTP1Proto
 		// nolint:gosec
 		tr = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
 	}
@@ -530,10 +549,10 @@ func (b *Benchmark) getDoHClient() (queryFunc, string) {
 	dohClient := doh.NewClient(&c)
 
 	switch b.DohMethod {
-	case postMethod:
+	case PostHTTPMethod:
 		network += " (POST)"
 		return dohClient.SendViaPost, network
-	case getMethod:
+	case GetHTTPMethod:
 		network += " (GET)"
 		return dohClient.SendViaGet, network
 	default:
@@ -543,12 +562,12 @@ func (b *Benchmark) getDoHClient() (queryFunc, string) {
 }
 
 func (b *Benchmark) getDNSClient() *dns.Client {
-	network := udpNetwork
+	network := UDPTransport
 	if b.TCP {
-		network = tcpNetwork
+		network = TCPTransport
 	}
 	if b.DOT {
-		network = tcptlsNetwork
+		network = TLSTransport
 	}
 
 	return &dns.Client{

@@ -1,9 +1,10 @@
-package cmd
+package dnsbench_test
 
 import (
 	"crypto/tls"
 
 	"github.com/miekg/dns"
+	"github.com/tantalor93/dnspyre/v3/pkg/dnsbench"
 )
 
 // Server represents simple DNS server.
@@ -30,7 +31,7 @@ func NewServer(network string, tlsConfig *tls.Config, f dns.HandlerFunc) *Server
 
 	<-ch
 	server := Server{inner: s}
-	if network == udpNetwork {
+	if network == dnsbench.UDPTransport {
 		server.Addr = s.PacketConn.LocalAddr().String()
 	} else {
 		server.Addr = s.Listener.Addr().String()

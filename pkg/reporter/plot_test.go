@@ -1,4 +1,4 @@
-package cmd
+package reporter
 
 import (
 	"os"
@@ -7,11 +7,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tantalor93/dnspyre/v3/pkg/dnsbench"
 )
 
 var testStart = time.Now()
 
-var testDatapoints = []Datapoint{
+var testDatapoints = []dnsbench.Datapoint{
 	{Start: testStart, Duration: 100 * time.Millisecond},
 	{Start: testStart.Add(time.Second), Duration: 200 * time.Millisecond},
 	{Start: testStart.Add(2 * time.Second), Duration: 300 * time.Millisecond},
@@ -25,7 +26,7 @@ var testDatapoints = []Datapoint{
 	{Start: testStart.Add(10 * time.Second), Duration: 200 * time.Millisecond},
 }
 
-var testErrorDatapoints = []ErrorDatapoint{
+var testErrorDatapoints = []dnsbench.ErrorDatapoint{
 	{Start: testStart.Add(2 * time.Second)},
 	{Start: testStart.Add(3 * time.Second)},
 	{Start: testStart.Add(4 * time.Second)},
