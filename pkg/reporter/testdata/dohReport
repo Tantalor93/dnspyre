@@ -1,0 +1,37 @@
+
+Total requests:		1
+Read/Write errors:	6
+ID mismatch errors:	10
+DNS success responses:	4
+DNS negative responses:	8
+DNS error responses:	9
+Truncated responses:	7
+
+DNS response codes:
+	NOERROR:	2
+
+DoH HTTP response status codes:
+	200:	2
+	500:	1
+
+DNS question types:
+	A:	2
+
+Time taken for tests:	 1s
+Questions per second:	 1.0
+DNS timings, 2 datapoints
+	 min:		 5ns
+	 mean:		 7ns
+	 [+/-sd]:	 2ns
+	 max:		 10ns
+	 p99:		 10ns
+	 p95:		 10ns
+	 p90:		 10ns
+	 p75:		 10ns
+	 p50:		 5ns
+
+Total Errors: 6
+Top errors:
+test2	3 (50.00)%
+read udp 8.8.8.8:53	2 (33.33)%
+test	1 (16.67)%

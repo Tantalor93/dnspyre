@@ -2,7 +2,7 @@
 
 [![Release](https://img.shields.io/github/release/Tantalor93/dnspyre/all.svg)](https://github.com/tantalor93/dnspyre/releases)
 [![Go version](https://img.shields.io/github/go-mod/go-version/Tantalor93/dnspyre)](https://github.com/Tantalor93/dnspyre/blob/master/go.mod#L3)
-[![](https://godoc.org/github.com/Tantalor93/dnspyre/v2/cmd?status.svg)](https://godoc.org/github.com/tantalor93/dnspyre/v2/cmd)
+[![](https://godoc.org/github.com/Tantalor93/dnspyre/v3?status.svg)](https://godoc.org/github.com/tantalor93/dnspyre/v3e)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Tantalor93](https://circleci.com/gh/Tantalor93/dnspyre/tree/master.svg?style=svg)](https://circleci.com/gh/Tantalor93/dnspyre?branch=master)
 [![lint](https://github.com/Tantalor93/dnspyre/actions/workflows/lint.yml/badge.svg?branch=master)](https://github.com/Tantalor93/dnspyre/actions/workflows/lint.yml)

@@ -10,6 +10,9 @@ import (
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/miekg/dns"
+	"github.com/tantalor93/dnspyre/v3/pkg/dnsbench"
+	"github.com/tantalor93/dnspyre/v3/pkg/printutils"
+	"github.com/tantalor93/dnspyre/v3/pkg/reporter"
 )
 
 var (
@@ -22,7 +25,9 @@ var (
 var (
 	pApp = kingpin.New("dnspyre", "A high QPS DNS benchmark.").Author(author)
 
-	benchmark Benchmark
+	benchmark = dnsbench.Benchmark{
+		Writer: os.Stdout,
+	}
 )
 
 func init() {
@@ -109,10 +114,10 @@ func init() {
 		Default("svg").EnumVar(&benchmark.PlotFormat, "svg", "png", "jpg")
 
 	pApp.Flag("doh-method", "HTTP method to use for DoH requests. Supported values: get, post.").
-		Default("post").EnumVar(&benchmark.DohMethod, getMethod, postMethod)
+		Default(dnsbench.PostHTTPMethod).EnumVar(&benchmark.DohMethod, dnsbench.GetHTTPMethod, dnsbench.PostHTTPMethod)
 
 	pApp.Flag("doh-protocol", "HTTP protocol to use for DoH requests. Supported values: 1.1, 2 and 3.").
-		Default(http1Proto).EnumVar(&benchmark.DohProtocol, http1Proto, http2Proto, http3Proto)
+		Default(dnsbench.HTTP1Proto).EnumVar(&benchmark.DohProtocol, dnsbench.HTTP1Proto, dnsbench.HTTP2Proto, dnsbench.HTTP3Proto)
 
 	pApp.Flag("insecure", "Disables server TLS certificate validation. Applicable for DoT, DoH and DoQ.").
 		Default("false").BoolVar(&benchmark.Insecure)
@@ -165,10 +170,10 @@ func Execute() {
 	end := time.Now()
 
 	if err != nil {
-		errPrint(os.Stderr, "There was an error while starting benchmark: %s\n", err.Error())
+		printutils.ErrPrint(os.Stderr, "There was an error while starting benchmark: %s\n", err.Error())
 	} else {
-		if err := benchmark.PrintReport(os.Stdout, res, start, end.Sub(start)); err != nil {
-			errPrint(os.Stderr, "There was an error while printing report: %s\n", err.Error())
+		if err := reporter.PrintReport(&benchmark, res, start, end.Sub(start)); err != nil {
+			printutils.ErrPrint(os.Stderr, "There was an error while printing report: %s\n", err.Error())
 		}
 	}
 }

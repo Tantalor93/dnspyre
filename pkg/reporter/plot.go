@@ -1,4 +1,4 @@
-package cmd
+package reporter
 
 import (
 	"fmt"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/miekg/dns"
 	"github.com/montanaflynn/stats"
+	"github.com/tantalor93/dnspyre/v3/pkg/dnsbench"
 	"go-hep.org/x/hep/hplot"
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
@@ -17,7 +18,7 @@ import (
 	"gonum.org/v1/plot/vg/draw"
 )
 
-func plotHistogramLatency(file string, times []Datapoint) {
+func plotHistogramLatency(file string, times []dnsbench.Datapoint) {
 	if len(times) == 0 {
 		// nothing to plot
 		return
@@ -45,7 +46,7 @@ func plotHistogramLatency(file string, times []Datapoint) {
 	}
 }
 
-func plotBoxPlotLatency(file, server string, times []Datapoint) {
+func plotBoxPlotLatency(file, server string, times []dnsbench.Datapoint) {
 	if len(times) == 0 {
 		// nothing to plot
 		return
@@ -124,7 +125,7 @@ func plotResponses(file string, rcodes map[int]int64) {
 	}
 }
 
-func plotLineThroughput(file string, benchStart time.Time, times []Datapoint) {
+func plotLineThroughput(file string, benchStart time.Time, times []dnsbench.Datapoint) {
 	if len(times) == 0 {
 		// nothing to plot
 		return
@@ -185,7 +186,7 @@ type latencyMeasurements struct {
 	p50 float64
 }
 
-func plotLineLatencies(file string, benchStart time.Time, times []Datapoint) {
+func plotLineLatencies(file string, benchStart time.Time, times []dnsbench.Datapoint) {
 	if len(times) == 0 {
 		// nothing to plot
 		return
@@ -270,7 +271,7 @@ func collectMeasurements(timings []float64, measurements map[int64]latencyMeasur
 	measurements[offset] = measure
 }
 
-func plotErrorRate(file string, benchStart time.Time, times []ErrorDatapoint) {
+func plotErrorRate(file string, benchStart time.Time, times []dnsbench.ErrorDatapoint) {
 	if len(times) == 0 {
 		// nothing to plot
 		return

@@ -1,4 +1,4 @@
-package cmd
+package reporter
 
 import (
 	"errors"
@@ -10,13 +10,7 @@ import (
 	"time"
 
 	"github.com/HdrHistogram/hdrhistogram-go"
-	"github.com/fatih/color"
-)
-
-var (
-	errPrint     = color.New(color.FgRed).FprintfFunc()
-	successPrint = color.New(color.FgGreen).FprintfFunc()
-	highlightStr = color.New(color.FgYellow).SprintFunc()
+	"github.com/tantalor93/dnspyre/v3/pkg/dnsbench"
 )
 
 type orderedMap struct {
@@ -25,11 +19,11 @@ type orderedMap struct {
 }
 
 type reportParameters struct {
-	benchmark                 *Benchmark
+	benchmark                 *dnsbench.Benchmark
 	outputWriter              io.Writer
 	timings                   *hdrhistogram.Histogram
 	codeTotals                map[int]int64
-	totalCounters             Counters
+	totalCounters             dnsbench.Counters
 	qtypeTotals               map[string]int64
 	topErrs                   orderedMap
 	authenticatedDomains      map[string]struct{}
@@ -39,21 +33,21 @@ type reportParameters struct {
 
 // PrintReport prints formatted benchmark result to stdout, exports graphs and generates CSV output if configured.
 // If there is a fatal error while printing report, an error is returned.
-func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchStart time.Time, benchDuration time.Duration) error {
+func PrintReport(b *dnsbench.Benchmark, stats []*dnsbench.ResultStats, benchStart time.Time, benchDuration time.Duration) error {
 	// merge all the stats here
 	timings := hdrhistogram.New(b.HistMin.Nanoseconds(), b.HistMax.Nanoseconds(), b.HistPre)
 	codeTotals := make(map[int]int64)
 	qtypeTotals := make(map[string]int64)
 	dohResponseStatusesTotals := make(map[int]int64)
 
-	times := make([]Datapoint, 0)
-	errTimes := make([]ErrorDatapoint, 0)
+	times := make([]dnsbench.Datapoint, 0)
+	errTimes := make([]dnsbench.ErrorDatapoint, 0)
 
 	errs := make(map[string]int, 0)
 	top3errs := make(map[string]int)
 	top3errorsInOrder := make([]string, 0)
 
-	var totalCounters Counters
+	var totalCounters dnsbench.Counters
 
 	// TODO proper coverage of plots
 	for _, s := range stats {
@@ -86,7 +80,7 @@ func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchStart ti
 			}
 		}
 		if s.Counters != nil {
-			totalCounters = Counters{
+			totalCounters = dnsbench.Counters{
 				Total:      totalCounters.Total + s.Counters.Total,
 				IOError:    totalCounters.IOError + s.Counters.IOError,
 				Success:    totalCounters.Success + s.Counters.Success,
@@ -129,12 +123,12 @@ func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchStart ti
 		if err := os.Mkdir(dir, os.ModePerm); err != nil {
 			panic(err)
 		}
-		plotHistogramLatency(b.fileName(dir, "latency-histogram"), times)
-		plotBoxPlotLatency(b.fileName(dir, "latency-boxplot"), b.Server, times)
-		plotResponses(b.fileName(dir, "responses-barchart"), codeTotals)
-		plotLineThroughput(b.fileName(dir, "throughput-lineplot"), benchStart, times)
-		plotLineLatencies(b.fileName(dir, "latency-lineplot"), benchStart, times)
-		plotErrorRate(b.fileName(dir, "errorrate-lineplot"), benchStart, errTimes)
+		plotHistogramLatency(fileName(b, dir, "latency-histogram"), times)
+		plotBoxPlotLatency(fileName(b, dir, "latency-boxplot"), b.Server, times)
+		plotResponses(fileName(b, dir, "responses-barchart"), codeTotals)
+		plotLineThroughput(fileName(b, dir, "throughput-lineplot"), benchStart, times)
+		plotLineLatencies(fileName(b, dir, "latency-lineplot"), benchStart, times)
+		plotErrorRate(fileName(b, dir, "errorrate-lineplot"), benchStart, errTimes)
 	}
 
 	var csv *os.File
@@ -172,7 +166,7 @@ func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchStart ti
 	topErrs := orderedMap{m: top3errs, order: top3errorsInOrder}
 	params := reportParameters{
 		benchmark:                 b,
-		outputWriter:              w,
+		outputWriter:              b.Writer,
 		timings:                   timings,
 		codeTotals:                codeTotals,
 		totalCounters:             totalCounters,
@@ -190,7 +184,7 @@ func (b *Benchmark) PrintReport(w io.Writer, stats []*ResultStats, benchStart ti
 	return s.print(params)
 }
 
-func errString(err ErrorDatapoint) string {
+func errString(err dnsbench.ErrorDatapoint) string {
 	var errorString string
 	var netOpErr *net.OpError
 	var resolveErr *net.DNSError
@@ -209,7 +203,7 @@ func errString(err ErrorDatapoint) string {
 	return errorString
 }
 
-func (b *Benchmark) fileName(dir, name string) string {
+func fileName(b *dnsbench.Benchmark, dir, name string) string {
 	return dir + "/" + name + "." + b.PlotFormat
 }
 
