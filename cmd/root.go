@@ -28,6 +28,15 @@ var (
 	benchmark = dnsbench.Benchmark{
 		Writer: os.Stdout,
 	}
+
+	failConditions []string
+)
+
+const (
+	ioerrorFailCondition    = "ioerror"
+	negativeFailCondition   = "negative"
+	errorFailCondition      = "error"
+	idmismatchFailCondition = "idmismatch"
 )
 
 func init() {
@@ -130,6 +139,12 @@ func init() {
 	pApp.Flag("progress", "Controls whether the progress bar is shown. Enabled by default.").
 		Default("true").BoolVar(&benchmark.ProgressBar)
 
+	pApp.Flag("fail", "Controls conditions upon which the dnspyre will exit with a non-zero exit code. Repeatable flag. "+
+		"Supported options are 'ioerror' (fail if there is at least 1 IO error), 'negative' (fail if there is at least 1 negative DNS answer), "+
+		"'error' (fail if there is at least 1 error DNS response), 'idmismatch' (fail there is at least 1 ID mismatch between DNS request and response).").
+		PlaceHolder(ioerrorFailCondition).
+		EnumsVar(&failConditions, ioerrorFailCondition, negativeFailCondition, errorFailCondition, idmismatchFailCondition)
+
 	pApp.Arg("queries", "Queries to issue. It can be a local file referenced using @<file-path>, for example @data/2-domains. "+
 		"It can also be resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that "+
 		"case, the file will be downloaded and saved in-memory. "+
@@ -183,6 +198,30 @@ func Execute() {
 	}
 
 	close(sigsInt)
+
+	if len(failConditions) > 0 {
+		stats := reporter.Merge(&benchmark, res)
+		for _, f := range failConditions {
+			switch f {
+			case ioerrorFailCondition:
+				if stats.Counters.IOError > 0 {
+					os.Exit(1)
+				}
+			case negativeFailCondition:
+				if stats.Counters.Negative > 0 {
+					os.Exit(1)
+				}
+			case errorFailCondition:
+				if stats.Counters.Error > 0 {
+					os.Exit(1)
+				}
+			case idmismatchFailCondition:
+				if stats.Counters.IDmismatch > 0 {
+					os.Exit(1)
+				}
+			}
+		}
+	}
 }
 
 func getSupportedDNSTypes() []string {

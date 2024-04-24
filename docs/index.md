@@ -82,6 +82,10 @@ Flags:
                                duration, the benchmark is canceled. This option is exclusive with --number option. The duration is
                                specified in GO duration format e.g. 10s, 15m, 1h.
       --[no-]progress          Controls whether the progress bar is shown. Enabled by default.
+      --fail=ioerror ...       Controls conditions upon which the dnspyre will exit with a non-zero exit code. Repeatable flag.
+                               Supported options are 'ioerror' (fail if there is at least 1 IO error), 'negative' (fail if there is at
+                               least 1 negative DNS answer), 'error' (fail if there is at least 1 error DNS response), 'idmismatch'
+                               (fail there is at least 1 ID mismatch between DNS request and response).
       --[no-]version           Show application version.
 
 Args:
