@@ -70,17 +70,17 @@ func (s *standardReporter) print(params reportParameters) error {
 	fmt.Fprintln(params.outputWriter, "Time taken for tests:\t", printutils.HighlightStr(roundDuration(params.benchmarkDuration).String()))
 	fmt.Fprintf(params.outputWriter, "Questions per second:\t %s", printutils.HighlightStr(fmt.Sprintf("%0.1f", float64(params.totalCounters.Total)/params.benchmarkDuration.Seconds())))
 	fmt.Fprintln(params.outputWriter)
-	min := time.Duration(params.timings.Min())
-	mean := time.Duration(params.timings.Mean())
-	sd := time.Duration(params.timings.StdDev())
-	max := time.Duration(params.timings.Max())
-	p99 := time.Duration(params.timings.ValueAtQuantile(99))
-	p95 := time.Duration(params.timings.ValueAtQuantile(95))
-	p90 := time.Duration(params.timings.ValueAtQuantile(90))
-	p75 := time.Duration(params.timings.ValueAtQuantile(75))
-	p50 := time.Duration(params.timings.ValueAtQuantile(50))
+	min := time.Duration(params.hist.Min())
+	mean := time.Duration(params.hist.Mean())
+	sd := time.Duration(params.hist.StdDev())
+	max := time.Duration(params.hist.Max())
+	p99 := time.Duration(params.hist.ValueAtQuantile(99))
+	p95 := time.Duration(params.hist.ValueAtQuantile(95))
+	p90 := time.Duration(params.hist.ValueAtQuantile(90))
+	p75 := time.Duration(params.hist.ValueAtQuantile(75))
+	p50 := time.Duration(params.hist.ValueAtQuantile(50))
 
-	if tc := params.timings.TotalCount(); tc > 0 {
+	if tc := params.hist.TotalCount(); tc > 0 {
 		fmt.Fprintln(params.outputWriter, "DNS timings,", printutils.HighlightStr(tc), "datapoints")
 		fmt.Fprintln(params.outputWriter, "\t min:\t\t", printutils.HighlightStr(roundDuration(min)))
 		fmt.Fprintln(params.outputWriter, "\t mean:\t\t", printutils.HighlightStr(roundDuration(mean)))
@@ -92,7 +92,7 @@ func (s *standardReporter) print(params reportParameters) error {
 		fmt.Fprintln(params.outputWriter, "\t p75:\t\t", printutils.HighlightStr(roundDuration(p75)))
 		fmt.Fprintln(params.outputWriter, "\t p50:\t\t", printutils.HighlightStr(roundDuration(p50)))
 
-		dist := params.timings.Distribution()
+		dist := params.hist.Distribution()
 		if params.benchmark.HistDisplay && tc > 1 {
 			fmt.Fprintln(params.outputWriter)
 			fmt.Fprintln(params.outputWriter, "DNS distribution,", printutils.HighlightStr(tc), "datapoints")
