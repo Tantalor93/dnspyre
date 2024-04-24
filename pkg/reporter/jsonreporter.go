@@ -56,7 +56,7 @@ func (s *jsonReporter) print(params reportParameters) error {
 	var res []histogramPoint
 
 	if params.benchmark.HistDisplay {
-		dist := params.timings.Distribution()
+		dist := params.hist.Distribution()
 		for _, d := range dist {
 			res = append(res, histogramPoint{
 				LatencyMs: time.Duration(d.To/2 + d.From/2).Milliseconds(),
@@ -94,15 +94,15 @@ func (s *jsonReporter) print(params reportParameters) error {
 		ResponseRcodes:           codeTotalsMapped,
 		QuestionTypes:            params.qtypeTotals,
 		LatencyStats: latencyStats{
-			MinMs:  time.Duration(params.timings.Min()).Milliseconds(),
-			MeanMs: time.Duration(params.timings.Mean()).Milliseconds(),
-			StdMs:  time.Duration(params.timings.StdDev()).Milliseconds(),
-			MaxMs:  time.Duration(params.timings.Max()).Milliseconds(),
-			P99Ms:  time.Duration(params.timings.ValueAtQuantile(99)).Milliseconds(),
-			P95Ms:  time.Duration(params.timings.ValueAtQuantile(95)).Milliseconds(),
-			P90Ms:  time.Duration(params.timings.ValueAtQuantile(90)).Milliseconds(),
-			P75Ms:  time.Duration(params.timings.ValueAtQuantile(75)).Milliseconds(),
-			P50Ms:  time.Duration(params.timings.ValueAtQuantile(50)).Milliseconds(),
+			MinMs:  time.Duration(params.hist.Min()).Milliseconds(),
+			MeanMs: time.Duration(params.hist.Mean()).Milliseconds(),
+			StdMs:  time.Duration(params.hist.StdDev()).Milliseconds(),
+			MaxMs:  time.Duration(params.hist.Max()).Milliseconds(),
+			P99Ms:  time.Duration(params.hist.ValueAtQuantile(99)).Milliseconds(),
+			P95Ms:  time.Duration(params.hist.ValueAtQuantile(95)).Milliseconds(),
+			P90Ms:  time.Duration(params.hist.ValueAtQuantile(90)).Milliseconds(),
+			P75Ms:  time.Duration(params.hist.ValueAtQuantile(75)).Milliseconds(),
+			P50Ms:  time.Duration(params.hist.ValueAtQuantile(50)).Milliseconds(),
 		},
 		LatencyDistribution:        res,
 		DohHTTPResponseStatusCodes: params.dohResponseStatusesTotals,
