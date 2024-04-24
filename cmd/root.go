@@ -150,8 +150,6 @@ func Execute() {
 	sigsInt := make(chan os.Signal, 8)
 	signal.Notify(sigsInt, syscall.SIGINT)
 
-	defer close(sigsInt)
-
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
@@ -161,7 +159,10 @@ func Execute() {
 			return
 		}
 		cancel()
+
 		<-sigsInt
+
+		close(sigsInt)
 		os.Exit(1)
 	}()
 
@@ -171,11 +172,17 @@ func Execute() {
 
 	if err != nil {
 		printutils.ErrPrint(os.Stderr, "There was an error while starting benchmark: %s\n", err.Error())
-	} else {
-		if err := reporter.PrintReport(&benchmark, res, start, end.Sub(start)); err != nil {
-			printutils.ErrPrint(os.Stderr, "There was an error while printing report: %s\n", err.Error())
-		}
+		close(sigsInt)
+		os.Exit(1)
 	}
+
+	if err := reporter.PrintReport(&benchmark, res, start, end.Sub(start)); err != nil {
+		printutils.ErrPrint(os.Stderr, "There was an error while printing report: %s\n", err.Error())
+		close(sigsInt)
+		os.Exit(1)
+	}
+
+	close(sigsInt)
 }
 
 func getSupportedDNSTypes() []string {
