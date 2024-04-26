@@ -10,10 +10,11 @@ import (
 
 func TestBenchmark_prepare(t *testing.T) {
 	tests := []struct {
-		name       string
-		benchmark  Benchmark
-		wantServer string
-		wantErr    bool
+		name               string
+		benchmark          Benchmark
+		wantServer         string
+		wantRequestLogPath string
+		wantErr            bool
 	}{
 		{
 			name:       "server - IPv4",
@@ -100,6 +101,12 @@ func TestBenchmark_prepare(t *testing.T) {
 			benchmark: Benchmark{Server: "8.8.8.8", EdnsOpt: "65518:test"},
 			wantErr:   true,
 		},
+		{
+			name:               "request log - default path",
+			benchmark:          Benchmark{Server: "8.8.8.8", RequestLogEnabled: true},
+			wantServer:         "8.8.8.8:53",
+			wantRequestLogPath: DefaultRequestLogPath,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -108,6 +115,7 @@ func TestBenchmark_prepare(t *testing.T) {
 			require.Equal(t, tt.wantErr, err != nil)
 			if !tt.wantErr {
 				assert.Equal(t, tt.wantServer, tt.benchmark.Server)
+				assert.Equal(t, tt.wantRequestLogPath, tt.wantRequestLogPath)
 			}
 		})
 	}

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"math/rand"
 	"net"
 	"net/http"
@@ -57,6 +58,9 @@ const (
 
 	// DefaultEdns0BufferSize default EDNS0 buffer size according to the http://www.dnsflagday.net/2020/
 	DefaultEdns0BufferSize = 1232
+
+	// DefaultRequestLogPath is a default path to the file, where the requests will be logged.
+	DefaultRequestLogPath = "requests.log"
 )
 
 // Benchmark is representation of runnable DNS benchmark scenario.
@@ -179,6 +183,13 @@ type Benchmark struct {
 	// These data sources can be combined, for example "google.com @data/2-domains https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/2-domains".
 	Queries []string
 
+	// RequestLogEnabled controls whether the Benchmark requests will be logged. Requests are logged into the file specified by Benchmark.RequestLogPath field.
+	RequestLogEnabled bool
+
+	// RequestLogPath specifies file where the request logs will be logged. If the file does not exist, it is created.
+	// If it exists, the request logs are appended to the file.
+	RequestLogPath string
+
 	// Writer used for writing benchmark execution logs and results. Default is os.Stdout.
 	Writer io.Writer
 
@@ -248,11 +259,24 @@ func (b *Benchmark) prepare() error {
 		}
 	}
 
+	if b.RequestLogEnabled {
+		b.RequestLogPath = DefaultRequestLogPath
+	}
+
 	return nil
 }
 
 // Run executes benchmark, if benchmark is unable to start the error is returned, otherwise array of results from parallel benchmark goroutines is returned.
 func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
+	if b.RequestLogEnabled {
+		file, err := os.OpenFile(b.RequestLogPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
+		log.SetOutput(file)
+	}
+
 	color.NoColor = !b.Color
 
 	if err := b.prepare(); err != nil {
@@ -366,7 +390,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 
 		var err error
 		wg.Add(1)
-		go func(st *ResultStats) {
+		go func(workerID uint32, st *ResultStats) {
 			defer func() {
 				wg.Done()
 			}()
@@ -433,30 +457,30 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 						}
 						var resp *dns.Msg
 
-						m := dns.Msg{}
-						m.RecursionDesired = b.Recurse
+						req := dns.Msg{}
+						req.RecursionDesired = b.Recurse
 
-						m.Question = make([]dns.Question, 1)
+						req.Question = make([]dns.Question, 1)
 						question := dns.Question{Name: q, Qtype: qt, Qclass: dns.ClassINET}
-						m.Question[0] = question
+						req.Question[0] = question
 
 						if b.useQuic {
-							m.Id = 0
+							req.Id = 0
 						} else {
-							m.Id = uint16(rando.Uint32())
+							req.Id = uint16(rando.Uint32())
 						}
 
 						if b.Edns0 > 0 {
-							m.SetEdns0(b.Edns0, false)
+							req.SetEdns0(b.Edns0, false)
 						}
 						if ednsOpt := b.EdnsOpt; len(ednsOpt) > 0 {
-							addEdnsOpt(&m, ednsOpt)
+							addEdnsOpt(&req, ednsOpt)
 						}
 						if b.DNSSEC {
-							edns0 := m.IsEdns0()
+							edns0 := req.IsEdns0()
 							if edns0 == nil {
-								m.SetEdns0(DefaultEdns0BufferSize, false)
-								edns0 = m.IsEdns0()
+								req.SetEdns0(DefaultEdns0BufferSize, false)
+								edns0 = req.IsEdns0()
 							}
 							edns0.SetDo(true)
 						}
@@ -464,9 +488,13 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 						start := time.Now()
 
 						reqTimeoutCtx, cancel := context.WithTimeout(ctx, b.RequestTimeout)
-						resp, err = query(reqTimeoutCtx, b.Server, &m)
+						resp, err = query(reqTimeoutCtx, b.Server, &req)
 						cancel()
-						st.record(&m, resp, err, start, time.Since(start))
+						dur := time.Since(start)
+						if b.RequestLogEnabled {
+							b.logRequest(workerID, req, resp, err, dur)
+						}
+						st.record(&req, resp, err, start, dur)
 
 						if incrementBar {
 							bar.Add(1)
@@ -474,12 +502,54 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 					}
 				}
 			}
-		}(st)
+		}(w, st)
 	}
 
 	wg.Wait()
 
 	return stats, nil
+}
+
+func (b *Benchmark) logRequest(workerID uint32, req dns.Msg, resp *dns.Msg, err error, dur time.Duration) {
+	rcode := "<nil>"
+	respid := "<nil>"
+	respflags := "<nil>"
+	if resp != nil {
+		rcode = dns.RcodeToString[resp.Rcode]
+		respid = fmt.Sprint(resp.Id)
+		respflags = getFlags(resp)
+	}
+	log.Printf("worker:[%v] reqid:[%d] qname:[%s] qtype:[%s] respid:[%s] rcode:[%s] respflags:[%s] err:[%v] duration:[%v]",
+		workerID, req.Id, req.Question[0].Name, dns.TypeToString[req.Question[0].Qtype], respid, rcode, respflags, err, dur)
+}
+
+func getFlags(resp *dns.Msg) string {
+	respflags := ""
+	if resp.Response {
+		respflags += "qr"
+	}
+	if resp.Authoritative {
+		respflags += " aa"
+	}
+	if resp.Truncated {
+		respflags += " tc"
+	}
+	if resp.RecursionDesired {
+		respflags += " rd"
+	}
+	if resp.RecursionAvailable {
+		respflags += " ra"
+	}
+	if resp.Zero {
+		respflags += " z"
+	}
+	if resp.AuthenticatedData {
+		respflags += " ad"
+	}
+	if resp.CheckingDisabled {
+		respflags += " cd"
+	}
+	return respflags
 }
 
 func addEdnsOpt(m *dns.Msg, ednsOpt string) {
