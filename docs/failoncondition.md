@@ -4,8 +4,6 @@ layout: default
 parent: Examples
 ---
 
-
-
 # Fail on condition
 v3.1.0
 {: .label .label-yellow }

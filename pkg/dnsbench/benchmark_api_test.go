@@ -1,6 +1,7 @@
 package dnsbench_test
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"crypto/tls"
@@ -12,6 +13,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"regexp"
 	"strconv"
 	"testing"
 	"time"
@@ -1277,6 +1279,128 @@ func TestBenchmark_Run_DoQ_truncated(t *testing.T) {
 	assert.Equal(t, int64(2), rs[0].Counters.Truncated, "there should be truncated messages")
 	assert.Equal(t, int64(2), rs[1].Counters.Total, "there should be executions")
 	assert.Equal(t, int64(2), rs[1].Counters.Truncated, "there should be truncated messages")
+}
+
+type requestLog struct {
+	worker    int
+	requestid int
+	qname     string
+	qtype     string
+	respid    int
+	rcode     string
+	respflags string
+	err       string
+	duration  time.Duration
+}
+
+func TestBenchmark_Requestlog(t *testing.T) {
+	requestLogPath := t.TempDir() + "/requests.log"
+
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 500)
+
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	buf := bytes.Buffer{}
+	bench := dnsbench.Benchmark{
+		Queries:           []string{"example.org"},
+		Types:             []string{"A", "AAAA"},
+		Server:            s.Addr,
+		TCP:               false,
+		Concurrency:       2,
+		Count:             1,
+		Probability:       1,
+		WriteTimeout:      1 * time.Second,
+		ReadTimeout:       3 * time.Second,
+		ConnectTimeout:    1 * time.Second,
+		RequestTimeout:    5 * time.Second,
+		Rcodes:            true,
+		Recurse:           true,
+		Writer:            &buf,
+		RequestLogEnabled: true,
+		RequestLogPath:    requestLogPath,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	require.NoError(t, err, "expected no error from benchmark run")
+	assertResult(t, rs)
+
+	requestLogFile, err := os.Open(requestLogPath)
+	require.NoError(t, err)
+
+	requestLogs := parseRequestLogs(t, requestLogFile)
+
+	workerIds := map[int]int{}
+	qtypes := map[string]int{}
+
+	for _, v := range requestLogs {
+		workerIds[v.worker]++
+		qtypes[v.qtype]++
+
+		assert.Equal(t, "example.org.", v.qname)
+		assert.NotZero(t, v.requestid)
+		assert.NotZero(t, v.respid)
+		assert.Equal(t, "NOERROR", v.rcode)
+		assert.Equal(t, "qr rd", v.respflags)
+		assert.Equal(t, "<nil>", v.err)
+		assert.NotZero(t, v.duration)
+	}
+	assert.Equal(t, map[int]int{0: 2, 1: 2}, workerIds)
+	assert.Equal(t, map[string]int{"AAAA": 2, "A": 2}, qtypes)
+}
+
+func parseRequestLogs(t *testing.T, reader io.Reader) []requestLog {
+	pattern := `.*worker:\[(.*)\] reqid:\[(.*)\] qname:\[(.*)\] qtype:\[(.*)\] respid:\[(.*)\] rcode:\[(.*)\] respflags:\[(.*)\] err:\[(.*)\] duration:\[(.*)\]$`
+	regex := regexp.MustCompile(pattern)
+	scanner := bufio.NewScanner(reader)
+	var requestLogs []requestLog
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		matches := regex.FindStringSubmatch(line)
+
+		workerID, err := strconv.Atoi(matches[1])
+		require.NoError(t, err)
+
+		requestID, err := strconv.Atoi(matches[2])
+		require.NoError(t, err)
+
+		qname := matches[3]
+		qtype := matches[4]
+
+		respID, err := strconv.Atoi(matches[5])
+		require.NoError(t, err)
+
+		rcode := matches[6]
+		respflags := matches[7]
+		errstr := matches[8]
+
+		dur, err := time.ParseDuration(matches[9])
+		require.NoError(t, err)
+
+		requestLogs = append(requestLogs, requestLog{
+			worker:    workerID,
+			requestid: requestID,
+			qname:     qname,
+			qtype:     qtype,
+			respid:    respID,
+			rcode:     rcode,
+			respflags: respflags,
+			err:       errstr,
+			duration:  dur,
+		})
+	}
+	return requestLogs
 }
 
 func assertResult(t *testing.T, rs []*dnsbench.ResultStats) {

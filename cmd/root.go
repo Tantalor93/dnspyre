@@ -145,6 +145,13 @@ func init() {
 		PlaceHolder(ioerrorFailCondition).
 		EnumsVar(&failConditions, ioerrorFailCondition, negativeFailCondition, errorFailCondition, idmismatchFailCondition)
 
+	pApp.Flag("log-requests", "Controls whether the Benchmark requests are logged. Requests are logged into the file specified by --log-requests-path flag. Disabled by default.").
+		Default("false").BoolVar(&benchmark.RequestLogEnabled)
+
+	pApp.Flag("log-requests-path", "Specifies path to the file, where the request logs will be logged. If the file exists, the logs will be appended to the file. "+
+		"If the file does not exist, the file will be created.").
+		Default(dnsbench.DefaultRequestLogPath).StringVar(&benchmark.RequestLogPath)
+
 	pApp.Arg("queries", "Queries to issue. It can be a local file referenced using @<file-path>, for example @data/2-domains. "+
 		"It can also be resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that "+
 		"case, the file will be downloaded and saved in-memory. "+
