@@ -138,7 +138,7 @@ func TestBenchmark_Run_PlainDNS_edns0(t *testing.T) {
 	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		opt := r.IsEdns0()
 		if assert.NotNil(t, opt) {
-			assert.EqualValues(t, opt.UDPSize(), 1024)
+			assert.EqualValues(t, 1024, opt.UDPSize())
 		}
 
 		ret := new(dns.Msg)
@@ -186,7 +186,7 @@ func TestBenchmark_Run_PlainDNS_edns0_ednsopt(t *testing.T) {
 	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		opt := r.IsEdns0()
 		if assert.NotNil(t, opt) {
-			assert.EqualValues(t, opt.UDPSize(), 1024)
+			assert.EqualValues(t, 1024, opt.UDPSize())
 			expectedOpt := false
 			for _, v := range opt.Option {
 				if v.Option() == testOpt {
@@ -541,7 +541,7 @@ func TestBenchmark_Run_PlainDNS_download_external_datasource_using_http(t *testi
 	})
 	defer s.Close()
 
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, err := w.Write([]byte(`example.org`))
 		if err != nil {
 			panic(err)
@@ -574,7 +574,7 @@ func TestBenchmark_Run_PlainDNS_download_external_datasource_using_http(t *testi
 }
 
 func TestBenchmark_Run_PlainDNS_download_external_datasource_using_http_not_available(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	ts := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
 	}))
 	// close right away to get dead port
 	ts.Close()
@@ -603,7 +603,7 @@ func TestBenchmark_Run_PlainDNS_download_external_datasource_using_http_not_avai
 }
 
 func TestBenchmark_Run_PlainDNS_download_external_datasource_using_http_wrong_response(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	}))
 	defer ts.Close()
@@ -910,7 +910,7 @@ func TestBenchmark_Run_worker_ratelimit(t *testing.T) {
 }
 
 func TestBenchmark_Run_PlainDNS_error(t *testing.T) {
-	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+	s := NewServer(dnsbench.UDPTransport, nil, func(_ dns.ResponseWriter, _ *dns.Msg) {
 	})
 	defer s.Close()
 
@@ -961,7 +961,7 @@ func TestBenchmark_Run_DoT_error(t *testing.T) {
 		MinVersion:   tls.VersionTLS12,
 	}
 
-	server := NewServer(dnsbench.TLSTransport, &config, func(w dns.ResponseWriter, r *dns.Msg) {
+	server := NewServer(dnsbench.TLSTransport, &config, func(_ dns.ResponseWriter, _ *dns.Msg) {
 	})
 	defer server.Close()
 
@@ -997,7 +997,7 @@ func TestBenchmark_Run_DoT_error(t *testing.T) {
 }
 
 func TestBenchmark_Run_DoH_error(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
 	defer ts.Close()
@@ -1033,7 +1033,7 @@ func TestBenchmark_Run_DoH_error(t *testing.T) {
 }
 
 func TestBenchmark_Run_DoQ_error(t *testing.T) {
-	server := newDoQServer(func(r *dns.Msg) *dns.Msg {
+	server := newDoQServer(func(_ *dns.Msg) *dns.Msg {
 		return nil
 	})
 	server.start()
@@ -1340,11 +1340,11 @@ func TestBenchmark_Requestlog(t *testing.T) {
 
 	requestLogs := parseRequestLogs(t, requestLogFile)
 
-	workerIds := map[int]int{}
+	workerIDs := map[int]int{}
 	qtypes := map[string]int{}
 
 	for _, v := range requestLogs {
-		workerIds[v.worker]++
+		workerIDs[v.worker]++
 		qtypes[v.qtype]++
 
 		assert.Equal(t, "example.org.", v.qname)
@@ -1355,7 +1355,7 @@ func TestBenchmark_Requestlog(t *testing.T) {
 		assert.Equal(t, "<nil>", v.err)
 		assert.NotZero(t, v.duration)
 	}
-	assert.Equal(t, map[int]int{0: 2, 1: 2}, workerIds)
+	assert.Equal(t, map[int]int{0: 2, 1: 2}, workerIDs)
 	assert.Equal(t, map[string]int{"AAAA": 2, "A": 2}, qtypes)
 }
 

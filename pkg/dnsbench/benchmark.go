@@ -406,15 +406,16 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 
 			var i int64
 
-			// shadow & copy the query func, because for DoQ and DoH we want to share the client, for plain DNS and DoT we don't
-			// due to manual connection redialing on error, etc.
-			query := query
+			// for DoH and DoQ we want to share the client, for plain DNS and DoT we want to have each worker have separate connection
+			// that is maintained by the worker, this allows DoT and plain DNS protocols to supports counting queries per connection
+			// and granular control of the connection
+			workerQuery := query
 
-			if query == nil {
+			if workerQuery == nil {
 				dnsClient := b.getDNSClient()
 
 				var co *dns.Conn
-				query = func(ctx context.Context, s string, msg *dns.Msg) (*dns.Msg, error) {
+				workerQuery = func(ctx context.Context, _ string, msg *dns.Msg) (*dns.Msg, error) {
 					if co != nil && b.QperConn > 0 && i%b.QperConn == 0 {
 						co.Close()
 						co = nil
@@ -488,7 +489,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 						start := time.Now()
 
 						reqTimeoutCtx, cancel := context.WithTimeout(ctx, b.RequestTimeout)
-						resp, err = query(reqTimeoutCtx, b.Server, &req)
+						resp, err = workerQuery(reqTimeoutCtx, b.Server, &req)
 						cancel()
 						dur := time.Since(start)
 						if b.RequestLogEnabled {
