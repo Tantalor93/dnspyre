@@ -115,7 +115,7 @@ func TestBenchmark_prepare(t *testing.T) {
 			require.Equal(t, tt.wantErr, err != nil)
 			if !tt.wantErr {
 				assert.Equal(t, tt.wantServer, tt.benchmark.Server)
-				assert.Equal(t, tt.wantRequestLogPath, tt.wantRequestLogPath)
+				assert.Equal(t, tt.wantRequestLogPath, tt.benchmark.RequestLogPath)
 			}
 		})
 	}
