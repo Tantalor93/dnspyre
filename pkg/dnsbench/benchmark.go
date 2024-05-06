@@ -303,37 +303,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		qTypes = append(qTypes, dns.StringToType[v])
 	}
 
-	network := UDPTransport
-	if b.TCP {
-		network = TCPTransport
-	}
-	if b.DOT {
-		network = TLSTransport
-	}
-
-	var query queryFunc
-	if b.useDoH {
-		var dohQuery queryFunc
-		dohQuery, network = b.getDoHClient()
-		query = func(ctx context.Context, s string, msg *dns.Msg) (*dns.Msg, error) {
-			return dohQuery(ctx, s, msg)
-		}
-	}
-
-	if b.useQuic {
-		h, _, _ := net.SplitHostPort(b.Server)
-		// nolint:gosec
-		quicClient := doq.NewClient(b.Server, doq.Options{
-			TLSConfig:      &tls.Config{ServerName: h, InsecureSkipVerify: b.Insecure},
-			ReadTimeout:    b.ReadTimeout,
-			WriteTimeout:   b.WriteTimeout,
-			ConnectTimeout: b.ConnectTimeout,
-		})
-		query = func(ctx context.Context, _ string, msg *dns.Msg) (*dns.Msg, error) {
-			return quicClient.Send(ctx, msg)
-		}
-		network = QUICTransport
-	}
+	queryFactory := b.queryFactory()
 
 	limits := ""
 	var limit ratelimit.Limiter
@@ -350,6 +320,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	}
 
 	if !b.Silent && !b.JSON {
+		network := b.network()
 		fmt.Fprintf(b.Writer, "Benchmarking %s via %s with %s concurrent requests %s\n", printutils.HighlightStr(b.Server), printutils.HighlightStr(network), printutils.HighlightStr(b.Concurrency), limits)
 	}
 
@@ -404,40 +375,9 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 				workerLimit = ratelimit.New(b.RateLimitWorker)
 			}
 
-			var i int64
+			query := queryFactory()
 
-			// for DoH and DoQ we want to share the client, for plain DNS and DoT we want to have each worker have separate connection
-			// that is maintained by the worker, this allows DoT and plain DNS protocols to supports counting queries per connection
-			// and granular control of the connection
-			workerQuery := query
-
-			if workerQuery == nil {
-				dnsClient := b.getDNSClient()
-
-				var co *dns.Conn
-				workerQuery = func(ctx context.Context, _ string, msg *dns.Msg) (*dns.Msg, error) {
-					if co != nil && b.QperConn > 0 && i%b.QperConn == 0 {
-						co.Close()
-						co = nil
-					}
-
-					if co == nil {
-						co, err = dnsClient.DialContext(ctx, b.Server)
-						if err != nil {
-							return nil, err
-						}
-					}
-					r, _, err := dnsClient.ExchangeWithConnContext(ctx, msg, co)
-					if err != nil {
-						co.Close()
-						co = nil
-						return nil, err
-					}
-					return r, nil
-				}
-			}
-
-			for i = 0; i < b.Count || b.Duration != 0; i++ {
+			for i := int64(0); i < b.Count || b.Duration != 0; i++ {
 				for _, q := range questions {
 					for _, qt := range qTypes {
 						if ctx.Err() != nil {
@@ -489,7 +429,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 						start := time.Now()
 
 						reqTimeoutCtx, cancel := context.WithTimeout(ctx, b.RequestTimeout)
-						resp, err = workerQuery(reqTimeoutCtx, b.Server, &req)
+						resp, err = query(reqTimeoutCtx, b.Server, &req)
 						cancel()
 						dur := time.Since(start)
 						if b.RequestLogEnabled {
@@ -509,6 +449,105 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	wg.Wait()
 
 	return stats, nil
+}
+
+func (b *Benchmark) network() string {
+	if b.useDoH {
+		_, network := isHTTPUrl(b.Server)
+		network += "/"
+		switch b.DohProtocol {
+		case HTTP3Proto:
+			network += HTTP3Proto
+		case HTTP2Proto:
+			network += HTTP2Proto
+		case HTTP1Proto:
+			fallthrough
+		default:
+			network += HTTP1Proto
+		}
+
+		switch b.DohMethod {
+		case PostHTTPMethod:
+			network += " (POST)"
+			return network
+		case GetHTTPMethod:
+			network += " (GET)"
+			return network
+		default:
+			network += " (POST)"
+			return network
+		}
+	}
+
+	if b.useQuic {
+		return QUICTransport
+	}
+
+	network := UDPTransport
+	if b.TCP {
+		network = TCPTransport
+	}
+	if b.DOT {
+		network = TLSTransport
+	}
+	return network
+}
+
+func (b *Benchmark) queryFactory() func() queryFunc {
+	// for DoH and DoQ we want to share the client, for plain DNS and DoT we want to have each worker have separate connection
+	// that is maintained by the worker, this allows DoT and plain DNS protocols to supports counting queries per connection
+	// and granular control of the connection
+	switch {
+	case b.useDoH:
+		dohQuery := b.dohQuery()
+		queryFactory := func() queryFunc {
+			return dohQuery
+		}
+		return queryFactory
+	case b.useQuic:
+		h, _, _ := net.SplitHostPort(b.Server)
+		// nolint:gosec
+		quicClient := doq.NewClient(b.Server, doq.Options{
+			TLSConfig:      &tls.Config{ServerName: h, InsecureSkipVerify: b.Insecure},
+			ReadTimeout:    b.ReadTimeout,
+			WriteTimeout:   b.WriteTimeout,
+			ConnectTimeout: b.ConnectTimeout,
+		})
+		queryFactory := func() queryFunc {
+			return func(ctx context.Context, _ string, msg *dns.Msg) (*dns.Msg, error) {
+				return quicClient.Send(ctx, msg)
+			}
+		}
+		return queryFactory
+	default:
+		queryFactory := func() queryFunc {
+			dnsClient := b.getDNSClient()
+			var co *dns.Conn
+			var i int64
+			return func(ctx context.Context, _ string, msg *dns.Msg) (*dns.Msg, error) {
+				if co != nil && b.QperConn > 0 && i%b.QperConn == 0 {
+					co.Close()
+					co = nil
+				}
+				i++
+				if co == nil {
+					var err error
+					co, err = dnsClient.DialContext(ctx, b.Server)
+					if err != nil {
+						return nil, err
+					}
+				}
+				r, _, err := dnsClient.ExchangeWithConnContext(ctx, msg, co)
+				if err != nil {
+					co.Close()
+					co = nil
+					return nil, err
+				}
+				return r, nil
+			}
+		}
+		return queryFactory
+	}
 }
 
 func (b *Benchmark) logRequest(workerID uint32, req dns.Msg, resp *dns.Msg, err error, dur time.Duration) {
@@ -596,23 +635,18 @@ func isHTTPUrl(s string) (ok bool, network string) {
 	return false, ""
 }
 
-func (b *Benchmark) getDoHClient() (queryFunc, string) {
-	_, network := isHTTPUrl(b.Server)
+func (b *Benchmark) dohQuery() queryFunc {
 	var tr http.RoundTripper
-	network += "/"
 	switch b.DohProtocol {
 	case HTTP3Proto:
-		network += HTTP3Proto
 		// nolint:gosec
 		tr = &http3.RoundTripper{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
 	case HTTP2Proto:
-		network += HTTP2Proto
 		// nolint:gosec
 		tr = &http2.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
 	case HTTP1Proto:
 		fallthrough
 	default:
-		network += HTTP1Proto
 		// nolint:gosec
 		tr = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
 	}
@@ -621,14 +655,11 @@ func (b *Benchmark) getDoHClient() (queryFunc, string) {
 
 	switch b.DohMethod {
 	case PostHTTPMethod:
-		network += " (POST)"
-		return dohClient.SendViaPost, network
+		return dohClient.SendViaPost
 	case GetHTTPMethod:
-		network += " (GET)"
-		return dohClient.SendViaGet, network
+		return dohClient.SendViaGet
 	default:
-		network += " (POST)"
-		return dohClient.SendViaPost, network
+		return dohClient.SendViaPost
 	}
 }
 
