@@ -190,6 +190,10 @@ type Benchmark struct {
 	// If it exists, the request logs are appended to the file.
 	RequestLogPath string
 
+	// SeparateWorkerConnections controls whether the concurrent workers will try to share connections to the server or not. When set true,
+	// the workers will NOT share connections and each worker will have separate connection.
+	SeparateWorkerConnections bool
+
 	// Writer used for writing benchmark execution logs and results. Default is os.Stdout.
 	Writer io.Writer
 
@@ -200,8 +204,8 @@ type Benchmark struct {
 
 type queryFunc func(context.Context, string, *dns.Msg) (*dns.Msg, error)
 
-// prepare validates and normalizes Benchmark settings.
-func (b *Benchmark) prepare() error {
+// init validates and normalizes Benchmark settings.
+func (b *Benchmark) init() error {
 	if b.Writer == nil {
 		b.Writer = os.Stdout
 	}
@@ -259,7 +263,7 @@ func (b *Benchmark) prepare() error {
 		}
 	}
 
-	if b.RequestLogEnabled {
+	if b.RequestLogEnabled && len(b.RequestLogPath) == 0 {
 		b.RequestLogPath = DefaultRequestLogPath
 	}
 
@@ -268,6 +272,12 @@ func (b *Benchmark) prepare() error {
 
 // Run executes benchmark, if benchmark is unable to start the error is returned, otherwise array of results from parallel benchmark goroutines is returned.
 func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
+	color.NoColor = !b.Color
+
+	if err := b.init(); err != nil {
+		return nil, err
+	}
+
 	if b.RequestLogEnabled {
 		file, err := os.OpenFile(b.RequestLogPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
 		if err != nil {
@@ -275,12 +285,6 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		}
 		defer file.Close()
 		log.SetOutput(file)
-	}
-
-	color.NoColor = !b.Color
-
-	if err := b.prepare(); err != nil {
-		return nil, err
 	}
 
 	questions, err := b.prepareQuestions()
@@ -499,13 +503,32 @@ func (b *Benchmark) queryFactory() func() queryFunc {
 	// and granular control of the connection
 	switch {
 	case b.useDoH:
+		if b.SeparateWorkerConnections {
+			return func() queryFunc {
+				dohQuery := b.dohQuery()
+				return dohQuery
+			}
+		}
 		dohQuery := b.dohQuery()
-		queryFactory := func() queryFunc {
+		return func() queryFunc {
 			return dohQuery
 		}
-		return queryFactory
 	case b.useQuic:
 		h, _, _ := net.SplitHostPort(b.Server)
+		if b.SeparateWorkerConnections {
+			return func() queryFunc {
+				// nolint:gosec
+				quicClient := doq.NewClient(b.Server, doq.Options{
+					TLSConfig:      &tls.Config{ServerName: h, InsecureSkipVerify: b.Insecure},
+					ReadTimeout:    b.ReadTimeout,
+					WriteTimeout:   b.WriteTimeout,
+					ConnectTimeout: b.ConnectTimeout,
+				})
+				return func(ctx context.Context, _ string, msg *dns.Msg) (*dns.Msg, error) {
+					return quicClient.Send(ctx, msg)
+				}
+			}
+		}
 		// nolint:gosec
 		quicClient := doq.NewClient(b.Server, doq.Options{
 			TLSConfig:      &tls.Config{ServerName: h, InsecureSkipVerify: b.Insecure},

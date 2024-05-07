@@ -14,7 +14,7 @@ import (
 	"github.com/quic-go/quic-go"
 )
 
-type doqHandler func(req *dns.Msg) *dns.Msg
+type doqHandler func(conn quic.Connection, req *dns.Msg) *dns.Msg
 
 // doqServer is a DoQ test DNS server.
 type doqServer struct {
@@ -58,7 +58,7 @@ func (d *doqServer) start() {
 						return
 					}
 
-					resp := d.handler(req)
+					resp := d.handler(conn, req)
 					if resp == nil {
 						// this should cause timeout
 						return

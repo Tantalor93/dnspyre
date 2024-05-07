@@ -152,6 +152,10 @@ func init() {
 		"If the file does not exist, the file will be created.").
 		Default(dnsbench.DefaultRequestLogPath).StringVar(&benchmark.RequestLogPath)
 
+	pApp.Flag("separate-worker-connections", "Controls whether the concurrent workers will try to share connections to the server or not. When enabled "+
+		"the workers will use separate connections. Disabled by default.").
+		Default("false").BoolVar(&benchmark.SeparateWorkerConnections)
+
 	pApp.Arg("queries", "Queries to issue. It can be a local file referenced using @<file-path>, for example @data/2-domains. "+
 		"It can also be resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that "+
 		"case, the file will be downloaded and saved in-memory. "+
