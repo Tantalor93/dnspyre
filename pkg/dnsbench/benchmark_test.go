@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestBenchmark_prepare(t *testing.T) {
+func TestBenchmark_init(t *testing.T) {
 	tests := []struct {
 		name               string
 		benchmark          Benchmark
@@ -110,7 +110,7 @@ func TestBenchmark_prepare(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.benchmark.prepare()
+			err := tt.benchmark.init()
 
 			require.Equal(t, tt.wantErr, err != nil)
 			if !tt.wantErr {

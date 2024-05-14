@@ -15,10 +15,12 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/miekg/dns"
+	"github.com/quic-go/quic-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tantalor93/dnspyre/v3/pkg/dnsbench"
@@ -726,7 +728,7 @@ func TestBenchmark_Run_PlainDNS_default_count(t *testing.T) {
 }
 
 func TestBenchmark_Run_DoQ(t *testing.T) {
-	server := newDoQServer(func(r *dns.Msg) *dns.Msg {
+	server := newDoQServer(func(_ quic.Connection, r *dns.Msg) *dns.Msg {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -1033,7 +1035,7 @@ func TestBenchmark_Run_DoH_error(t *testing.T) {
 }
 
 func TestBenchmark_Run_DoQ_error(t *testing.T) {
-	server := newDoQServer(func(_ *dns.Msg) *dns.Msg {
+	server := newDoQServer(func(_ quic.Connection, _ *dns.Msg) *dns.Msg {
 		return nil
 	})
 	server.start()
@@ -1238,7 +1240,7 @@ func TestBenchmark_Run_DoH_truncated(t *testing.T) {
 }
 
 func TestBenchmark_Run_DoQ_truncated(t *testing.T) {
-	server := newDoQServer(func(r *dns.Msg) *dns.Msg {
+	server := newDoQServer(func(_ quic.Connection, r *dns.Msg) *dns.Msg {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -1357,6 +1359,192 @@ func TestBenchmark_Requestlog(t *testing.T) {
 	}
 	assert.Equal(t, map[int]int{0: 2, 1: 2}, workerIDs)
 	assert.Equal(t, map[string]int{"AAAA": 2, "A": 2}, qtypes)
+}
+
+func TestBenchmark_Run_DoH_separate_connections(t *testing.T) {
+	tests := []struct {
+		name                    string
+		separateConnections     bool
+		wantNumberOfConnections int
+	}{
+		{
+			name:                    "separate connections",
+			separateConnections:     true,
+			wantNumberOfConnections: 5,
+		},
+		{
+			name:                    "shared connections",
+			separateConnections:     false,
+			wantNumberOfConnections: 1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cert, err := tls.LoadX509KeyPair("testdata/test.crt", "testdata/test.key")
+			require.NoError(t, err)
+
+			certs, err := os.ReadFile("testdata/test.crt")
+			require.NoError(t, err)
+
+			pool, err := x509.SystemCertPool()
+			require.NoError(t, err)
+
+			pool.AppendCertsFromPEM(certs)
+			config := tls.Config{
+				ServerName:   "localhost",
+				RootCAs:      pool,
+				Certificates: []tls.Certificate{cert},
+				MinVersion:   tls.VersionTLS12,
+			}
+
+			mutex := sync.Mutex{}
+			remoteAddrs := make(map[string]int)
+
+			ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				mutex.Lock()
+				remoteAddrs[r.RemoteAddr]++
+				mutex.Unlock()
+
+				bd, err := io.ReadAll(r.Body)
+				if err != nil {
+					panic(err)
+				}
+
+				msg := dns.Msg{}
+				err = msg.Unpack(bd)
+				if err != nil {
+					panic(err)
+				}
+
+				msg.Answer = append(msg.Answer, A("example.org. IN A 127.0.0.1"))
+
+				pack, err := msg.Pack()
+				if err != nil {
+					panic(err)
+				}
+
+				_, err = w.Write(pack)
+				if err != nil {
+					panic(err)
+				}
+			}))
+			ts.EnableHTTP2 = true
+			ts.TLS = &config
+			ts.StartTLS()
+			defer ts.Close()
+
+			buf := bytes.Buffer{}
+			bench := dnsbench.Benchmark{
+				Queries:                   []string{"example.org"},
+				Types:                     []string{"A"},
+				Server:                    ts.URL,
+				DohProtocol:               "2",
+				TCP:                       true,
+				Concurrency:               5,
+				Count:                     2,
+				Probability:               1,
+				WriteTimeout:              1 * time.Second,
+				ReadTimeout:               3 * time.Second,
+				ConnectTimeout:            1 * time.Second,
+				RequestTimeout:            5 * time.Second,
+				Rcodes:                    true,
+				Recurse:                   true,
+				DohMethod:                 dnsbench.PostHTTPMethod,
+				Writer:                    &buf,
+				SeparateWorkerConnections: tt.separateConnections,
+				Insecure:                  true,
+			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			rs, err := bench.Run(ctx)
+
+			// close right away to mitigate race detector failures
+			ts.Close()
+
+			require.NoError(t, err, "expected no error from benchmark run")
+			assert.Len(t, rs, 5)
+			for _, v := range rs {
+				assert.Empty(t, v.Errors)
+			}
+			assert.Len(t, remoteAddrs, tt.wantNumberOfConnections)
+			assert.Equal(t, fmt.Sprintf("Using 1 hostnames\nBenchmarking %s/dns-query via https/2 (POST) with 5 concurrent requests \n", ts.URL), buf.String())
+		})
+	}
+}
+
+func TestBenchmark_Run_DoQ_separate_connections(t *testing.T) {
+	tests := []struct {
+		name                    string
+		separateConnections     bool
+		wantNumberOfConnections int
+	}{
+		{
+			name:                    "separate connections",
+			separateConnections:     true,
+			wantNumberOfConnections: 5,
+		},
+		{
+			name:                    "shared connections",
+			separateConnections:     false,
+			wantNumberOfConnections: 1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mutex := sync.Mutex{}
+			remoteAddrs := make(map[string]int)
+
+			server := newDoQServer(func(c quic.Connection, r *dns.Msg) *dns.Msg {
+				mutex.Lock()
+				remoteAddrs[c.RemoteAddr().String()]++
+				mutex.Unlock()
+
+				ret := new(dns.Msg)
+				ret.SetReply(r)
+				ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+				return ret
+			})
+			server.start()
+			defer server.stop()
+
+			buf := bytes.Buffer{}
+			bench := dnsbench.Benchmark{
+				Queries:                   []string{"example.org"},
+				Types:                     []string{"A"},
+				Server:                    "quic://" + server.addr,
+				TCP:                       true,
+				Concurrency:               5,
+				Count:                     2,
+				Probability:               1,
+				WriteTimeout:              1 * time.Second,
+				ReadTimeout:               3 * time.Second,
+				ConnectTimeout:            1 * time.Second,
+				RequestTimeout:            5 * time.Second,
+				Rcodes:                    true,
+				Recurse:                   true,
+				DohMethod:                 dnsbench.PostHTTPMethod,
+				Writer:                    &buf,
+				SeparateWorkerConnections: tt.separateConnections,
+				Insecure:                  true,
+			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			rs, err := bench.Run(ctx)
+
+			// stop right away to mitigate race detector failures
+			server.stop()
+
+			require.NoError(t, err, "expected no error from benchmark run")
+			assert.Len(t, rs, 5)
+			for _, v := range rs {
+				assert.Empty(t, v.Errors)
+			}
+			assert.Len(t, remoteAddrs, tt.wantNumberOfConnections)
+			assert.Equal(t, fmt.Sprintf("Using 1 hostnames\nBenchmarking %s via quic with 5 concurrent requests \n", server.addr), buf.String())
+		})
+	}
 }
 
 func parseRequestLogs(t *testing.T, reader io.Reader) []requestLog {

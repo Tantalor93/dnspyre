@@ -39,7 +39,8 @@ linters-settings:
     - '^ @.*' # swaggo comments like // @title
     - '^ (\d+)(\.|\)).*' # enumeration comments like // 1. or // 1)
   gosec:
-    global:
-      audit: true
+    config:
+      global:
+        audit: true
     excludes:
     - G104

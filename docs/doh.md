@@ -5,8 +5,6 @@ parent: Examples
 ---
 
 # DoH
-{: .no_toc }
-
 *dnspyre* supports running benchmarks against [RFC-8484](https://www.rfc-editor.org/rfc/rfc8484) compatible DNS over HTTPS servers
 
 ```
