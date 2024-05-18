@@ -3,6 +3,5 @@
 set -e
 rm -rf manpages
 mkdir manpages
-for sh in bash zsh; do
-	go run main.go --help-man >"manpages/dnspyre.1"
-done
+go run main.go --help-man >"manpages/dnspyre.1"
+gzip --best "manpages/dnspyre.1"
