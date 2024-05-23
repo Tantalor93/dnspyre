@@ -37,7 +37,7 @@ brews:
     bin.install "dnspyre"
     bash_completion.install "completions/dnspyre.bash" => "_dnspyre"
     zsh_completion.install "completions/dnspyre.zsh" => "_dnspyre"
-    man1.install Dir["manpages/*.1"]
+    man1.install "manpages/dnspyre.1.gz"
 dockers:
 - use: docker
   id: dnspyre
