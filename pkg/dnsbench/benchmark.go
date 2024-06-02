@@ -363,7 +363,6 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		st := newResultStats(b)
 		stats[w] = st
 
-		var err error
 		wg.Add(1)
 		go func(workerID uint32, st *ResultStats) {
 			defer func() {
@@ -400,7 +399,6 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 								return
 							}
 						}
-						var resp *dns.Msg
 
 						req := dns.Msg{}
 						req.RecursionDesired = b.Recurse
@@ -433,7 +431,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 						start := time.Now()
 
 						reqTimeoutCtx, cancel := context.WithTimeout(ctx, b.RequestTimeout)
-						resp, err = query(reqTimeoutCtx, b.Server, &req)
+						resp, err := query(reqTimeoutCtx, b.Server, &req)
 						cancel()
 						dur := time.Since(start)
 						if b.RequestLogEnabled {
