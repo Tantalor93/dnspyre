@@ -9,7 +9,7 @@ require (
 	github.com/miekg/dns v1.1.61
 	github.com/montanaflynn/stats v0.7.1
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/quic-go/quic-go v0.44.0
+	github.com/quic-go/quic-go v0.45.0
 	github.com/schollz/progressbar/v3 v3.14.4
 	github.com/stretchr/testify v1.9.0
 	github.com/tantalor93/doh-go v0.2.0
