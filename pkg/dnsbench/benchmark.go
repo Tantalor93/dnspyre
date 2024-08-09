@@ -433,6 +433,10 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 						reqTimeoutCtx, cancel := context.WithTimeout(ctx, b.RequestTimeout)
 						resp, err := query(reqTimeoutCtx, b.Server, &req)
 						cancel()
+						if deadline, deadlineSet := reqTimeoutCtx.Deadline(); err != nil && deadlineSet && start.After(deadline) {
+							// Benchmark was cancelled before sending request, do not count this query results and end the worker
+							return
+						}
 						dur := time.Since(start)
 						if b.RequestLogEnabled {
 							b.logRequest(workerID, req, resp, err, dur)
