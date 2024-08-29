@@ -26,6 +26,7 @@ jobs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.RELEASE_TOKEN }}
+    - uses: sigstore/cosign-installer@v3.6.0
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@v5
       with:
