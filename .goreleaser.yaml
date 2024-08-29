@@ -79,3 +79,12 @@ signs:
     - "${artifact}"
     - "--yes" # needed on cosign 2.0.0+
   artifacts: all
+docker_signs:
+  - cmd: cosign
+    stdin: "{{ .Env.COSIGN_PASSWORD }}"
+    args:
+      - "sign"
+      -  "--key=env://COSIGN_PRIVATE_KEY"
+      - "${artifact}"
+      - "--yes" # needed on cosign 2.0.0+
+    artifacts: all
