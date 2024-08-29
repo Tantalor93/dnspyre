@@ -69,3 +69,13 @@ nfpms:
   - apk
   - deb
   - rpm
+signs:
+- cmd: cosign
+  stdin: "{{ .Env.COSIGN_PASSWORD }}"
+  args:
+    - "sign-blob"
+    -  "--key=env://COSIGN_PRIVATE_KEY"
+    - "--output-signature=${signature}"
+    - "${artifact}"
+    - "--yes" # needed on cosign 2.0.0+
+  artifacts: all

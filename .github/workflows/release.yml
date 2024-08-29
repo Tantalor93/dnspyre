@@ -34,3 +34,5 @@ jobs:
         args: release --clean
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        COSIGN_PRIVATE_KEY: ${{secrets.COSIGN_PRIVATE_KEY}}
