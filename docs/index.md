@@ -91,6 +91,14 @@ Flags:
       --log-requests-path="requests.log"
                                Specifies path to the file, where the request logs will be logged. If the file exists, the logs will be
                                appended to the file. If the file does not exist, the file will be created.
+      --[no-]separate-worker-connections
+                               Controls whether the concurrent workers will try to share connections to the server or not. When enabled
+                               the workers will use separate connections. Disabled by default.
+      --request-delay="0s"     Configures delay to be added before each request done by worker. Delay can be either constant or
+                               randomized. Constant delay is configured as single duration <GO duration> (e.g. 500ms, 2s, etc.).
+                               Randomized delay is configured as interval of two durations <GO duration>-<GO duration> (e.g. 1s-2s,
+                               500ms-2s, etc.), where the actual delay is random value from the interval that is randomized after each
+                               request.
       --[no-]version           Show application version.
 
 Args:

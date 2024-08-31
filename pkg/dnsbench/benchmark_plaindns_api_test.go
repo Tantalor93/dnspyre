@@ -682,3 +682,83 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Requestlog() {
 
 	assertRequestLogStructure(suite.T(), requestLogFile)
 }
+
+func (suite *PlainDNSTestSuite) TestBenchmark_ConstantRequestDelay() {
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         s.Addr,
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		DNSSEC:         true,
+		RequestDelay:   "1s",
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	start := time.Now()
+	rs, err := bench.Run(ctx)
+	benchDuration := time.Since(start)
+
+	suite.Require().NoError(err, "expected no error from benchmark run")
+	assertResult(suite.T(), rs)
+	suite.InDelta(2*time.Second, benchDuration, float64(100*time.Millisecond))
+}
+
+func (suite *PlainDNSTestSuite) TestBenchmark_RandomRequestDelay() {
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         s.Addr,
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		DNSSEC:         true,
+		RequestDelay:   "1s-2s",
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	start := time.Now()
+	rs, err := bench.Run(ctx)
+	benchDuration := time.Since(start)
+
+	suite.Require().NoError(err, "expected no error from benchmark run")
+	assertResult(suite.T(), rs)
+	suite.InDelta(4*time.Second, benchDuration, float64(time.Second))
+}

@@ -10,11 +10,13 @@ import (
 
 func TestBenchmark_init(t *testing.T) {
 	tests := []struct {
-		name               string
-		benchmark          Benchmark
-		wantServer         string
-		wantRequestLogPath string
-		wantErr            bool
+		name                  string
+		benchmark             Benchmark
+		wantServer            string
+		wantRequestLogPath    string
+		wantErr               bool
+		wantRequestDelayStart time.Duration
+		wantRequestDelayEnd   time.Duration
 	}{
 		{
 			name:       "server - IPv4",
@@ -107,6 +109,24 @@ func TestBenchmark_init(t *testing.T) {
 			wantServer:         "8.8.8.8:53",
 			wantRequestLogPath: DefaultRequestLogPath,
 		},
+		{
+			name:                  "constant delay",
+			benchmark:             Benchmark{Server: "8.8.8.8", RequestDelay: "2s"},
+			wantServer:            "8.8.8.8:53",
+			wantRequestDelayStart: 2 * time.Second,
+		},
+		{
+			name:                  "random delay",
+			benchmark:             Benchmark{Server: "8.8.8.8", RequestDelay: "2s-3s"},
+			wantServer:            "8.8.8.8:53",
+			wantRequestDelayStart: 2 * time.Second,
+			wantRequestDelayEnd:   3 * time.Second,
+		},
+		{
+			name:      "invalid delay",
+			benchmark: Benchmark{Server: "8.8.8.8", RequestDelay: "invalid"},
+			wantErr:   true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -116,6 +136,8 @@ func TestBenchmark_init(t *testing.T) {
 			if !tt.wantErr {
 				assert.Equal(t, tt.wantServer, tt.benchmark.Server)
 				assert.Equal(t, tt.wantRequestLogPath, tt.benchmark.RequestLogPath)
+				assert.Equal(t, tt.wantRequestDelayStart, tt.benchmark.requestDelayStart)
+				assert.Equal(t, tt.wantRequestDelayEnd, tt.benchmark.requestDelayEnd)
 			}
 		})
 	}

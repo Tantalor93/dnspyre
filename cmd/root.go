@@ -156,6 +156,11 @@ func init() {
 		"the workers will use separate connections. Disabled by default.").
 		Default("false").BoolVar(&benchmark.SeparateWorkerConnections)
 
+	pApp.Flag("request-delay", "Configures delay to be added before each request done by worker. Delay can be either constant or randomized. "+
+		"Constant delay is configured as single duration <GO duration> (e.g. 500ms, 2s, etc.). Randomized delay is configured as interval of "+
+		"two durations <GO duration>-<GO duration> (e.g. 1s-2s, 500ms-2s, etc.), where the actual delay is random value from the interval that "+
+		"is randomized after each request.").Default("0s").StringVar(&benchmark.RequestDelay)
+
 	pApp.Arg("queries", "Queries to issue. It can be a local file referenced using @<file-path>, for example @data/2-domains. "+
 		"It can also be resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that "+
 		"case, the file will be downloaded and saved in-memory. "+
