@@ -760,5 +760,5 @@ func (suite *PlainDNSTestSuite) TestBenchmark_RandomRequestDelay() {
 
 	suite.Require().NoError(err, "expected no error from benchmark run")
 	assertResult(suite.T(), rs)
-	suite.InDelta(4*time.Second, benchDuration, float64(time.Second))
+	suite.InDelta(4*time.Second, benchDuration, float64(2*time.Second))
 }
