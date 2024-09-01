@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -197,9 +198,14 @@ type Benchmark struct {
 	// Writer used for writing benchmark execution logs and results. Default is os.Stdout.
 	Writer io.Writer
 
+	// RequestDelay configures delay between each DNS request. Either constant delay can be configured (e.g. 2s) or randomized delay can be configured (e.g. 1s-2s).
+	RequestDelay string
+
 	// internal variable so we do not have to parse the address with each request.
-	useDoH  bool
-	useQuic bool
+	useDoH            bool
+	useQuic           bool
+	requestDelayStart time.Duration
+	requestDelayEnd   time.Duration
 }
 
 type queryFunc func(context.Context, string, *dns.Msg) (*dns.Msg, error)
@@ -267,6 +273,40 @@ func (b *Benchmark) init() error {
 		b.RequestLogPath = DefaultRequestLogPath
 	}
 
+	if err := b.parseRequestDelay(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *Benchmark) parseRequestDelay() error {
+	if len(b.RequestDelay) == 0 {
+		return nil
+	}
+	requestDelayRegex := regexp.MustCompile(`^(\d+(?:ms|ns|[smhdw]))(?:-(\d+(?:ms|ns|[smhdw])))?$`)
+
+	durations := requestDelayRegex.FindStringSubmatch(b.RequestDelay)
+	if len(durations) != 3 {
+		return fmt.Errorf("'%s' has unexpected format, either <GO duration> or <GO duration>-<Go duration> is expected", b.RequestDelay)
+	}
+	if len(durations[1]) != 0 {
+		durationStart, err := time.ParseDuration(durations[1])
+		if err != nil {
+			return err
+		}
+		b.requestDelayStart = durationStart
+	}
+	if len(durations[2]) != 0 {
+		durationEnd, err := time.ParseDuration(durations[2])
+		if err != nil {
+			return err
+		}
+		b.requestDelayEnd = durationEnd
+	}
+	if b.requestDelayEnd > 0 && b.requestDelayStart > 0 && b.requestDelayEnd-b.requestDelayStart <= 0 {
+		return fmt.Errorf("'%s' is invalid interval, start should be strictly less than end", b.RequestDelay)
+	}
 	return nil
 }
 
@@ -331,7 +371,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	var bar *progressbar.ProgressBar
 	var incrementBar bool
 	if repetitions := b.Count * int64(b.Concurrency) * int64(len(b.Types)) * int64(len(questions)); !b.Silent && b.ProgressBar && repetitions >= 100 {
-		fmt.Fprintln(b.Writer)
+		fmt.Fprintln(os.Stderr)
 		if b.Probability < 1.0 {
 			// show spinner when Benchmark.Probability is less than 1.0, because the actual number of repetitions is not known
 			repetitions = -1
@@ -340,9 +380,10 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		incrementBar = true
 	}
 	if !b.Silent && b.ProgressBar && b.Duration >= 10*time.Second {
-		fmt.Fprintln(b.Writer)
+		fmt.Fprintln(os.Stderr)
 		bar = progressbar.Default(int64(b.Duration.Seconds()), "Progress:")
 		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
 		go func() {
 			for {
 				select {
@@ -446,6 +487,8 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 						if incrementBar {
 							bar.Add(1)
 						}
+
+						b.delay(ctx, rando)
 					}
 				}
 			}
@@ -453,8 +496,34 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	}
 
 	wg.Wait()
+	if bar != nil {
+		_ = bar.Exit()
+	}
 
 	return stats, nil
+}
+
+func (b *Benchmark) delay(ctx context.Context, rando *rand.Rand) {
+	switch {
+	case b.requestDelayStart > 0 && b.requestDelayEnd > 0:
+		delay := time.Duration(rando.Int63n(int64(b.requestDelayEnd-b.requestDelayStart))) + b.requestDelayStart
+		waitFor(ctx, delay)
+	case b.requestDelayStart > 0:
+		waitFor(ctx, b.requestDelayStart)
+	default:
+	}
+}
+
+func waitFor(ctx context.Context, dur time.Duration) {
+	timer := time.NewTimer(dur)
+	defer timer.Stop()
+
+	select {
+	case <-timer.C:
+		// slept for requested duration
+	case <-ctx.Done():
+		// sleep interrupted
+	}
 }
 
 func (b *Benchmark) network() string {
