@@ -33,7 +33,7 @@ type jsonResult struct {
 	TotalNegativeResponses     int64            `json:"totalNegativeResponses"`
 	TotalErrorResponses        int64            `json:"totalErrorResponses"`
 	TotalIOErrors              int64            `json:"totalIOErrors"`
-	TotalIDmismatch            int64            `json:"TotalIDmismatch"`
+	TotalIDmismatch            int64            `json:"totalIDmismatch"`
 	TotalTruncatedResponses    int64            `json:"totalTruncatedResponses"`
 	ResponseRcodes             map[string]int64 `json:"responseRcodes,omitempty"`
 	QuestionTypes              map[string]int64 `json:"questionTypes"`
