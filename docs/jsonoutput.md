@@ -24,7 +24,7 @@ like this
   "totalRequests": 276,
   "totalSuccessCodes": 276,
   "totalErrors": 0,
-  "TotalIDmismatch": 0,
+  "totalIDmismatch": 0,
   "totalTruncatedResponses": 0,
   "responseRcodes": {
     "NOERROR": 276
