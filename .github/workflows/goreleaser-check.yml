@@ -15,7 +15,7 @@ jobs:
       with:
         fetch-depth: 0
     - name: Check goreleaser configuration
-      uses: goreleaser/goreleaser-action@v5
+      uses: goreleaser/goreleaser-action@v6
       with:
         distribution: goreleaser
         version: latest
