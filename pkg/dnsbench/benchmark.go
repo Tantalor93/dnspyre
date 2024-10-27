@@ -208,7 +208,7 @@ type Benchmark struct {
 	requestDelayEnd   time.Duration
 }
 
-type queryFunc func(context.Context, string, *dns.Msg) (*dns.Msg, error)
+type queryFunc func(context.Context, *dns.Msg) (*dns.Msg, error)
 
 // init validates and normalizes Benchmark settings.
 func (b *Benchmark) init() error {
@@ -472,7 +472,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 						start := time.Now()
 
 						reqTimeoutCtx, cancel := context.WithTimeout(ctx, b.RequestTimeout)
-						resp, err := query(reqTimeoutCtx, b.Server, &req)
+						resp, err := query(reqTimeoutCtx, &req)
 						cancel()
 						if deadline, deadlineSet := reqTimeoutCtx.Deadline(); err != nil && deadlineSet && start.After(deadline) {
 							// Benchmark was cancelled before sending request, do not count this query results and end the worker
@@ -576,8 +576,7 @@ func (b *Benchmark) queryFactory() func() queryFunc {
 	case b.useDoH:
 		if b.SeparateWorkerConnections {
 			return func() queryFunc {
-				dohQuery := b.dohQuery()
-				return dohQuery
+				return b.dohQuery()
 			}
 		}
 		dohQuery := b.dohQuery()
@@ -595,9 +594,7 @@ func (b *Benchmark) queryFactory() func() queryFunc {
 					WriteTimeout:   b.WriteTimeout,
 					ConnectTimeout: b.ConnectTimeout,
 				})
-				return func(ctx context.Context, _ string, msg *dns.Msg) (*dns.Msg, error) {
-					return quicClient.Send(ctx, msg)
-				}
+				return quicClient.Send
 			}
 		}
 		// nolint:gosec
@@ -607,18 +604,15 @@ func (b *Benchmark) queryFactory() func() queryFunc {
 			WriteTimeout:   b.WriteTimeout,
 			ConnectTimeout: b.ConnectTimeout,
 		})
-		queryFactory := func() queryFunc {
-			return func(ctx context.Context, _ string, msg *dns.Msg) (*dns.Msg, error) {
-				return quicClient.Send(ctx, msg)
-			}
+		return func() queryFunc {
+			return quicClient.Send
 		}
-		return queryFactory
 	default:
 		queryFactory := func() queryFunc {
 			dnsClient := b.getDNSClient()
 			var co *dns.Conn
 			var i int64
-			return func(ctx context.Context, _ string, msg *dns.Msg) (*dns.Msg, error) {
+			return func(ctx context.Context, msg *dns.Msg) (*dns.Msg, error) {
 				if co != nil && b.QperConn > 0 && i%b.QperConn == 0 {
 					co.Close()
 					co = nil
@@ -745,7 +739,7 @@ func (b *Benchmark) dohQuery() queryFunc {
 		tr = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
 	}
 	c := http.Client{Transport: tr, Timeout: b.ReadTimeout}
-	dohClient := doh.NewClient(&c)
+	dohClient := doh.NewClient(b.Server, doh.WithHTTPClient(&c))
 
 	switch b.DohMethod {
 	case PostHTTPMethod:
