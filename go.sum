@@ -113,6 +113,8 @@ github.com/tantalor93/doh-go v0.3.0 h1:Hy7CRfrpUeqhAt/XGSWr3L4Wro+lmbvNH7476Lx2r
 github.com/tantalor93/doh-go v0.3.0/go.mod h1:1uDDy9iGTVHKEofhXUz9pTvCo7QAPRNys7pxkdLbFuM=
 github.com/tantalor93/doq-go v0.11.0 h1:NQpRX+5oXQDOxrg/XVm+CFlyQq1s8zeq3CztvwjEkZo=
 github.com/tantalor93/doq-go v0.11.0/go.mod h1:zKG8/a+qSC9u9fhlBsjrza3sj/eAwazv3s5S0+soptY=
+github.com/tantalor93/doq-go v0.12.0 h1:OssjZtTIG+nPVz6cFy3J2ZjMF/Bni44itvOUU/kOBFM=
+github.com/tantalor93/doq-go v0.12.0/go.mod h1:zKG8/a+qSC9u9fhlBsjrza3sj/eAwazv3s5S0+soptY=
 github.com/teambition/rrule-go v1.8.2 h1:lIjpjvWTj9fFUZCmuoVDrKVOtdiyzbzc93qTmRVe/J8=
 github.com/teambition/rrule-go v1.8.2/go.mod h1:Ieq5AbrKGciP1V//Wq8ktsTXwSwJHDD5mD/wLBGl3p4=
 github.com/xhit/go-str2duration/v2 v2.1.0 h1:lxklc02Drh6ynqX+DdPyp5pCKLUQpRT8bp8Ydu2Bstc=

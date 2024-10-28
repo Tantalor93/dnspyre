@@ -588,22 +588,22 @@ func (b *Benchmark) queryFactory() func() queryFunc {
 		if b.SeparateWorkerConnections {
 			return func() queryFunc {
 				// nolint:gosec
-				quicClient := doq.NewClient(b.Server, doq.Options{
-					TLSConfig:      &tls.Config{ServerName: h, InsecureSkipVerify: b.Insecure},
-					ReadTimeout:    b.ReadTimeout,
-					WriteTimeout:   b.WriteTimeout,
-					ConnectTimeout: b.ConnectTimeout,
-				})
+				quicClient := doq.NewClient(b.Server,
+					doq.WithTLSConfig(&tls.Config{ServerName: h, InsecureSkipVerify: b.Insecure}),
+					doq.WithReadTimeout(b.ReadTimeout),
+					doq.WithWriteTimeout(b.WriteTimeout),
+					doq.WithConnectTimeout(b.ConnectTimeout),
+				)
 				return quicClient.Send
 			}
 		}
 		// nolint:gosec
-		quicClient := doq.NewClient(b.Server, doq.Options{
-			TLSConfig:      &tls.Config{ServerName: h, InsecureSkipVerify: b.Insecure},
-			ReadTimeout:    b.ReadTimeout,
-			WriteTimeout:   b.WriteTimeout,
-			ConnectTimeout: b.ConnectTimeout,
-		})
+		quicClient := doq.NewClient(b.Server,
+			doq.WithTLSConfig(&tls.Config{ServerName: h, InsecureSkipVerify: b.Insecure}),
+			doq.WithReadTimeout(b.ReadTimeout),
+			doq.WithWriteTimeout(b.WriteTimeout),
+			doq.WithConnectTimeout(b.ConnectTimeout),
+		)
 		return func() queryFunc {
 			return quicClient.Send
 		}
