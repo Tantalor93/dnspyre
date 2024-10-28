@@ -28,6 +28,10 @@ type reportParameters struct {
 	dohResponseStatusesTotals map[int]int64
 }
 
+type reportPrinter interface {
+	print(params reportParameters) error
+}
+
 // PrintReport prints formatted benchmark result to stdout, exports graphs and generates CSV output if configured.
 // If there is a fatal error while printing report, an error is returned.
 func PrintReport(b *dnsbench.Benchmark, stats []*dnsbench.ResultStats, benchStart time.Time, benchDuration time.Duration) error {
@@ -101,12 +105,16 @@ func PrintReport(b *dnsbench.Benchmark, stats []*dnsbench.ResultStats, benchStar
 		benchmarkDuration:         benchDuration,
 		dohResponseStatusesTotals: totals.DoHStatusCodes,
 	}
-	if b.JSON {
-		j := jsonReporter{}
-		return j.print(params)
+	return printer(b).print(params)
+}
+
+func printer(b *dnsbench.Benchmark) reportPrinter {
+	switch {
+	case b.JSON:
+		return &jsonReporter{}
+	default:
+		return &standardReporter{}
 	}
-	s := standardReporter{}
-	return s.print(params)
 }
 
 func fileName(b *dnsbench.Benchmark, dir, name string) string {
