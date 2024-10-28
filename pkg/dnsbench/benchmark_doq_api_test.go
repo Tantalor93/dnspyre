@@ -278,6 +278,7 @@ func (d *doqServer) start() {
 						return
 					}
 					packWithPrefix := make([]byte, 2+len(pack))
+					// nolint:gosec
 					binary.BigEndian.PutUint16(packWithPrefix, uint16(len(pack)))
 					copy(packWithPrefix[2:], pack)
 					_, _ = stream.Write(packWithPrefix)
@@ -346,6 +347,7 @@ func readDOQMessage(r io.Reader) (*dns.Msg, error) {
 	// A client or server receives a STREAM FIN before receiving all the bytes
 	// for a message indicated in the 2-octet length field.
 	// See https://www.rfc-editor.org/rfc/rfc9250#section-4.3.3-2.2
+	// nolint:gosec
 	if size != uint16(len(buf)) {
 		return nil, fmt.Errorf("message size does not match 2-byte prefix")
 	}
