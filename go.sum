@@ -29,8 +29,8 @@ github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ3
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/fatih/color v1.17.0 h1:GlRw1BRJxkpqUCBKzKOw098ed57fEsKeNjpTe3cSjK4=
-github.com/fatih/color v1.17.0/go.mod h1:YZ7TlrGPkiz6ku9fK3TLD/pl3CpsiFyu8N92HLgmosI=
+github.com/fatih/color v1.18.0 h1:S8gINlzdQ840/4pfAwic/ZE0djQEH3wM94VfqLTZcOM=
+github.com/fatih/color v1.18.0/go.mod h1:4FelSpRwEGDpQ12mAdzqdOukCy4u8WUtOY6lkT/6HfU=
 github.com/fogleman/gg v1.2.1-0.20190220221249-0403632d5b90/go.mod h1:R/bRT+9gY/C5z7JzPU0zXsXHKM4/ayA+zqcVNZzPa1k=
 github.com/go-fonts/dejavu v0.3.2 h1:3XlHi0JBYX+Cp8n98c6qSoHrxPa4AUKDMKdrh/0sUdk=
 github.com/go-fonts/dejavu v0.3.2/go.mod h1:m+TzKY7ZEl09/a17t1593E4VYW8L1VaBXHzFZOIjGEY=
@@ -111,8 +111,6 @@ github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsT
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
 github.com/tantalor93/doh-go v0.3.0 h1:Hy7CRfrpUeqhAt/XGSWr3L4Wro+lmbvNH7476Lx2rDA=
 github.com/tantalor93/doh-go v0.3.0/go.mod h1:1uDDy9iGTVHKEofhXUz9pTvCo7QAPRNys7pxkdLbFuM=
-github.com/tantalor93/doq-go v0.11.0 h1:NQpRX+5oXQDOxrg/XVm+CFlyQq1s8zeq3CztvwjEkZo=
-github.com/tantalor93/doq-go v0.11.0/go.mod h1:zKG8/a+qSC9u9fhlBsjrza3sj/eAwazv3s5S0+soptY=
 github.com/tantalor93/doq-go v0.12.0 h1:OssjZtTIG+nPVz6cFy3J2ZjMF/Bni44itvOUU/kOBFM=
 github.com/tantalor93/doq-go v0.12.0/go.mod h1:zKG8/a+qSC9u9fhlBsjrza3sj/eAwazv3s5S0+soptY=
 github.com/teambition/rrule-go v1.8.2 h1:lIjpjvWTj9fFUZCmuoVDrKVOtdiyzbzc93qTmRVe/J8=
