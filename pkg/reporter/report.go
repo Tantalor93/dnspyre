@@ -56,10 +56,14 @@ func PrintReport(b *dnsbench.Benchmark, stats []*dnsbench.ResultStats, benchStar
 	}
 
 	if len(b.PlotDir) != 0 {
+		if err := directoryExists(b.PlotDir); err != nil {
+			return fmt.Errorf("unable to plot results: %w", err)
+		}
+
 		now := time.Now().Format(time.RFC3339)
 		dir := fmt.Sprintf("%s/graphs-%s", b.PlotDir, now)
 		if err := os.Mkdir(dir, os.ModePerm); err != nil {
-			panic(err)
+			return fmt.Errorf("unable to plot results: %w", err)
 		}
 		plotHistogramLatency(fileName(b, dir, "latency-histogram"), totals.Timings)
 		plotBoxPlotLatency(fileName(b, dir, "latency-boxplot"), b.Server, totals.Timings)
@@ -106,6 +110,19 @@ func PrintReport(b *dnsbench.Benchmark, stats []*dnsbench.ResultStats, benchStar
 		dohResponseStatusesTotals: totals.DoHStatusCodes,
 	}
 	return printer(b).print(params)
+}
+
+func directoryExists(plotDir string) error {
+	stat, err := os.Stat(plotDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("'%s' path does not point to an existing directory", plotDir)
+		}
+		return err
+	} else if !stat.IsDir() {
+		return fmt.Errorf("'%s' is not a path to a directory", plotDir)
+	}
+	return nil
 }
 
 func printer(b *dnsbench.Benchmark) reportPrinter {
