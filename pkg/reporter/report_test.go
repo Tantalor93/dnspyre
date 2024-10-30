@@ -6,6 +6,8 @@ import (
 	"io"
 	"net"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -99,6 +101,55 @@ func Test_PrintReport_errors(t *testing.T) {
 	err := reporter.PrintReport(&b, []*dnsbench.ResultStats{&rs}, time.Now(), time.Second)
 	require.NoError(t, err)
 	assert.Equal(t, readResource("errorReport"), buffer.String())
+}
+
+func Test_PrintReport_plot(t *testing.T) {
+	dir := t.TempDir()
+
+	buffer := bytes.Buffer{}
+	b, rs := testReportData(&buffer)
+	b.PlotDir = dir
+	b.PlotFormat = dnsbench.DefaultPlotFormat
+
+	err := reporter.PrintReport(&b, []*dnsbench.ResultStats{&rs}, time.Now(), time.Second)
+
+	require.NoError(t, err)
+
+	testDir, err := os.ReadDir(dir)
+
+	require.NoError(t, err)
+	require.Len(t, testDir, 1)
+
+	graphsDir := testDir[0].Name()
+	assert.True(t, strings.HasPrefix(graphsDir, "graphs-"))
+
+	graphsDirContent, err := os.ReadDir(filepath.Join(dir, graphsDir))
+	require.NoError(t, err)
+
+	var graphFiles []string
+	for _, v := range graphsDirContent {
+		graphFiles = append(graphFiles, v.Name())
+	}
+
+	assert.ElementsMatch(t, graphFiles,
+		[]string{
+			"errorrate-lineplot.svg", "latency-boxplot.svg", "latency-histogram.svg", "latency-lineplot.svg",
+			"responses-barchart.svg", "throughput-lineplot.svg",
+		},
+	)
+}
+
+func Test_PrintReport_plot_error(t *testing.T) {
+	dir := t.TempDir()
+
+	buffer := bytes.Buffer{}
+	b, rs := testReportData(&buffer)
+	b.PlotDir = dir + "/non-existing-directory"
+	b.PlotFormat = dnsbench.DefaultPlotFormat
+
+	err := reporter.PrintReport(&b, []*dnsbench.ResultStats{&rs}, time.Now(), time.Second)
+
+	require.Error(t, err)
 }
 
 func testReportData(testOutputWriter io.Writer) (dnsbench.Benchmark, dnsbench.ResultStats) {

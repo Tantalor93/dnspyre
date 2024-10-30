@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tantalor93/dnspyre/v3/pkg/dnsbench"
+	"gonum.org/v1/plot/plotter"
 )
 
 var testStart = time.Now()
@@ -129,4 +130,47 @@ func Test_plotErrorRate(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, expected, actual, "generated error rate plot does not equal to expected 'test-errorrate-lineplot.png")
+}
+
+func Test_numBins(t *testing.T) {
+	tests := []struct {
+		name   string
+		values plotter.Values
+		want   int
+	}{
+		{
+			name:   "small dataset",
+			values: dataset(25),
+			want:   5,
+		},
+		{
+			name:   "medium dataset",
+			values: dataset(500),
+			want:   15,
+		},
+		{
+			name:   "large dataset",
+			values: dataset(2000),
+			want:   11,
+		},
+		{
+			name:   "single item dataset",
+			values: dataset(1),
+			want:   1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, numBins(tt.values))
+		})
+	}
+}
+
+// dataset generates uniformorly distributed dataset.
+func dataset(len int) plotter.Values {
+	values := make(plotter.Values, len)
+	for i := range values {
+		values[i] = float64(i)
+	}
+	return values
 }
