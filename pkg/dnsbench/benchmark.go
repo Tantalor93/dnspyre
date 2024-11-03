@@ -57,6 +57,21 @@ const (
 
 	// DefaultRequestLogPath is a default path to the file, where the requests will be logged.
 	DefaultRequestLogPath = "requests.log"
+
+	// DefaultPlotFormat is a default format for plots.
+	DefaultPlotFormat = "svg"
+
+	// DefaultRequestTimeout is a default request timeout.
+	DefaultRequestTimeout = 5 * time.Second
+
+	// DefaultConnectTimeout is a default connect timeout.
+	DefaultConnectTimeout = time.Second
+
+	// DefaultReadTimeout is a default read timeout.
+	DefaultReadTimeout = 3 * time.Second
+
+	// DefaultWriteTimeout is a default read timeout.
+	DefaultWriteTimeout = time.Second
 )
 
 // Benchmark is representation of runnable DNS benchmark scenario.
