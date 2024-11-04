@@ -3,6 +3,7 @@ package reporter
 import (
 	"fmt"
 	"image/color"
+	"math"
 	"os"
 	"sort"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/montanaflynn/stats"
 	"github.com/tantalor93/dnspyre/v3/pkg/dnsbench"
 	"go-hep.org/x/hep/hplot"
+	"gonum.org/v1/gonum/stat"
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
 	"gonum.org/v1/plot/plotutil"
@@ -30,20 +32,46 @@ func plotHistogramLatency(file string, times []dnsbench.Datapoint) {
 	p := plot.New()
 	p.Title.Text = "Latencies distribution"
 
-	hist, err := plotter.NewHist(values, 16)
+	hist, err := plotter.NewHist(values, numBins(values))
 	if err != nil {
 		panic(err)
 	}
 	p.X.Label.Text = "Latencies (ms)"
-	p.X.Tick.Marker = hplot.Ticks{N: 3, Format: "%.0f"}
+	p.X.Tick.Marker = hplot.Ticks{N: 5, Format: "%.0f"}
 	p.Y.Label.Text = "Number of requests"
-	p.Y.Tick.Marker = hplot.Ticks{N: 3, Format: "%.0f"}
+	p.Y.Tick.Marker = hplot.Ticks{N: 5, Format: "%.0f"}
 	hist.FillColor = color.RGBA{R: 175, G: 238, B: 238, A: 255}
 	p.Add(hist)
 
 	if err := p.Save(6*vg.Inch, 6*vg.Inch, file); err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to save plot.", err)
 	}
+}
+
+// numBins calculates number of bins for histogram.
+func numBins(values plotter.Values) int {
+	n := float64(len(values))
+
+	// small dataset
+	if n < 100 {
+		sqrt := math.Sqrt(n)
+		return int(math.Min(15, sqrt))
+	}
+
+	// medium dataset - use Rice's rule
+	if n < 1000 {
+		rice := 2 * math.Cbrt(n)
+		return int(math.Min(30, rice))
+	}
+
+	// large dataset - use Doane's rule
+	// Calculate skewness
+	skewness := stat.Skew(values, nil)
+
+	// Calculate standard error of skewness
+	sigmaG := math.Sqrt(6 * (n - 2) / ((n + 1) * (n + 3)))
+	doane := 1 + math.Log2(n) + math.Log2(1+math.Abs(skewness)/sigmaG)
+	return int(math.Min(50, doane))
 }
 
 func plotBoxPlotLatency(file, server string, times []dnsbench.Datapoint) {
