@@ -51,7 +51,7 @@ func init() {
 		Short('t').Default("A").EnumsVar(&benchmark.Types, getSupportedDNSTypes()...)
 
 	pApp.Flag("number", "How many times the provided queries are repeated. Note that the total number of queries issued = types*number*concurrency*len(queries).").
-		Short('n').Int64Var(&benchmark.Count)
+		Short('n').PlaceHolder("1").Int64Var(&benchmark.Count)
 
 	pApp.Flag("concurrency", "Number of concurrent queries to issue.").
 		Short('c').Default("1").Uint32Var(&benchmark.Concurrency)
@@ -74,23 +74,26 @@ func init() {
 	pApp.Flag("ednsopt", "code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal string. code must be an arbitrary numeric value.").
 		Default("").StringVar(&benchmark.EdnsOpt)
 
-	pApp.Flag("dnssec", "Allow DNSSEC (sets DO bit for all DNS requests to 1)").
-		Default("false").BoolVar(&benchmark.DNSSEC)
+	pApp.Flag("dnssec", "Allow DNSSEC (sets DO bit for all DNS requests to 1)").BoolVar(&benchmark.DNSSEC)
 
 	pApp.Flag("edns0", "Configures EDNS0 usage in DNS requests send by benchmark and configures EDNS0 buffer size to the specified value. When 0 is configured, then EDNS0 is not used.").
 		Default("0").Uint16Var(&benchmark.Edns0)
 
-	pApp.Flag("tcp", "Use TCP for DNS requests.").Default("false").BoolVar(&benchmark.TCP)
+	pApp.Flag("tcp", "Use TCP for DNS requests.").BoolVar(&benchmark.TCP)
 
-	pApp.Flag("dot", "Use DoT (DNS over TLS) for DNS requests.").Default("false").BoolVar(&benchmark.DOT)
+	pApp.Flag("dot", "Use DoT (DNS over TLS) for DNS requests.").BoolVar(&benchmark.DOT)
 
-	pApp.Flag("write", "write timeout.").Default("1s").DurationVar(&benchmark.WriteTimeout)
+	pApp.Flag("write", "write timeout.").Default(dnsbench.DefaultWriteTimeout.String()).
+		DurationVar(&benchmark.WriteTimeout)
 
-	pApp.Flag("read", "read timeout.").Default("3s").DurationVar(&benchmark.ReadTimeout)
+	pApp.Flag("read", "read timeout.").Default(dnsbench.DefaultReadTimeout.String()).
+		DurationVar(&benchmark.ReadTimeout)
 
-	pApp.Flag("connect", "connect timeout.").Default("1s").DurationVar(&benchmark.ConnectTimeout)
+	pApp.Flag("connect", "connect timeout.").Default(dnsbench.DefaultConnectTimeout.String()).
+		DurationVar(&benchmark.ConnectTimeout)
 
-	pApp.Flag("request", "request timeout.").Default("5s").DurationVar(&benchmark.RequestTimeout)
+	pApp.Flag("request", "request timeout.").Default(dnsbench.DefaultRequestTimeout.String()).
+		DurationVar(&benchmark.RequestTimeout)
 
 	pApp.Flag("codes", "Enable counting DNS return codes. Enabled by default.").
 		Default("true").BoolVar(&benchmark.Rcodes)
@@ -111,7 +114,7 @@ func init() {
 
 	pApp.Flag("json", "Report benchmark results as JSON.").BoolVar(&benchmark.JSON)
 
-	pApp.Flag("silent", "Disable stdout.").Default("false").BoolVar(&benchmark.Silent)
+	pApp.Flag("silent", "Disable stdout.").BoolVar(&benchmark.Silent)
 
 	pApp.Flag("color", "ANSI Color output. Enabled by default.").
 		Default("true").BoolVar(&benchmark.Color)
@@ -120,7 +123,7 @@ func init() {
 		Default("").PlaceHolder("/path/to/folder").StringVar(&benchmark.PlotDir)
 
 	pApp.Flag("plotf", "Format of graphs. Supported formats: svg, png and jpg.").
-		Default("svg").EnumVar(&benchmark.PlotFormat, "svg", "png", "jpg")
+		Default(dnsbench.DefaultPlotFormat).EnumVar(&benchmark.PlotFormat, "svg", "png", "jpg")
 
 	pApp.Flag("doh-method", "HTTP method to use for DoH requests. Supported values: get, post.").
 		Default(dnsbench.PostHTTPMethod).EnumVar(&benchmark.DohMethod, dnsbench.GetHTTPMethod, dnsbench.PostHTTPMethod)
@@ -129,7 +132,7 @@ func init() {
 		Default(dnsbench.HTTP1Proto).EnumVar(&benchmark.DohProtocol, dnsbench.HTTP1Proto, dnsbench.HTTP2Proto, dnsbench.HTTP3Proto)
 
 	pApp.Flag("insecure", "Disables server TLS certificate validation. Applicable for DoT, DoH and DoQ.").
-		Default("false").BoolVar(&benchmark.Insecure)
+		BoolVar(&benchmark.Insecure)
 
 	pApp.Flag("duration", "Specifies for how long the benchmark should be executing, the benchmark will run for the specified time "+
 		"while sending DNS requests in an infinite loop based on the data source. After running for the specified duration, the benchmark is canceled. "+
@@ -146,7 +149,7 @@ func init() {
 		EnumsVar(&failConditions, ioerrorFailCondition, negativeFailCondition, errorFailCondition, idmismatchFailCondition)
 
 	pApp.Flag("log-requests", "Controls whether the Benchmark requests are logged. Requests are logged into the file specified by --log-requests-path flag. Disabled by default.").
-		Default("false").BoolVar(&benchmark.RequestLogEnabled)
+		BoolVar(&benchmark.RequestLogEnabled)
 
 	pApp.Flag("log-requests-path", "Specifies path to the file, where the request logs will be logged. If the file exists, the logs will be appended to the file. "+
 		"If the file does not exist, the file will be created.").
@@ -154,7 +157,7 @@ func init() {
 
 	pApp.Flag("separate-worker-connections", "Controls whether the concurrent workers will try to share connections to the server or not. When enabled "+
 		"the workers will use separate connections. Disabled by default.").
-		Default("false").BoolVar(&benchmark.SeparateWorkerConnections)
+		BoolVar(&benchmark.SeparateWorkerConnections)
 
 	pApp.Flag("request-delay", "Configures delay to be added before each request done by worker. Delay can be either constant or randomized. "+
 		"Constant delay is configured as single duration <GO duration> (e.g. 500ms, 2s, etc.). Randomized delay is configured as interval of "+
