@@ -10,13 +10,14 @@ require (
 	github.com/montanaflynn/stats v0.7.1
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/quic-go/quic-go v0.44.0
-	github.com/schollz/progressbar/v3 v3.14.6
+	github.com/schollz/progressbar/v3 v3.17.1
 	github.com/stretchr/testify v1.9.0
 	github.com/tantalor93/doh-go v0.3.0
 	github.com/tantalor93/doq-go v0.12.0
 	go-hep.org/x/hep v0.35.0
 	go.uber.org/ratelimit v0.3.1
 	golang.org/x/net v0.30.0
+	gonum.org/v1/gonum v0.15.1
 	gonum.org/v1/plot v0.15.0
 )
 
@@ -36,7 +37,7 @@ require (
 	github.com/google/pprof v0.0.0-20210407192527-94a9f03dee38 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mattn/go-runewidth v0.0.15 // indirect
+	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/onsi/ginkgo/v2 v2.9.5 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -49,10 +50,9 @@ require (
 	golang.org/x/image v0.21.0 // indirect
 	golang.org/x/mod v0.21.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.26.0 // indirect
-	golang.org/x/term v0.25.0 // indirect
+	golang.org/x/sys v0.27.0 // indirect
+	golang.org/x/term v0.26.0 // indirect
 	golang.org/x/text v0.19.0 // indirect
 	golang.org/x/tools v0.26.0 // indirect
-	gonum.org/v1/gonum v0.15.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
