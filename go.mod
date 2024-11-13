@@ -5,7 +5,7 @@ go 1.22.0
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2
 	github.com/alecthomas/kingpin/v2 v2.4.0
-	github.com/fatih/color v1.17.0
+	github.com/fatih/color v1.18.0
 	github.com/miekg/dns v1.1.62
 	github.com/montanaflynn/stats v0.7.1
 	github.com/olekukonko/tablewriter v0.0.5
@@ -17,6 +17,7 @@ require (
 	go-hep.org/x/hep v0.35.0
 	go.uber.org/ratelimit v0.3.1
 	golang.org/x/net v0.30.0
+	gonum.org/v1/gonum v0.15.1
 	gonum.org/v1/plot v0.15.0
 )
 
@@ -53,6 +54,5 @@ require (
 	golang.org/x/term v0.25.0 // indirect
 	golang.org/x/text v0.19.0 // indirect
 	golang.org/x/tools v0.26.0 // indirect
-	gonum.org/v1/gonum v0.15.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
