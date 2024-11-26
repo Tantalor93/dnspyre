@@ -15,11 +15,8 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version-file: go.mod
-    - name: Build
-      run: go build -v ./...
-    - name: Test With Coverage
-      run: |
-        go test -coverprofile=cover.out -covermode=atomic -race ./...; [ -f cover.out ] && cat cover.out >> ../coverage.txt
+    - name: Run coverage
+      run: go test -race -coverprofile=coverage.out -covermode=atomic
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
       env:
