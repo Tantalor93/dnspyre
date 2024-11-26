@@ -205,13 +205,13 @@ func Execute() {
 	end := time.Now()
 
 	if err != nil {
-		printutils.ErrPrint(os.Stderr, "There was an error while starting benchmark: %s\n", err.Error())
+		printutils.ErrFprintf(os.Stderr, "There was an error while starting benchmark: %s\n", err.Error())
 		close(sigsInt)
 		os.Exit(1)
 	}
 
 	if err := reporter.PrintReport(&benchmark, res, start, end.Sub(start)); err != nil {
-		printutils.ErrPrint(os.Stderr, "There was an error while printing report: %s\n", err.Error())
+		printutils.ErrFprintf(os.Stderr, "There was an error while printing report: %s\n", err.Error())
 		close(sigsInt)
 		os.Exit(1)
 	}

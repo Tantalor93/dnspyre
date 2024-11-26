@@ -13,18 +13,18 @@ DNS response codes:
 DNS question types:
 	A:	2
 
-Time taken for tests:	 1s
-Questions per second:	 1.0
+Time taken for tests:	1s
+Questions per second:	1.0
 DNS timings, 2 datapoints
-	 min:		 5ns
-	 mean:		 7ns
-	 [+/-sd]:	 2ns
-	 max:		 10ns
-	 p99:		 10ns
-	 p95:		 10ns
-	 p90:		 10ns
-	 p75:		 10ns
-	 p50:		 5ns
+	 min:		5ns
+	 mean:		7ns
+	 [+/-sd]:	2ns
+	 max:		10ns
+	 p99:		10ns
+	 p95:		10ns
+	 p90:		10ns
+	 p75:		10ns
+	 p50:		5ns
 
 Total Errors: 6
 Top errors:
