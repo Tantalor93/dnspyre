@@ -14,7 +14,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/tantalor93/doh-go v0.3.0
 	github.com/tantalor93/doq-go v0.12.0
-	go-hep.org/x/hep v0.35.0
+	go-hep.org/x/hep v0.36.0
 	go.uber.org/ratelimit v0.3.1
 	golang.org/x/net v0.30.0
 	gonum.org/v1/gonum v0.15.1
