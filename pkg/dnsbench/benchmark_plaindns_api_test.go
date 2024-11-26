@@ -487,6 +487,7 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_global_ratelimit() {
 	})
 	defer s.Close()
 
+	buf := bytes.Buffer{}
 	bench := dnsbench.Benchmark{
 		Queries:        []string{"example.org"},
 		Types:          []string{"A"},
@@ -502,6 +503,7 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_global_ratelimit() {
 		RequestTimeout: 5 * time.Second,
 		Rcodes:         true,
 		Recurse:        true,
+		Writer:         &buf,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -513,6 +515,10 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_global_ratelimit() {
 	// assert that total queries is 5 with +-1 precision, because benchmark cancellation based on duration is not that precise
 	// and one worker can start the resolution before cancelling
 	suite.InDelta(int64(5), rs[0].Counters.Total+rs[1].Counters.Total, 1.0)
+	suite.Equal(
+		fmt.Sprintf("Using 1 hostnames\nBenchmarking %s via udp with 2 concurrent requests (limited to 1 QPS overall)\n",
+			s.Addr), buf.String(),
+	)
 }
 
 func (suite *PlainDNSTestSuite) TestBenchmark_Run_worker_ratelimit() {
@@ -528,6 +534,7 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_worker_ratelimit() {
 	})
 	defer s.Close()
 
+	buf := bytes.Buffer{}
 	bench := dnsbench.Benchmark{
 		Queries:         []string{"example.org"},
 		Types:           []string{"A"},
@@ -543,6 +550,7 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_worker_ratelimit() {
 		RequestTimeout:  5 * time.Second,
 		Rcodes:          true,
 		Recurse:         true,
+		Writer:          &buf,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -556,6 +564,60 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_worker_ratelimit() {
 	// because benchmark cancellation based on duration is not that precise
 	// and each worker can start the resolution before cancelling
 	suite.InDelta(int64(10), rs[0].Counters.Total+rs[1].Counters.Total, 2.0)
+	suite.Equal(
+		fmt.Sprintf("Using 1 hostnames\nBenchmarking %s via udp with 2 concurrent requests (limited to 1 QPS per concurrent worker)\n",
+			s.Addr), buf.String(),
+	)
+}
+
+func (suite *PlainDNSTestSuite) TestBenchmark_Run_global_ratelimit_precendence() {
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 100)
+
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	buf := bytes.Buffer{}
+	bench := dnsbench.Benchmark{
+		Queries:         []string{"example.org"},
+		Types:           []string{"A"},
+		Server:          s.Addr,
+		TCP:             false,
+		Concurrency:     2,
+		Duration:        5 * time.Second,
+		RateLimitWorker: 2,
+		Rate:            1,
+		Probability:     1,
+		WriteTimeout:    1 * time.Second,
+		ReadTimeout:     3 * time.Second,
+		ConnectTimeout:  1 * time.Second,
+		RequestTimeout:  5 * time.Second,
+		Rcodes:          true,
+		Recurse:         true,
+		Writer:          &buf,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	suite.Require().NoError(err, "expected no error from benchmark run")
+	suite.Require().Len(rs, 2, "expected results from two workers")
+
+	// assert that total queries is 10 with +-2 precision,
+	// because benchmark cancellation based on duration is not that precise
+	// and each worker can start the resolution before cancelling
+	suite.InDelta(int64(5), rs[0].Counters.Total+rs[1].Counters.Total, 1.0)
+	suite.Equal(
+		fmt.Sprintf("Using 1 hostnames\nBenchmarking %s via udp with 2 concurrent requests (limited to 1 QPS overall and 2 QPS per concurrent worker)\n",
+			s.Addr), buf.String(),
+	)
 }
 
 func (suite *PlainDNSTestSuite) TestBenchmark_Run_error() {

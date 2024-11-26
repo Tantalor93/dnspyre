@@ -319,7 +319,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	}
 
 	if !b.Silent && !b.JSON {
-		fmt.Fprintf(b.Writer, "Using %s hostnames\n", printutils.HighlightStr(len(questions)))
+		printutils.NeutralFprintf(b.Writer, "Using %s hostnames\n", printutils.HighlightSprint(len(questions)))
 	}
 
 	var qTypes []uint16
@@ -334,18 +334,20 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	if b.Rate > 0 {
 		limit = ratelimit.New(b.Rate)
 		if b.RateLimitWorker == 0 {
-			limits = fmt.Sprintf("(limited to %s QPS overall)", printutils.HighlightStr(b.Rate))
+			limits = fmt.Sprintf("(limited to %s QPS overall)", printutils.HighlightSprint(b.Rate))
 		} else {
-			limits = fmt.Sprintf("(limited to %s QPS overall and %s QPS per concurrent worker)", printutils.HighlightStr(b.Rate), printutils.HighlightStr(b.RateLimitWorker))
+			limits = fmt.Sprintf("(limited to %s QPS overall and %s QPS per concurrent worker)",
+				printutils.HighlightSprint(b.Rate), printutils.HighlightSprint(b.RateLimitWorker))
 		}
 	}
 	if b.Rate == 0 && b.RateLimitWorker > 0 {
-		limits = fmt.Sprintf("(limited to %s QPS per concurrent worker)", printutils.HighlightStr(b.RateLimitWorker))
+		limits = fmt.Sprintf("(limited to %s QPS per concurrent worker)", printutils.HighlightSprint(b.RateLimitWorker))
 	}
 
 	if !b.Silent && !b.JSON {
 		network := b.network()
-		fmt.Fprintf(b.Writer, "Benchmarking %s via %s with %s concurrent requests %s\n", printutils.HighlightStr(b.Server), printutils.HighlightStr(network), printutils.HighlightStr(b.Concurrency), limits)
+		printutils.NeutralFprintf(b.Writer, "Benchmarking %s via %s with %s concurrent requests %s\n",
+			printutils.HighlightSprint(b.Server), printutils.HighlightSprint(network), printutils.HighlightSprint(b.Concurrency), limits)
 	}
 
 	var bar *progressbar.ProgressBar
