@@ -16,7 +16,7 @@ require (
 	github.com/tantalor93/doq-go v0.12.0
 	go-hep.org/x/hep v0.36.0
 	go.uber.org/ratelimit v0.3.1
-	golang.org/x/net v0.30.0
+	golang.org/x/net v0.31.0
 	gonum.org/v1/gonum v0.15.1
 	gonum.org/v1/plot v0.15.0
 )
@@ -45,14 +45,14 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	go.uber.org/mock v0.4.0 // indirect
-	golang.org/x/crypto v0.28.0 // indirect
+	golang.org/x/crypto v0.29.0 // indirect
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c // indirect
 	golang.org/x/image v0.21.0 // indirect
 	golang.org/x/mod v0.21.0 // indirect
-	golang.org/x/sync v0.8.0 // indirect
+	golang.org/x/sync v0.9.0 // indirect
 	golang.org/x/sys v0.27.0 // indirect
 	golang.org/x/term v0.26.0 // indirect
-	golang.org/x/text v0.19.0 // indirect
+	golang.org/x/text v0.20.0 // indirect
 	golang.org/x/tools v0.26.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
