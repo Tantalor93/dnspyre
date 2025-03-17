@@ -18,12 +18,12 @@ require (
 	go.uber.org/ratelimit v0.3.1
 	golang.org/x/net v0.33.0
 	gonum.org/v1/gonum v0.15.1
-	gonum.org/v1/plot v0.15.1
+	gonum.org/v1/plot v0.15.2
 )
 
 require (
-	codeberg.org/go-fonts/liberation v0.4.0 // indirect
-	codeberg.org/go-latex/latex v0.0.0-20250304174001-fb59698489e0 // indirect
+	codeberg.org/go-fonts/liberation v0.4.1 // indirect
+	codeberg.org/go-latex/latex v0.0.1 // indirect
 	codeberg.org/go-pdf/fpdf v0.10.0 // indirect
 	git.sr.ht/~sbinet/gg v0.6.0 // indirect
 	github.com/ajstarks/svgo v0.0.0-20211024235047-1546f124cd8b // indirect
