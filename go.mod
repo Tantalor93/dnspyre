@@ -1,6 +1,7 @@
 module github.com/tantalor93/dnspyre/v3
 
 go 1.22.0
+toolchain go1.24.1
 
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2
@@ -9,7 +10,7 @@ require (
 	github.com/miekg/dns v1.1.63
 	github.com/montanaflynn/stats v0.7.1
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/quic-go/quic-go v0.44.0
+	github.com/quic-go/quic-go v0.50.1
 	github.com/schollz/progressbar/v3 v3.17.1
 	github.com/stretchr/testify v1.10.0
 	github.com/tantalor93/doh-go v0.3.0
@@ -41,10 +42,10 @@ require (
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/onsi/ginkgo/v2 v2.9.5 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/quic-go/qpack v0.4.0 // indirect
+	github.com/quic-go/qpack v0.5.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
-	go.uber.org/mock v0.4.0 // indirect
+	go.uber.org/mock v0.5.0 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c // indirect
 	golang.org/x/image v0.24.0 // indirect
