@@ -1,3 +1,4 @@
+// Package cmd provides the main CLI interface for dnspyre.
 package cmd
 
 import (
