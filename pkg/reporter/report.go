@@ -42,17 +42,17 @@ func PrintReport(b *dnsbench.Benchmark, stats []*dnsbench.ResultStats, benchStar
 	top3errorsInOrder := make([]string, 0)
 
 	for i := 0; i < 3; i++ {
-		max := 0
-		maxerr := ""
+		maxerr := 0
+		maxerrstr := ""
 		for k, v := range totals.GroupedErrors {
-			if _, ok := top3errs[k]; v > max && !ok {
-				maxerr = k
-				max = v
+			if _, ok := top3errs[k]; v > maxerr && !ok {
+				maxerrstr = k
+				maxerr = v
 			}
 		}
-		if max != 0 {
-			top3errs[maxerr] = max
-			top3errorsInOrder = append(top3errorsInOrder, maxerr)
+		if maxerr != 0 {
+			top3errs[maxerrstr] = maxerr
+			top3errorsInOrder = append(top3errorsInOrder, maxerrstr)
 		}
 	}
 

@@ -69,10 +69,10 @@ func (s *standardReporter) print(params reportParameters) error {
 	printutils.NeutralFprintf(params.outputWriter, "Questions per second:\t%s\n",
 		printutils.HighlightSprintf("%0.1f", float64(params.totalCounters.Total)/params.benchmarkDuration.Seconds()))
 
-	min := time.Duration(params.hist.Min())
+	minHist := time.Duration(params.hist.Min())
 	mean := time.Duration(params.hist.Mean())
 	sd := time.Duration(params.hist.StdDev())
-	max := time.Duration(params.hist.Max())
+	maxHist := time.Duration(params.hist.Max())
 	p99 := time.Duration(params.hist.ValueAtQuantile(99))
 	p95 := time.Duration(params.hist.ValueAtQuantile(95))
 	p90 := time.Duration(params.hist.ValueAtQuantile(90))
@@ -81,10 +81,10 @@ func (s *standardReporter) print(params reportParameters) error {
 
 	if tc := params.hist.TotalCount(); tc > 0 {
 		printutils.NeutralFprintf(params.outputWriter, "DNS timings, %s datapoints\n", printutils.HighlightSprint(tc))
-		printutils.NeutralFprintf(params.outputWriter, "\t min:\t\t%s\n", printutils.HighlightSprint(roundDuration(min)))
+		printutils.NeutralFprintf(params.outputWriter, "\t min:\t\t%s\n", printutils.HighlightSprint(roundDuration(minHist)))
 		printutils.NeutralFprintf(params.outputWriter, "\t mean:\t\t%s\n", printutils.HighlightSprint(roundDuration(mean)))
 		printutils.NeutralFprintf(params.outputWriter, "\t [+/-sd]:\t%s\n", printutils.HighlightSprint(roundDuration(sd)))
-		printutils.NeutralFprintf(params.outputWriter, "\t max:\t\t%s\n", printutils.HighlightSprint(roundDuration(max)))
+		printutils.NeutralFprintf(params.outputWriter, "\t max:\t\t%s\n", printutils.HighlightSprint(roundDuration(maxHist)))
 		printutils.NeutralFprintf(params.outputWriter, "\t p99:\t\t%s\n", printutils.HighlightSprint(roundDuration(p99)))
 		printutils.NeutralFprintf(params.outputWriter, "\t p95:\t\t%s\n", printutils.HighlightSprint(roundDuration(p95)))
 		printutils.NeutralFprintf(params.outputWriter, "\t p90:\t\t%s\n", printutils.HighlightSprint(roundDuration(p90)))
@@ -145,15 +145,15 @@ func printBars(w io.Writer, bars []hdrhistogram.Bar) {
 	counts := make([]int64, 0, len(bars))
 	lines := make([][]string, 0, len(bars))
 	added := false
-	var max int64
+	var maxCount int64
 
 	for _, b := range bars {
 		if b.Count == 0 && !added {
 			// trim the start
 			continue
 		}
-		if b.Count > max {
-			max = b.Count
+		if b.Count > maxCount {
+			maxCount = b.Count
 		}
 
 		added = true
@@ -167,7 +167,7 @@ func printBars(w io.Writer, bars []hdrhistogram.Bar) {
 	}
 
 	for i, l := range lines {
-		l[1] = makeBar(counts[i], max)
+		l[1] = makeBar(counts[i], maxCount)
 	}
 
 	table := tablewriter.NewWriter(w)
@@ -177,10 +177,10 @@ func printBars(w io.Writer, bars []hdrhistogram.Bar) {
 	table.Render()
 }
 
-func makeBar(c int64, max int64) string {
+func makeBar(c int64, m int64) string {
 	if c == 0 {
 		return ""
 	}
-	t := int((43 * float64(c) / float64(max)) + 0.5)
+	t := int((43 * float64(c) / float64(m)) + 0.5)
 	return strings.Repeat(printutils.HighlightSprint("▄"), t)
 }

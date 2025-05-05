@@ -1,3 +1,4 @@
+// Package printutils provides utility functions for printing colored output to the console.
 package printutils
 
 import (

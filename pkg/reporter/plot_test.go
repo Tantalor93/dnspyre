@@ -167,8 +167,8 @@ func Test_numBins(t *testing.T) {
 }
 
 // dataset generates uniformorly distributed dataset.
-func dataset(len int) plotter.Values {
-	values := make(plotter.Values, len)
+func dataset(length int) plotter.Values {
+	values := make(plotter.Values, length)
 	for i := range values {
 		values[i] = float64(i)
 	}

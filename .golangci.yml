@@ -1,46 +1,55 @@
+version: "2"
 run:
-  timeout: 5m
   modules-download-mode: readonly
 linters:
-  disable-all: true
+  default: none
   enable:
-  - gci
-  - gocritic
-  - godot
-  - gofmt
-  - gofumpt
-  - goimports
-  - gomoddirectives
-  - gomodguard
-  - gosec
-  - gosimple
-  - govet
-  - ineffassign
-  - revive
-  - staticcheck
-  - stylecheck
-  - testifylint
-  - typecheck
-  - unconvert
-  - unparam
-  - unused
-  - usestdlibvars
-  - wastedassign
-  - whitespace
-
-issues:
-  include:
-  - EXC0012 # disable excluding of issues about comments from revive
-
-linters-settings:
-  godot:
-    # list of regexps for excluding particular comment lines from check
-    exclude:
-    - '^ @.*' # swaggo comments like // @title
-    - '^ (\d+)(\.|\)).*' # enumeration comments like // 1. or // 1)
-  gosec:
-    config:
-      global:
-        audit: true
-    excludes:
-    - G104
+    - gocritic
+    - godot
+    - gomoddirectives
+    - gomodguard
+    - gosec
+    - govet
+    - ineffassign
+    - revive
+    - staticcheck
+    - testifylint
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - wastedassign
+    - whitespace
+  settings:
+    godot:
+      exclude:
+        - ^ @.*
+        - ^ (\d+)(\.|\)).*
+    gosec:
+      excludes:
+        - G104
+      config:
+        global:
+          audit: true
+  exclusions:
+    generated: lax
+    presets:
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

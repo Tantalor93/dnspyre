@@ -195,7 +195,7 @@ func plotLineThroughput(file string, benchStart time.Time, times []dnsbench.Data
 	p.Add(l)
 
 	scatter, err := plotter.NewScatter(values)
-	scatter.GlyphStyle.Shape = draw.CircleGlyph{}
+	scatter.Shape = draw.CircleGlyph{}
 
 	if err != nil {
 		panic(err)
@@ -342,8 +342,8 @@ func plotErrorRate(file string, benchStart time.Time, times []dnsbench.ErrorData
 	if err != nil {
 		panic(err)
 	}
-	scatter.GlyphStyle.Color = color.RGBA{R: 238, G: 46, B: 47, A: 255}
-	scatter.GlyphStyle.Shape = draw.CircleGlyph{}
+	scatter.Color = color.RGBA{R: 238, G: 46, B: 47, A: 255}
+	scatter.Shape = draw.CircleGlyph{}
 
 	p.Add(scatter)
 
@@ -365,7 +365,7 @@ func plotLine(p *plot.Plot, values plotter.XYs, color color.Color, fill color.Co
 	if err != nil {
 		panic(err)
 	}
-	scatter.GlyphStyle.Color = color
-	scatter.GlyphStyle.Shape = draw.CircleGlyph{}
+	scatter.Color = color
+	scatter.Shape = draw.CircleGlyph{}
 	p.Add(scatter)
 }
