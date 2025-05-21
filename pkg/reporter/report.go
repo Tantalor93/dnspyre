@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/HdrHistogram/hdrhistogram-go"
@@ -60,8 +61,8 @@ func PrintReport(b *dnsbench.Benchmark, stats []*dnsbench.ResultStats, benchStar
 			return fmt.Errorf("unable to plot results: %w", err)
 		}
 
-		now := time.Now().Format(time.RFC3339)
-		dir := fmt.Sprintf("%s/graphs-%s", b.PlotDir, now)
+		now := time.Now().Format("2006-01-02T15-04-05")
+		dir := filepath.Join(b.PlotDir, fmt.Sprintf("graphs-%s", now))
 		if err := os.Mkdir(dir, os.ModePerm); err != nil {
 			return fmt.Errorf("unable to plot results: %w", err)
 		}

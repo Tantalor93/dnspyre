@@ -6,7 +6,7 @@ parent: Examples
 
 # Plotting graphs
 *dnspyre* is able to also visualize the benchmark results as graphs, plotting is enabled by using `--plot` option and providing valid path where to export graphs.
-Graphs are exported into the new subdirectory `graphs-<RFC3339 timestamp>` on provided path
+Graphs are exported into the new subdirectory `graphs-<timestamp>` on provided path
 
 For example, this command
 
