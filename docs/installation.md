@@ -16,7 +16,7 @@ brew install dnspyre
 Also you can use standard [Go tooling](https://pkg.go.dev/cmd/go#hdr-Compile_and_install_packages_and_dependencies) to install *dnspyre*
 
 ```
-go install github.com/tantalor93/dnspyre/v2@latest
+go install github.com/tantalor93/dnspyre/v3@latest
 ```
 
 Or you can download latest *dnspyre* binary archive for your operating system and architecture [here](https://github.com/Tantalor93/dnspyre/releases/latest)
