@@ -18,7 +18,7 @@ require (
 	go.uber.org/ratelimit v0.3.1
 	golang.org/x/net v0.41.0
 	gonum.org/v1/gonum v0.16.0
-	gonum.org/v1/plot v0.15.2
+	gonum.org/v1/plot v0.16.0
 )
 
 require (
