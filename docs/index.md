@@ -99,6 +99,8 @@ Flags:
                                Randomized delay is configured as interval of two durations <GO duration>-<GO duration> (e.g. 1s-2s,
                                500ms-2s, etc.), where the actual delay is random value from the interval that is randomized after each
                                request.
+      --prometheus=:8080       Enables Prometheus metrics endpoint on the specified address. For example :8080 or localhost:8080. The endpoint is
+                               available at /metrics path.
       --[no-]version           Show application version.
 
 Args:

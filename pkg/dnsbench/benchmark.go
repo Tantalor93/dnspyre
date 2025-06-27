@@ -21,6 +21,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/miekg/dns"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/schollz/progressbar/v3"
 	"github.com/tantalor93/dnspyre/v3/pkg/printutils"
 	"go.uber.org/ratelimit"
@@ -211,6 +212,9 @@ type Benchmark struct {
 	// RequestDelay configures delay between each DNS request. Either constant delay can be configured (e.g. 2s) or randomized delay can be configured (e.g. 1s-2s).
 	RequestDelay string
 
+	// PrometheusMetricsAddr configures address for Prometheus metrics endpoint.
+	PrometheusMetricsAddr string
+
 	// internal variable so we do not have to parse the address with each request.
 	useDoH            bool
 	useQuic           bool
@@ -305,6 +309,20 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		}
 		defer file.Close()
 		log.SetOutput(file)
+	}
+
+	if len(b.PrometheusMetricsAddr) != 0 {
+		// nolint:gosec
+		server := http.Server{
+			Addr:    b.PrometheusMetricsAddr,
+			Handler: promhttp.Handler(),
+		}
+		defer server.Shutdown(ctx)
+		go func() {
+			if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+				printutils.ErrFprintf(b.Writer, "Failed to start Prometheus metrics server at %s: %v\n", b.PrometheusMetricsAddr, err)
+			}
+		}()
 	}
 
 	questions, err := b.prepareQuestions()
@@ -466,6 +484,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 							logRequest(workerID, req, resp, err, dur)
 						}
 						st.record(&req, resp, err, start, dur)
+						b.measureProm(req, resp, dur, err)
 
 						if incrementBar {
 							bar.Add(1)
@@ -484,6 +503,22 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	}
 
 	return stats, nil
+}
+
+func (b *Benchmark) measureProm(req dns.Msg, resp *dns.Msg, time time.Duration, err error) {
+	if len(b.PrometheusMetricsAddr) == 0 {
+		return
+	}
+	if resp != nil {
+		rcode := dns.RcodeToString[resp.Rcode]
+		respType := dns.TypeToString[resp.Question[0].Qtype]
+		dnsResponseTotalMetrics.WithLabelValues(respType, rcode).Inc()
+	}
+	if err != nil {
+		errorsTotalMetrics.WithLabelValues().Inc()
+	}
+	reqType := dns.TypeToString[req.Question[0].Qtype]
+	dnsRequestsDurationMetrics.WithLabelValues(reqType).Observe(time.Seconds())
 }
 
 func (b *Benchmark) delay(ctx context.Context, rando *rand.Rand) {

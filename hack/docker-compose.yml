@@ -1,0 +1,18 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090" # Expose Prometheus UI on host port 9090
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro # Mount your config file
+      - prometheus_data:/prometheus # Persistent storage for metrics data
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+
+volumes:
+  prometheus_data: # Define a named volume for persistent data
