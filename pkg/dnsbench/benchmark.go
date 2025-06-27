@@ -21,6 +21,9 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/miekg/dns"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/schollz/progressbar/v3"
 	"github.com/tantalor93/dnspyre/v3/pkg/printutils"
 	"go.uber.org/ratelimit"
@@ -29,6 +32,26 @@ import (
 var client = http.Client{
 	Timeout: 120 * time.Second,
 }
+
+var (
+	dnsRequestsTotalMetrics = promauto.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "dnspyre",
+		Name:      "dns_requests_total",
+		Help:      "The total number DNS requests",
+	}, []string{"worker", "type"})
+
+	dnsResponseTotalMetrics = promauto.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "dnspyre",
+		Name:      "dns_response_total",
+		Help:      "The total number DNS responses",
+	}, []string{"worker", "type", "rcode"})
+
+	errorsTotalMetrics = promauto.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "dnspyre",
+		Name:      "errors_total",
+		Help:      "The total number errors",
+	}, []string{"worker"})
+)
 
 const (
 	// UDPTransport represents plain DNS over UDP.
@@ -211,6 +234,9 @@ type Benchmark struct {
 	// RequestDelay configures delay between each DNS request. Either constant delay can be configured (e.g. 2s) or randomized delay can be configured (e.g. 1s-2s).
 	RequestDelay string
 
+	// PrometheusMetricsAddr configures address for Prometheus metrics endpoint.
+	PrometheusMetricsAddr string
+
 	// internal variable so we do not have to parse the address with each request.
 	useDoH            bool
 	useQuic           bool
@@ -292,6 +318,20 @@ func (b *Benchmark) init() error {
 
 // Run executes benchmark, if benchmark is unable to start the error is returned, otherwise array of results from parallel benchmark goroutines is returned.
 func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
+	if len(b.PrometheusMetricsAddr) != 0 {
+		// nolint:gosec
+		server := http.Server{
+			Addr:    b.PrometheusMetricsAddr,
+			Handler: promhttp.Handler(),
+		}
+		defer server.Shutdown(ctx)
+		go func() {
+			if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+				printutils.ErrFprintf(b.Writer, "Failed to start Prometheus metrics server at %s: %v\n", b.PrometheusMetricsAddr, err)
+			}
+		}()
+	}
+
 	color.NoColor = !b.Color
 
 	if err := b.init(); err != nil {
@@ -466,6 +506,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 							logRequest(workerID, req, resp, err, dur)
 						}
 						st.record(&req, resp, err, start, dur)
+						b.measureProm(workerID, req, resp, err)
 
 						if incrementBar {
 							bar.Add(1)
@@ -484,6 +525,23 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	}
 
 	return stats, nil
+}
+
+func (b *Benchmark) measureProm(workerID uint32, req dns.Msg, resp *dns.Msg, err error) {
+	if len(b.PrometheusMetricsAddr) == 0 {
+		return
+	}
+	workerLbl := fmt.Sprintf("%d", workerID)
+	reqType := dns.TypeToString[req.Question[0].Qtype]
+	dnsRequestsTotalMetrics.WithLabelValues(workerLbl, reqType).Inc()
+	if resp != nil {
+		rcode := dns.RcodeToString[resp.Rcode]
+		respType := dns.TypeToString[resp.Question[0].Qtype]
+		dnsResponseTotalMetrics.WithLabelValues(workerLbl, respType, rcode).Inc()
+	}
+	if err != nil {
+		errorsTotalMetrics.WithLabelValues(workerLbl).Inc()
+	}
 }
 
 func (b *Benchmark) delay(ctx context.Context, rando *rand.Rand) {
