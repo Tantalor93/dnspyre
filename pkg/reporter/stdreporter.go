@@ -10,6 +10,7 @@ import (
 	"github.com/HdrHistogram/hdrhistogram-go"
 	"github.com/miekg/dns"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/tw"
 	"github.com/tantalor93/dnspyre/v3/pkg/dnsbench"
 	"github.com/tantalor93/dnspyre/v3/pkg/printutils"
 )
@@ -94,7 +95,10 @@ func (s *standardReporter) print(params reportParameters) error {
 		dist := params.hist.Distribution()
 		if params.benchmark.HistDisplay && tc > 1 {
 			printutils.NeutralFprintf(params.outputWriter, "\nDNS distribution, %s datapoints\n", printutils.HighlightSprint(tc))
-			printBars(params.outputWriter, dist)
+			err := printBars(params.outputWriter, dist)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -141,7 +145,7 @@ func printProgress(w io.Writer, c dnsbench.Counters) {
 	}
 }
 
-func printBars(w io.Writer, bars []hdrhistogram.Bar) {
+func printBars(w io.Writer, bars []hdrhistogram.Bar) error {
 	counts := make([]int64, 0, len(bars))
 	lines := make([][]string, 0, len(bars))
 	added := false
@@ -170,11 +174,17 @@ func printBars(w io.Writer, bars []hdrhistogram.Bar) {
 		l[1] = makeBar(counts[i], maxCount)
 	}
 
-	table := tablewriter.NewWriter(w)
-	table.SetHeader([]string{"Latency", "", "Count"})
-	table.SetBorder(false)
-	table.AppendBulk(lines)
-	table.Render()
+	table := tablewriter.NewTable(w, tablewriter.WithRendition(tw.Rendition{Borders: tw.BorderNone}))
+	table.Header("Latency", "", "Count")
+	err := table.Bulk(lines)
+	if err != nil {
+		return err
+	}
+	err = table.Render()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func makeBar(c int64, m int64) string {
