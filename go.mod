@@ -3,7 +3,7 @@ module github.com/tantalor93/dnspyre/v3
 go 1.24.0
 
 require (
-	github.com/HdrHistogram/hdrhistogram-go v1.1.2
+	github.com/HdrHistogram/hdrhistogram-go v1.2.0
 	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/fatih/color v1.18.0
 	github.com/miekg/dns v1.1.68
@@ -40,6 +40,7 @@ require (
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/google/pprof v0.0.0-20210407192527-94a9f03dee38 // indirect
+	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.19 // indirect
