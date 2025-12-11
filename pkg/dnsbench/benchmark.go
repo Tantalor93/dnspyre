@@ -231,7 +231,7 @@ func (b *Benchmark) init() error {
 	}
 
 	if len(b.Server) == 0 {
-		return errors.New("server for benchmarking must not be empty")
+		b.Server = DefaultNameServer()
 	}
 
 	b.useDoH, _ = isHTTPUrl(b.Server)
