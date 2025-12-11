@@ -12,66 +12,66 @@ func TestBenchmark_init(t *testing.T) {
 	tests := []struct {
 		name                  string
 		benchmark             Benchmark
-		wantServer            string
+		assertServer          assert.ValueAssertionFunc
 		wantRequestLogPath    string
 		wantErr               bool
 		wantRequestDelayStart time.Duration
 		wantRequestDelayEnd   time.Duration
 	}{
 		{
-			name:       "server - IPv4",
-			benchmark:  Benchmark{Server: "8.8.8.8"},
-			wantServer: "8.8.8.8:53",
+			name:         "server - IPv4",
+			benchmark:    Benchmark{Server: "8.8.8.8"},
+			assertServer: assertServerEqual("8.8.8.8:53"),
 		},
 		{
-			name:       "server - IPv4 with port",
-			benchmark:  Benchmark{Server: "8.8.8.8:53"},
-			wantServer: "8.8.8.8:53",
+			name:         "server - IPv4 with port",
+			benchmark:    Benchmark{Server: "8.8.8.8:53"},
+			assertServer: assertServerEqual("8.8.8.8:53"),
 		},
 		{
-			name:       "server - IPv6",
-			benchmark:  Benchmark{Server: "fddd:dddd::"},
-			wantServer: "[fddd:dddd::]:53",
+			name:         "server - IPv6",
+			benchmark:    Benchmark{Server: "fddd:dddd::"},
+			assertServer: assertServerEqual("[fddd:dddd::]:53"),
 		},
 		{
-			name:       "server - IPv6",
-			benchmark:  Benchmark{Server: "fddd:dddd::"},
-			wantServer: "[fddd:dddd::]:53",
+			name:         "server - IPv6",
+			benchmark:    Benchmark{Server: "fddd:dddd::"},
+			assertServer: assertServerEqual("[fddd:dddd::]:53"),
 		},
 		{
-			name:       "server - IPv6 with port",
-			benchmark:  Benchmark{Server: "fddd:dddd::"},
-			wantServer: "[fddd:dddd::]:53",
+			name:         "server - IPv6 with port",
+			benchmark:    Benchmark{Server: "fddd:dddd::"},
+			assertServer: assertServerEqual("[fddd:dddd::]:53"),
 		},
 		{
-			name:       "server - DoT with IP address",
-			benchmark:  Benchmark{Server: "8.8.8.8", DOT: true},
-			wantServer: "8.8.8.8:853",
+			name:         "server - DoT with IP address",
+			benchmark:    Benchmark{Server: "8.8.8.8", DOT: true},
+			assertServer: assertServerEqual("8.8.8.8:853"),
 		},
 		{
-			name:       "server - HTTPS url",
-			benchmark:  Benchmark{Server: "https://1.1.1.1"},
-			wantServer: "https://1.1.1.1/dns-query",
+			name:         "server - HTTPS url",
+			benchmark:    Benchmark{Server: "https://1.1.1.1"},
+			assertServer: assertServerEqual("https://1.1.1.1/dns-query"),
 		},
 		{
-			name:       "server - HTTP url",
-			benchmark:  Benchmark{Server: "http://127.0.0.1"},
-			wantServer: "http://127.0.0.1/dns-query",
+			name:         "server - HTTP url",
+			benchmark:    Benchmark{Server: "http://127.0.0.1"},
+			assertServer: assertServerEqual("http://127.0.0.1/dns-query"),
 		},
 		{
-			name:       "server - custom HTTP url",
-			benchmark:  Benchmark{Server: "http://127.0.0.1/custom/dns-query"},
-			wantServer: "http://127.0.0.1/custom/dns-query",
+			name:         "server - custom HTTP url",
+			benchmark:    Benchmark{Server: "http://127.0.0.1/custom/dns-query"},
+			assertServer: assertServerEqual("http://127.0.0.1/custom/dns-query"),
 		},
 		{
-			name:       "server - QUIC url",
-			benchmark:  Benchmark{Server: "quic://dns.adguard-dns.com"},
-			wantServer: "dns.adguard-dns.com:853",
+			name:         "server - QUIC url",
+			benchmark:    Benchmark{Server: "quic://dns.adguard-dns.com"},
+			assertServer: assertServerEqual("dns.adguard-dns.com:853"),
 		},
 		{
-			name:       "server - QUIC url with port",
-			benchmark:  Benchmark{Server: "quic://localhost:853"},
-			wantServer: "localhost:853",
+			name:         "server - QUIC url with port",
+			benchmark:    Benchmark{Server: "quic://localhost:853"},
+			assertServer: assertServerEqual("localhost:853"),
 		},
 		{
 			name:      "count and duration specified at once",
@@ -84,9 +84,9 @@ func TestBenchmark_init(t *testing.T) {
 			wantErr:   true,
 		},
 		{
-			name:      "Missing server",
-			benchmark: Benchmark{},
-			wantErr:   true,
+			name:         "Missing server",
+			benchmark:    Benchmark{},
+			assertServer: assert.NotEmpty,
 		},
 		{
 			name:      "invalid format of ednsopt",
@@ -106,19 +106,19 @@ func TestBenchmark_init(t *testing.T) {
 		{
 			name:               "request log - default path",
 			benchmark:          Benchmark{Server: "8.8.8.8", RequestLogEnabled: true},
-			wantServer:         "8.8.8.8:53",
+			assertServer:       assertServerEqual("8.8.8.8:53"),
 			wantRequestLogPath: DefaultRequestLogPath,
 		},
 		{
 			name:                  "constant delay",
 			benchmark:             Benchmark{Server: "8.8.8.8", RequestDelay: "2s"},
-			wantServer:            "8.8.8.8:53",
+			assertServer:          assertServerEqual("8.8.8.8:53"),
 			wantRequestDelayStart: 2 * time.Second,
 		},
 		{
 			name:                  "random delay",
 			benchmark:             Benchmark{Server: "8.8.8.8", RequestDelay: "2s-3s"},
-			wantServer:            "8.8.8.8:53",
+			assertServer:          assertServerEqual("8.8.8.8:53"),
 			wantRequestDelayStart: 2 * time.Second,
 			wantRequestDelayEnd:   3 * time.Second,
 		},
@@ -134,11 +134,17 @@ func TestBenchmark_init(t *testing.T) {
 
 			require.Equal(t, tt.wantErr, err != nil)
 			if !tt.wantErr {
-				assert.Equal(t, tt.wantServer, tt.benchmark.Server)
+				tt.assertServer(t, tt.benchmark.Server)
 				assert.Equal(t, tt.wantRequestLogPath, tt.benchmark.RequestLogPath)
 				assert.Equal(t, tt.wantRequestDelayStart, tt.benchmark.requestDelayStart)
 				assert.Equal(t, tt.wantRequestDelayEnd, tt.benchmark.requestDelayEnd)
 			}
 		})
+	}
+}
+
+func assertServerEqual(server string) assert.ValueAssertionFunc {
+	return func(t assert.TestingT, val any, i2 ...interface{}) bool {
+		return assert.Equal(t, server, val, i2)
 	}
 }
