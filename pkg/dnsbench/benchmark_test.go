@@ -84,11 +84,6 @@ func TestBenchmark_init(t *testing.T) {
 			wantErr:   true,
 		},
 		{
-			name:      "Missing server",
-			benchmark: Benchmark{},
-			wantErr:   true,
-		},
-		{
 			name:      "invalid format of ednsopt",
 			benchmark: Benchmark{Server: "8.8.8.8", EdnsOpt: "test"},
 			wantErr:   true,
@@ -141,4 +136,11 @@ func TestBenchmark_init(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestBenchmark_init_emptyServer(t *testing.T) {
+	benchmark := Benchmark{}
+	err := benchmark.init()
+	require.NoError(t, err)
+	assert.NotEmpty(t, benchmark.Server)
 }

@@ -46,7 +46,8 @@ func init() {
 		"For plain DNS (either over UDP or TCP) the format is <IP/host>[:port], if port is not provided then port 53 is used. "+
 		"For DoT the format is <IP/host>[:port], if port is not provided then port 853 is used. "+
 		"For DoH the format is https://<IP/host>[:port][/path] or http://<IP/host>[:port][/path], if port is not provided then either 443 or 80 port is used. If no path is provided, then /dns-query is used. "+
-		"For DoQ the format is quic://<IP/host>[:port], if port is not provided then port 853 is used.").Short('s').Default("127.0.0.1").StringVar(&benchmark.Server)
+		"For DoQ the format is quic://<IP/host>[:port], if port is not provided then port 853 is used. "+
+		"If no server is provided, then system resolver is used or 127.0.0.1").Short('s').StringVar(&benchmark.Server)
 
 	pApp.Flag("type", "Query type. Repeatable flag. If multiple query types are specified then each query will be duplicated for each type.").
 		Short('t').Default("A").EnumsVar(&benchmark.Types, getSupportedDNSTypes()...)
