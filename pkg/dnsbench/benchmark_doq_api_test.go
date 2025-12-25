@@ -129,15 +129,15 @@ func (suite *DoQTestSuite) TestBenchmark_Run_separate_connections() {
 			defer cancel()
 			rs, err := bench.Run(ctx)
 
-			// stop right away to mitigate race detector failures
-			server.stop()
-
 			suite.Require().NoError(err, "expected no error from benchmark run")
 			suite.Require().Len(rs, 5)
 			for _, v := range rs {
 				suite.Empty(v.Errors)
 			}
+			mutex.Lock()
 			suite.Len(remoteAddrs, tt.wantNumberOfConnections)
+			mutex.Unlock()
+
 			suite.Equal(fmt.Sprintf("Using 1 hostnames\nBenchmarking %s via quic with 5 concurrent requests \n", server.addr), buf.String())
 		})
 	}
