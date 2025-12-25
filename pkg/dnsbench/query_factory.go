@@ -85,7 +85,7 @@ func dohQuery(b *Benchmark) queryFunc {
 	switch b.DohProtocol {
 	case HTTP3Proto:
 		// nolint:gosec
-		tr = &http3.RoundTripper{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
+		tr = &http3.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
 	case HTTP2Proto:
 		// nolint:gosec
 		tr = &http2.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}

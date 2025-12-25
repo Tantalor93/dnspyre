@@ -29,7 +29,7 @@ func TestDoQTestSuite(t *testing.T) {
 }
 
 func (suite *DoQTestSuite) TestBenchmark_Run() {
-	server := newDoQServer(func(_ quic.Connection, r *dns.Msg) *dns.Msg {
+	server := newDoQServer(func(_ *quic.Conn, r *dns.Msg) *dns.Msg {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -91,7 +91,7 @@ func (suite *DoQTestSuite) TestBenchmark_Run_separate_connections() {
 			mutex := sync.Mutex{}
 			remoteAddrs := make(map[string]int)
 
-			server := newDoQServer(func(c quic.Connection, r *dns.Msg) *dns.Msg {
+			server := newDoQServer(func(c *quic.Conn, r *dns.Msg) *dns.Msg {
 				mutex.Lock()
 				remoteAddrs[c.RemoteAddr().String()]++
 				mutex.Unlock()
@@ -144,7 +144,7 @@ func (suite *DoQTestSuite) TestBenchmark_Run_separate_connections() {
 }
 
 func (suite *DoQTestSuite) TestBenchmark_Run_truncated() {
-	server := newDoQServer(func(_ quic.Connection, r *dns.Msg) *dns.Msg {
+	server := newDoQServer(func(_ *quic.Conn, r *dns.Msg) *dns.Msg {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
 		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
@@ -188,7 +188,7 @@ func (suite *DoQTestSuite) TestBenchmark_Run_truncated() {
 }
 
 func (suite *DoQTestSuite) TestBenchmark_Run_error() {
-	server := newDoQServer(func(_ quic.Connection, _ *dns.Msg) *dns.Msg {
+	server := newDoQServer(func(_ *quic.Conn, _ *dns.Msg) *dns.Msg {
 		return nil
 	})
 	server.start()
@@ -224,7 +224,7 @@ func (suite *DoQTestSuite) TestBenchmark_Run_error() {
 	suite.EqualValues(2, rs[1].Counters.IOError, "there should be errors")
 }
 
-type doqHandler func(conn quic.Connection, req *dns.Msg) *dns.Msg
+type doqHandler func(conn *quic.Conn, req *dns.Msg) *dns.Msg
 
 // doqServer is a DoQ test DNS server.
 type doqServer struct {
