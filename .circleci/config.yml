@@ -3,7 +3,21 @@ version: 2.1
 orbs:
   codecov: codecov/codecov@5.0.3
 jobs:
-  build:
+  build-matrix:
+    parameters:
+      os:
+        type: string
+      arch:
+        type: string
+    docker:
+      - image: cimg/go:1.24
+    steps:
+      - checkout
+      - run:
+          name: Build for << parameters.os >> / << parameters.arch >>
+          command: |
+            GOOS=<< parameters.os >> GOARCH=<< parameters.arch >> go build -v -o ./bin/dnspyre-<< parameters.os >>-<< parameters.arch >>
+  tests:
     working_directory: ~/repo
     docker:
       - image: cimg/go:1.24
@@ -34,4 +48,12 @@ workflows:
   version: 2
   tests:
     jobs:
-    - build
+    - tests
+    - build-matrix:
+        matrix:
+          parameters:
+            os: [ "linux", "darwin", "windows"]
+            arch: [ "386", "amd64", "arm64" ]
+          exclude:
+            - os: "darwin"
+              arch: "386"
