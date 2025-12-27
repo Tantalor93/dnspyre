@@ -32,16 +32,17 @@ A high QPS DNS benchmark.
 
 Flags:
       --[no-]help              Show context-sensitive help (also try --help-long and --help-man).
-  -s, --server="127.0.0.1"     Server represents (plain DNS, DoT, DoH or DoQ) server, which will be benchmarked. Format depends on the
-                               DNS protocol, that should be used for DNS benchmark. For plain DNS (either over UDP or TCP) the format is
-                               <IP/host>[:port], if port is not provided then port 53 is used. For DoT the format is <IP/host>[:port],
-                               if port is not provided then port 853 is used. For DoH the format is https://<IP/host>[:port][/path] or
-                               http://<IP/host>[:port][/path], if port is not provided then either 443 or 80 port is used. If no path is
-                               provided, then /dns-query is used. For DoQ the format is quic://<IP/host>[:port], if port is not provided
-                               then port 853 is used.
-  -t, --type=A ...             Query type. Repeatable flag. If multiple query types are specified then each query will be duplicated for
-                               each type.
-  -n, --number=NUMBER          How many times the provided queries are repeated. Note that the total number of queries issued =
+  -s, --server=SERVER          Server represents (plain DNS, DoT, DoH or DoQ) server, which will be benchmarked. Format depends
+                               on the DNS protocol, that should be used for DNS benchmark. For plain DNS (either over UDP or
+                               TCP) the format is <IP/host>[:port], if port is not provided then port 53 is used. For DoT the
+                               format is <IP/host>[:port], if port is not provided then port 853 is used. For DoH the format is
+                               https://<IP/host>[:port][/path] or http://<IP/host>[:port][/path], if port is not provided then
+                               either 443 or 80 port is used. If no path is provided, then /dns-query is used. For DoQ the format
+                               is quic://<IP/host>[:port], if port is not provided then port 853 is used. If no server is provided,
+                               then system resolver is used or 127.0.0.1
+  -t, --type=A ...             Query type. Repeatable flag. If multiple query types are specified then each query will be duplicated
+                               for each type.
+  -n, --number=1               How many times the provided queries are repeated. Note that the total number of queries issued =
                                types*number*concurrency*len(queries).
   -c, --concurrency=1          Number of concurrent queries to issue.
   -l, --rate-limit=0           Apply a global questions / second rate limit.
@@ -49,9 +50,9 @@ Flags:
       --query-per-conn=0       Queries on a connection before creating a new one. 0: unlimited. Applicable for plain DNS and DoT,
                                this option is not considered for DoH or DoQ.
   -r, --[no-]recurse           Allow DNS recursion. Enabled by default.
-      --probability=1          Each provided hostname will be used with provided probability. Value 1 and above means that each hostname
-                               will be used by each concurrent benchmark goroutine. Useful for randomizing queries across benchmark
-                               goroutines.
+      --probability=1          Each provided hostname will be used with provided probability. Value 1 and above means that each
+                               hostname will be used by each concurrent benchmark goroutine. Useful for randomizing queries across
+                               benchmark goroutines.
       --ednsopt=""             code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal
                                string. code must be an arbitrary numeric value.
       --[no-]dnssec            Allow DNSSEC (sets DO bit for all DNS requests to 1)
@@ -99,8 +100,8 @@ Flags:
                                Randomized delay is configured as interval of two durations <GO duration>-<GO duration> (e.g. 1s-2s,
                                500ms-2s, etc.), where the actual delay is random value from the interval that is randomized after each
                                request.
-      --prometheus=:8080       Enables Prometheus metrics endpoint on the specified address. For example :8080 or localhost:8080. The endpoint is
-                               available at /metrics path.
+      --prometheus=:8080       Enables Prometheus metrics endpoint on the specified address. For example :8080 or localhost:8080.
+                               The endpoint is available at /metrics path.
       --[no-]version           Show application version.
 
 Args:
