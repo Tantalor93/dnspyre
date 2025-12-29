@@ -11,7 +11,7 @@ require (
 	github.com/olekukonko/tablewriter v1.1.2
 	github.com/prometheus/client_golang v1.23.2
 	github.com/quic-go/quic-go v0.58.0
-	github.com/schollz/progressbar/v3 v3.18.0
+	github.com/schollz/progressbar/v3 v3.19.0
 	github.com/stretchr/testify v1.11.1
 	github.com/tantalor93/doh-go v0.4.0
 	github.com/tantalor93/doq-go v0.13.0
