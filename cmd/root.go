@@ -5,6 +5,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"runtime"
 	"runtime/debug"
 	"syscall"
 	"time"
@@ -31,6 +32,7 @@ var (
 	}
 
 	failConditions []string
+	cpuLimit       int
 )
 
 const (
@@ -169,6 +171,10 @@ func init() {
 	pApp.Flag("prometheus", "Enables Prometheus metrics endpoint on the specified address. For example :8080 or localhost:8080. The endpoint is available at /metrics path.").
 		PlaceHolder(":8080").StringVar(&benchmark.PrometheusMetricsAddr)
 
+	pApp.Flag("cpu-limit", "Number of CPU cores to use. Default is 0, which means use all available CPU cores. "+
+		"Setting this value limits the number of operating system threads that can execute user-level Go code simultaneously.").
+		Default("0").IntVar(&cpuLimit)
+
 	pApp.Arg("queries", "Queries to issue. It can be a local file referenced using @<file-path>, for example @data/2-domains. "+
 		"It can also be resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that "+
 		"case, the file will be downloaded and saved in-memory. "+
@@ -185,6 +191,20 @@ func init() {
 func Execute() {
 	pApp.Version(Version)
 	kingpin.MustParse(pApp.Parse(os.Args[1:]))
+
+	// Set CPU limit if specified
+	if cpuLimit > 0 {
+		numCPU := runtime.NumCPU()
+		if cpuLimit > numCPU {
+			printutils.ErrFprintf(os.Stderr, "Warning: CPU limit %d exceeds available CPUs %d, using all available CPUs\n", cpuLimit, numCPU)
+			runtime.GOMAXPROCS(numCPU)
+		} else {
+			runtime.GOMAXPROCS(cpuLimit)
+			if !benchmark.Silent && !benchmark.JSON {
+				printutils.NeutralFprintf(benchmark.Writer, "Using %d CPU core(s) out of %d available\n", cpuLimit, numCPU)
+			}
+		}
+	}
 
 	sigsInt := make(chan os.Signal, 8)
 	signal.Notify(sigsInt, syscall.SIGINT)
