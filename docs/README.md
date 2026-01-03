@@ -1,4 +1,16 @@
-# just-the-docs-template
+# dnspyre Documentation
+
+## Previewing documentation changes in Pull Requests
+
+When you create a pull request with changes to the documentation (files in the `docs/` directory), a GitHub Actions workflow will automatically:
+
+1. Build the Jekyll site with your changes
+2. Deploy a live preview to a unique URL
+3. Comment on your PR with a link to view the rendered documentation
+
+This allows reviewers to see exactly how the documentation will look before merging.
+
+The preview will be automatically cleaned up when the PR is closed or merged.
 
 ## Building and previewing your site locally
 
