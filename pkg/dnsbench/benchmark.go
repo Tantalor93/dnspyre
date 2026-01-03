@@ -297,6 +297,14 @@ func (b *Benchmark) init() error {
 		return err
 	}
 
+	if b.CPULimit < 0 {
+		return errors.New("--cpu must not be negative")
+	}
+
+	if b.CPULimit > runtime.NumCPU() {
+		return fmt.Errorf("--cpu cannot exceed the number of available CPUs (%d)", runtime.NumCPU())
+	}
+
 	return nil
 }
 
