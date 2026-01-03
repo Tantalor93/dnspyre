@@ -33,7 +33,7 @@ jobs:
           working-directory: '${{ github.workspace }}/docs'
       
       - name: Build with Jekyll
-        run: bundle exec jekyll build --baseurl "/dnspyre"
+        run: bundle exec jekyll build --baseurl "/dnspyre/pr-previews/pr-${{ github.event.pull_request.number }}"
         env:
           JEKYLL_ENV: production
       

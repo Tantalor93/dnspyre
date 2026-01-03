@@ -20,7 +20,6 @@ jobs:
       - name: Cleanup preview deployment
         uses: rossjrw/pr-preview-action@v1
         with:
-          source-dir: docs/_site/
           preview-branch: gh-pages-preview
           umbrella-dir: pr-previews
           action: remove
