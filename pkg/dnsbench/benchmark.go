@@ -325,6 +325,17 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		log.SetOutput(file)
 	}
 
+	if b.CPULimit > 0 {
+		oldMaxProcs := runtime.GOMAXPROCS(b.CPULimit)
+		defer runtime.GOMAXPROCS(oldMaxProcs)
+
+		if !b.Silent && !b.JSON {
+			availableCPUs := runtime.NumCPU()
+			printutils.NeutralFprintf(b.Writer, "Using %s out of %s available CPUs\n",
+				printutils.HighlightSprint(b.CPULimit), printutils.HighlightSprint(availableCPUs))
+		}
+	}
+
 	if len(b.PrometheusMetricsAddr) != 0 {
 		// nolint:gosec
 		server := http.Server{
@@ -380,18 +391,6 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		network := b.network()
 		printutils.NeutralFprintf(b.Writer, "Benchmarking %s via %s with %s concurrent requests %s\n",
 			printutils.HighlightSprint(b.Server), printutils.HighlightSprint(network), printutils.HighlightSprint(b.Concurrency), limits)
-	}
-
-	// Apply CPU limit if configured
-	if b.CPULimit > 0 {
-		oldMaxProcs := runtime.GOMAXPROCS(b.CPULimit)
-		defer runtime.GOMAXPROCS(oldMaxProcs)
-		
-		if !b.Silent && !b.JSON {
-			availableCPUs := runtime.NumCPU()
-			printutils.NeutralFprintf(b.Writer, "Using %s out of %s available CPUs\n",
-				printutils.HighlightSprint(b.CPULimit), printutils.HighlightSprint(availableCPUs))
-		}
 	}
 
 	var bar *progressbar.ProgressBar
