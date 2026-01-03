@@ -316,12 +316,6 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		return nil, err
 	}
 
-	// Apply CPU limit if configured
-	if b.CPULimit > 0 {
-		oldMaxProcs := runtime.GOMAXPROCS(b.CPULimit)
-		defer runtime.GOMAXPROCS(oldMaxProcs)
-	}
-
 	if b.RequestLogEnabled {
 		file, err := os.OpenFile(b.RequestLogPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
 		if err != nil {
@@ -388,10 +382,16 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 			printutils.HighlightSprint(b.Server), printutils.HighlightSprint(network), printutils.HighlightSprint(b.Concurrency), limits)
 	}
 
-	if !b.Silent && !b.JSON && b.CPULimit > 0 {
-		availableCPUs := runtime.NumCPU()
-		printutils.NeutralFprintf(b.Writer, "Using %s out of %s available CPUs\n",
-			printutils.HighlightSprint(b.CPULimit), printutils.HighlightSprint(availableCPUs))
+	// Apply CPU limit if configured
+	if b.CPULimit > 0 {
+		oldMaxProcs := runtime.GOMAXPROCS(b.CPULimit)
+		defer runtime.GOMAXPROCS(oldMaxProcs)
+		
+		if !b.Silent && !b.JSON {
+			availableCPUs := runtime.NumCPU()
+			printutils.NeutralFprintf(b.Writer, "Using %s out of %s available CPUs\n",
+				printutils.HighlightSprint(b.CPULimit), printutils.HighlightSprint(availableCPUs))
+		}
 	}
 
 	var bar *progressbar.ProgressBar
