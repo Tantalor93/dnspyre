@@ -169,6 +169,10 @@ func init() {
 	pApp.Flag("prometheus", "Enables Prometheus metrics endpoint on the specified address. For example :8080 or localhost:8080. The endpoint is available at /metrics path.").
 		PlaceHolder(":8080").StringVar(&benchmark.PrometheusMetricsAddr)
 
+	pApp.Flag("cpu-limit", "Limits the number of operating system threads that can execute user-level Go code simultaneously. "+
+		"When set to a value > 0, it limits CPU cores used by the benchmark. When set to 0 (default), no limit is applied and all available CPU cores can be used.").
+		Default("0").IntVar(&benchmark.CPULimit)
+
 	pApp.Arg("queries", "Queries to issue. It can be a local file referenced using @<file-path>, for example @data/2-domains. "+
 		"It can also be resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that "+
 		"case, the file will be downloaded and saved in-memory. "+

@@ -824,3 +824,40 @@ func (suite *PlainDNSTestSuite) TestBenchmark_RandomRequestDelay() {
 	assertResult(suite.T(), rs)
 	suite.InDelta(4*time.Second, benchDuration, float64(2*time.Second))
 }
+
+func (suite *PlainDNSTestSuite) TestBenchmark_CPULimit() {
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         s.Addr,
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		CPULimit:       1,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	rs, err := bench.Run(ctx)
+
+	suite.Require().NoError(err, "expected no error from benchmark run")
+	assertResult(suite.T(), rs)
+}
+

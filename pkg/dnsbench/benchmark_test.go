@@ -148,3 +148,41 @@ func assertServerEqual(server string) assert.ValueAssertionFunc {
 		return assert.Equal(t, server, val, i2)
 	}
 }
+
+func TestBenchmark_CPULimit(t *testing.T) {
+	tests := []struct {
+		name     string
+		cpuLimit int
+	}{
+		{
+			name:     "CPU limit set to 1",
+			cpuLimit: 1,
+		},
+		{
+			name:     "CPU limit set to 2",
+			cpuLimit: 2,
+		},
+		{
+			name:     "CPU limit not set (0)",
+			cpuLimit: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			benchmark := Benchmark{
+				Server:     "8.8.8.8",
+				CPULimit:   tt.cpuLimit,
+				Queries:    []string{"example.com"},
+				Types:      []string{"A"},
+				Count:      1,
+				Concurrency: 1,
+			}
+
+			// Just verify that initialization succeeds with CPU limit set
+			err := benchmark.init()
+			require.NoError(t, err)
+		})
+	}
+}
+

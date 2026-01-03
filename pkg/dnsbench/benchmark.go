@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -215,6 +216,11 @@ type Benchmark struct {
 	// PrometheusMetricsAddr configures address for Prometheus metrics endpoint.
 	PrometheusMetricsAddr string
 
+	// CPULimit limits the number of operating system threads that can execute user-level Go code simultaneously.
+	// When set to a value > 0, it will call runtime.GOMAXPROCS() to limit CPU cores used by the benchmark.
+	// When set to 0, no limit is applied and all available CPU cores can be used.
+	CPULimit int
+
 	// internal variable so we do not have to parse the address with each request.
 	useDoH            bool
 	useQuic           bool
@@ -300,6 +306,12 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 
 	if err := b.init(); err != nil {
 		return nil, err
+	}
+
+	// Apply CPU limit if configured
+	if b.CPULimit > 0 {
+		oldMaxProcs := runtime.GOMAXPROCS(b.CPULimit)
+		defer runtime.GOMAXPROCS(oldMaxProcs)
 	}
 
 	if b.RequestLogEnabled {
