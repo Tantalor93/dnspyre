@@ -171,8 +171,8 @@ func init() {
 	pApp.Flag("prometheus", "Enables Prometheus metrics endpoint on the specified address. For example :8080 or localhost:8080. The endpoint is available at /metrics path.").
 		PlaceHolder(":8080").StringVar(&benchmark.PrometheusMetricsAddr)
 
-	pApp.Flag("cpu-limit", "Number of CPU cores to use. Default is 0, which means use all available CPU cores. "+
-		"Setting this value limits the number of operating system threads that can execute user-level Go code simultaneously.").
+	pApp.Flag("cpu-limit", "Maximum number of OS threads that can execute Go code simultaneously. Default is 0, which uses all available CPU cores. "+
+		"This effectively limits CPU usage to the specified number of cores.").
 		Default("0").IntVar(&cpuLimit)
 
 	pApp.Arg("queries", "Queries to issue. It can be a local file referenced using @<file-path>, for example @data/2-domains. "+
@@ -197,12 +197,13 @@ func Execute() {
 		numCPU := runtime.NumCPU()
 		if cpuLimit > numCPU {
 			printutils.ErrFprintf(os.Stderr, "Warning: CPU limit %d exceeds available CPUs %d, using all available CPUs\n", cpuLimit, numCPU)
-			runtime.GOMAXPROCS(numCPU)
+			cpuLimit = numCPU
+			runtime.GOMAXPROCS(cpuLimit)
 		} else {
 			runtime.GOMAXPROCS(cpuLimit)
-			if !benchmark.Silent && !benchmark.JSON {
-				printutils.NeutralFprintf(benchmark.Writer, "Using %d CPU core(s) out of %d available\n", cpuLimit, numCPU)
-			}
+		}
+		if !benchmark.Silent && !benchmark.JSON {
+			printutils.NeutralFprintf(benchmark.Writer, "Using %d CPU core(s) out of %d available\n", cpuLimit, numCPU)
 		}
 	}
 
