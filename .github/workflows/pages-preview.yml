@@ -11,6 +11,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  deployments: write
 
 jobs:
   # Build job
@@ -43,6 +44,14 @@ jobs:
           path: docs/_site/
           retention-days: 7
       
+      - name: Deploy to GitHub Pages Preview
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: docs/_site/
+          preview-branch: gh-pages-preview
+          umbrella-dir: pr-previews
+          action: auto
+      
       - name: Comment PR with preview info
         uses: actions/github-script@v7
         with:
@@ -50,22 +59,33 @@ jobs:
             const prNumber = context.issue.number;
             const runId = context.runId;
             const repo = context.repo;
+            const sha = context.sha.substring(0, 7);
+            
+            // Construct preview URL
+            const previewUrl = `https://${repo.owner}.github.io/${repo.repo}/pr-previews/pr-${prNumber}/`;
             
             const comment = `## 📄 Documentation Preview
             
             The documentation has been built successfully! 
             
-            You can download the preview artifact from the [workflow run](https://github.com/${repo.owner}/${repo.repo}/actions/runs/${runId}) to view the rendered pages locally.
+            ### 🌐 Live Preview
+            View the rendered documentation at: **${previewUrl}**
             
-            ### How to view the preview:
+            ### 📦 Alternative: Download Artifact
+            You can also download the preview artifact from the [workflow run](https://github.com/${repo.owner}/${repo.repo}/actions/runs/${runId}) to view locally.
+            
+            <details>
+            <summary>How to view the artifact locally</summary>
+            
             1. Download the \`jekyll-preview-${prNumber}\` artifact from the workflow run
             2. Extract the ZIP file
-            3. Open \`index.html\` in your browser to view the documentation
+            3. Serve it with a local web server (e.g., \`python3 -m http.server\` in the extracted directory)
+            4. Open \`http://localhost:8000\` in your browser
             
-            **Note:** Links may not work correctly when viewing locally. For full functionality, the site needs to be served with a local web server (e.g., \`python3 -m http.server\` in the extracted directory).
+            </details>
             
             ---
-            *This preview will be available for 7 days.*`;
+            *Preview updated for commit ${sha} • Available for 7 days*`;
             
             // Find existing comment
             const { data: comments } = await github.rest.issues.listComments({

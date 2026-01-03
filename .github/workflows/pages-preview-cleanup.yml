@@ -1,0 +1,43 @@
+# Workflow for cleaning up Jekyll site previews when PR is closed
+name: Cleanup Jekyll preview
+
+on:
+  pull_request:
+    types: [closed]
+    paths:
+      - "docs/**"
+
+# Sets permissions for the workflow
+permissions:
+  contents: write
+  pull-requests: write
+  deployments: write
+
+jobs:
+  cleanup-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cleanup preview deployment
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: docs/_site/
+          preview-branch: gh-pages-preview
+          umbrella-dir: pr-previews
+          action: remove
+      
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.issue.number;
+            
+            const comment = `## 🧹 Preview Cleanup
+            
+            The documentation preview for this PR has been removed.`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: comment
+            });
