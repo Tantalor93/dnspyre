@@ -169,7 +169,7 @@ func init() {
 	pApp.Flag("prometheus", "Enables Prometheus metrics endpoint on the specified address. For example :8080 or localhost:8080. The endpoint is available at /metrics path.").
 		PlaceHolder(":8080").StringVar(&benchmark.PrometheusMetricsAddr)
 
-	pApp.Flag("cpu-limit", "Limits the number of operating system threads that can execute user-level Go code simultaneously. "+
+	pApp.Flag("cpu", "Limits the number of operating system threads that can execute user-level Go code simultaneously. "+
 		"When set to a value > 0, it limits CPU cores used by the benchmark. When set to 0 (default), no limit is applied and all available CPU cores can be used.").
 		Default("0").IntVar(&benchmark.CPULimit)
 

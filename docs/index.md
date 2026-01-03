@@ -102,7 +102,7 @@ Flags:
                                request.
       --prometheus=:8080       Enables Prometheus metrics endpoint on the specified address. For example :8080 or localhost:8080.
                                The endpoint is available at /metrics path.
-      --cpu-limit=0            Limits the number of operating system threads that can execute user-level Go code simultaneously.
+      --cpu=0                  Limits the number of operating system threads that can execute user-level Go code simultaneously.
                                When set to a value > 0, it limits CPU cores used by the benchmark. When set to 0 (default), no limit
                                is applied and all available CPU cores can be used.
       --[no-]version           Show application version.

@@ -16,7 +16,7 @@ dnspyre -n 2 -c 10 --server 8.8.8.8 example.com
 
 ## CPU Limit
 
-By default, *dnspyre* uses all available CPU cores for the benchmark. You can limit the number of CPU cores used by the benchmark using the `--cpu-limit` flag.
+By default, *dnspyre* uses all available CPU cores for the benchmark. You can limit the number of CPU cores used by the benchmark using the `--cpu` flag.
 
 This can be useful when:
 - Running benchmarks on shared systems where you don't want to consume all CPU resources
@@ -26,10 +26,10 @@ This can be useful when:
 Example limiting the benchmark to use only 2 CPU cores:
 
 ```
-dnspyre -n 100 -c 10 --cpu-limit 2 --server 8.8.8.8 example.com
+dnspyre -n 100 -c 10 --cpu 2 --server 8.8.8.8 example.com
 ```
 
-When the `--cpu-limit` flag is specified, *dnspyre* will display the CPU limit information:
+When the `--cpu` flag is specified, *dnspyre* will display the CPU limit information:
 
 ```
 Using 1 hostnames
