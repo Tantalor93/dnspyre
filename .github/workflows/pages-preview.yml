@@ -1,0 +1,98 @@
+# Workflow for building Jekyll site preview on PRs
+name: Preview Jekyll site for PRs
+
+on:
+  pull_request:
+    paths:
+      - "docs/**"
+    types: [opened, synchronize, reopened]
+
+# Sets permissions for the workflow
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  # Build job
+  build-preview:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: docs
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          cache-version: 1
+          working-directory: '${{ github.workspace }}/docs'
+      
+      - name: Build with Jekyll
+        run: bundle exec jekyll build --baseurl "/dnspyre"
+        env:
+          JEKYLL_ENV: production
+      
+      - name: Upload preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jekyll-preview-${{ github.event.pull_request.number }}
+          path: docs/_site/
+          retention-days: 7
+      
+      - name: Comment PR with preview info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.issue.number;
+            const runId = context.runId;
+            const repo = context.repo;
+            
+            const comment = `## 📄 Documentation Preview
+            
+            The documentation has been built successfully! 
+            
+            You can download the preview artifact from the [workflow run](https://github.com/${repo.owner}/${repo.repo}/actions/runs/${runId}) to view the rendered pages locally.
+            
+            ### How to view the preview:
+            1. Download the \`jekyll-preview-${prNumber}\` artifact from the workflow run
+            2. Extract the ZIP file
+            3. Open \`index.html\` in your browser to view the documentation
+            
+            **Note:** Links may not work correctly when viewing locally. For full functionality, the site needs to be served with a local web server (e.g., \`python3 -m http.server\` in the extracted directory).
+            
+            ---
+            *This preview will be available for 7 days.*`;
+            
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: repo.owner,
+              repo: repo.repo,
+              issue_number: prNumber,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('## 📄 Documentation Preview')
+            );
+            
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: repo.owner,
+                repo: repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: repo.owner,
+                repo: repo.repo,
+                issue_number: prNumber,
+                body: comment
+              });
+            }
