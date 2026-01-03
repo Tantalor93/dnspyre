@@ -1,6 +1,7 @@
 package dnsbench
 
 import (
+	"runtime"
 	"testing"
 	"time"
 
@@ -136,6 +137,12 @@ func TestBenchmark_init(t *testing.T) {
 			name:      "CPU limit exceeds available CPUs",
 			benchmark: Benchmark{Server: "8.8.8.8", CPULimit: 9999},
 			wantErr:   true,
+		},
+		{
+			name:         "CPU limit equal to available CPUs",
+			benchmark:    Benchmark{Server: "8.8.8.8", CPULimit: runtime.NumCPU()},
+			assertServer: assertServerEqual("8.8.8.8:53"),
+			wantErr:      false,
 		},
 	}
 	for _, tt := range tests {
