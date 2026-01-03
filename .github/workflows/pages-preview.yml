@@ -37,13 +37,6 @@ jobs:
         env:
           JEKYLL_ENV: production
       
-      - name: Upload preview artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: jekyll-preview-${{ github.event.pull_request.number }}
-          path: docs/_site/
-          retention-days: 7
-      
       - name: Deploy to GitHub Pages Preview
         uses: rossjrw/pr-preview-action@v1
         with:
@@ -57,7 +50,6 @@ jobs:
         with:
           script: |
             const prNumber = context.issue.number;
-            const runId = context.runId;
             const repo = context.repo;
             const sha = context.sha.substring(0, 7);
             
@@ -68,24 +60,10 @@ jobs:
             
             The documentation has been built successfully! 
             
-            ### 🌐 Live Preview
             View the rendered documentation at: **${previewUrl}**
             
-            ### 📦 Alternative: Download Artifact
-            You can also download the preview artifact from the [workflow run](https://github.com/${repo.owner}/${repo.repo}/actions/runs/${runId}) to view locally.
-            
-            <details>
-            <summary>How to view the artifact locally</summary>
-            
-            1. Download the \`jekyll-preview-${prNumber}\` artifact from the workflow run
-            2. Extract the ZIP file
-            3. Serve it with a local web server (e.g., \`python3 -m http.server\` in the extracted directory)
-            4. Open \`http://localhost:8000\` in your browser
-            
-            </details>
-            
             ---
-            *Preview updated for commit ${sha} • Available for 7 days*`;
+            *Preview updated for commit ${sha}*`;
             
             // Find existing comment
             const { data: comments } = await github.rest.issues.listComments({
