@@ -380,6 +380,12 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 			printutils.HighlightSprint(b.Server), printutils.HighlightSprint(network), printutils.HighlightSprint(b.Concurrency), limits)
 	}
 
+	if !b.Silent && !b.JSON && b.CPULimit > 0 {
+		availableCPUs := runtime.NumCPU()
+		printutils.NeutralFprintf(b.Writer, "Using %s out of %s available CPUs\n",
+			printutils.HighlightSprint(b.CPULimit), printutils.HighlightSprint(availableCPUs))
+	}
+
 	var bar *progressbar.ProgressBar
 	var incrementBar bool
 	if repetitions := b.Count * int64(b.Concurrency) * int64(len(b.Types)) * int64(len(questions)); !b.Silent && b.ProgressBar && repetitions >= 100 {

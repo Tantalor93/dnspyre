@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"runtime"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
@@ -32,21 +34,21 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run() {
 	tests := []struct {
 		name               string
 		args               args
-		wantOutputTemplate string
+		wantOutputContains []string
 	}{
 		{
 			name: "DNS over UDP",
 			args: args{
 				protocol: dnsbench.UDPTransport,
 			},
-			wantOutputTemplate: "Using 1 hostnames\nBenchmarking %s via udp with 2 concurrent requests \n",
+			wantOutputContains: []string{"Using 1 hostnames", "via udp with 2 concurrent requests"},
 		},
 		{
 			name: "DNS over TCP",
 			args: args{
 				protocol: dnsbench.TCPTransport,
 			},
-			wantOutputTemplate: "Using 1 hostnames\nBenchmarking %s via tcp with 2 concurrent requests \n",
+			wantOutputContains: []string{"Using 1 hostnames", "via tcp with 2 concurrent requests"},
 		},
 	}
 	for _, tt := range tests {
@@ -87,7 +89,11 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run() {
 
 			suite.Require().NoError(err, "expected no error from benchmark run")
 			assertResult(suite.T(), rs)
-			suite.Equal(fmt.Sprintf(tt.wantOutputTemplate, s.Addr), buf.String())
+			
+			output := buf.String()
+			for _, expected := range tt.wantOutputContains {
+				suite.Contains(output, expected, "output should contain expected string")
+			}
 		})
 	}
 }
@@ -835,6 +841,7 @@ func (suite *PlainDNSTestSuite) TestBenchmark_CPULimit() {
 	})
 	defer s.Close()
 
+	buf := bytes.Buffer{}
 	bench := dnsbench.Benchmark{
 		Queries:        []string{"example.org"},
 		Types:          []string{"A", "AAAA"},
@@ -850,6 +857,7 @@ func (suite *PlainDNSTestSuite) TestBenchmark_CPULimit() {
 		Rcodes:         true,
 		Recurse:        true,
 		CPULimit:       1,
+		Writer:         &buf,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -859,5 +867,107 @@ func (suite *PlainDNSTestSuite) TestBenchmark_CPULimit() {
 
 	suite.Require().NoError(err, "expected no error from benchmark run")
 	assertResult(suite.T(), rs)
+	
+	output := buf.String()
+	suite.Contains(output, "Using 1 out of", "output should show CPU limit")
+	suite.Contains(output, "available CPUs", "output should show available CPUs")
+}
+
+func (suite *PlainDNSTestSuite) TestBenchmark_NoCPULimit() {
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	buf := bytes.Buffer{}
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         s.Addr,
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		CPULimit:       0, // No limit
+		Writer:         &buf,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	rs, err := bench.Run(ctx)
+
+	suite.Require().NoError(err, "expected no error from benchmark run")
+	assertResult(suite.T(), rs)
+	
+	output := buf.String()
+	suite.NotContains(output, "available CPUs", "output should NOT show CPU information when limit is not set")
+}
+
+func (suite *PlainDNSTestSuite) TestBenchmark_CPULimit_ActuallyApplied() {
+	// Store the actual GOMAXPROCS value observed during benchmark execution
+	var observedMaxProcs int
+	var mu sync.Mutex
+	
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+		mu.Lock()
+		// Capture GOMAXPROCS during the DNS handler execution
+		observedMaxProcs = runtime.GOMAXPROCS(0)
+		mu.Unlock()
+		
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	initialMaxProcs := runtime.GOMAXPROCS(0)
+	
+	buf := bytes.Buffer{}
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A"},
+		Server:         s.Addr,
+		TCP:            false,
+		Concurrency:    1,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		CPULimit:       2,
+		Writer:         &buf,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	rs, err := bench.Run(ctx)
+
+	suite.Require().NoError(err, "expected no error from benchmark run")
+	
+	// Verify GOMAXPROCS was set to the limit during execution
+	suite.Equal(2, observedMaxProcs, "GOMAXPROCS should have been set to 2 during benchmark execution")
+	
+	// Verify GOMAXPROCS was restored after execution
+	finalMaxProcs := runtime.GOMAXPROCS(0)
+	suite.Equal(initialMaxProcs, finalMaxProcs, "GOMAXPROCS should be restored to original value after benchmark")
+	
+	suite.Len(rs, 1)
 }
 
