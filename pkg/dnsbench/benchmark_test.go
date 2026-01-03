@@ -135,7 +135,7 @@ func TestBenchmark_init(t *testing.T) {
 		},
 		{
 			name:      "CPU limit exceeds available CPUs",
-			benchmark: Benchmark{Server: "8.8.8.8", CPULimit: 9999},
+			benchmark: Benchmark{Server: "8.8.8.8", CPULimit: runtime.NumCPU() + 1},
 			wantErr:   true,
 		},
 		{
