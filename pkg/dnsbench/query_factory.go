@@ -82,18 +82,51 @@ func dohQueryFactory(b *Benchmark) func() queryFunc {
 
 func dohQuery(b *Benchmark) queryFunc {
 	var tr http.RoundTripper
+
+	// Set up dialer with source IP if specified
+	var dialer *net.Dialer
+	if b.SourceIP != "" {
+		localAddr, err := net.ResolveTCPAddr("tcp", b.SourceIP+":0")
+		if err == nil {
+			dialer = &net.Dialer{
+				LocalAddr: localAddr,
+				Timeout:   b.ConnectTimeout,
+			}
+		}
+	}
+
 	switch b.DohProtocol {
 	case HTTP3Proto:
 		// nolint:gosec
+		// HTTP3 doesn't support custom dialer with source IP in a straightforward way
 		tr = &http3.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
 	case HTTP2Proto:
 		// nolint:gosec
-		tr = &http2.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
+		h2Transport := &http2.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
+		if dialer != nil {
+			h2Transport.DialTLS = func(network, addr string, cfg *tls.Config) (net.Conn, error) {
+				conn, err := dialer.Dial(network, addr)
+				if err != nil {
+					return nil, err
+				}
+				tlsConn := tls.Client(conn, cfg)
+				if err := tlsConn.Handshake(); err != nil {
+					conn.Close()
+					return nil, err
+				}
+				return tlsConn, nil
+			}
+		}
+		tr = h2Transport
 	case HTTP1Proto:
 		fallthrough
 	default:
 		// nolint:gosec
-		tr = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
+		h1Transport := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
+		if dialer != nil {
+			h1Transport.DialContext = dialer.DialContext
+		}
+		tr = h1Transport
 	}
 	c := http.Client{Transport: tr, Timeout: b.ReadTimeout}
 	dohClient := doh.NewClient(b.Server, doh.WithHTTPClient(&c))
@@ -128,7 +161,7 @@ func getDNSClient(b *Benchmark) *dns.Client {
 		network = TLSTransport
 	}
 
-	return &dns.Client{
+	client := &dns.Client{
 		Net:          network,
 		DialTimeout:  b.ConnectTimeout,
 		WriteTimeout: b.WriteTimeout,
@@ -137,4 +170,27 @@ func getDNSClient(b *Benchmark) *dns.Client {
 		// nolint:gosec
 		TLSConfig: &tls.Config{InsecureSkipVerify: b.Insecure},
 	}
+
+	// Set up custom dialer if source IP is specified
+	if b.SourceIP != "" {
+		// Determine which address type to use based on network
+		var localAddr net.Addr
+		var err error
+		
+		if network == UDPTransport {
+			localAddr, err = net.ResolveUDPAddr("udp", b.SourceIP+":0")
+		} else {
+			// For TCP and TLS (tcp-tls), use TCP address
+			localAddr, err = net.ResolveTCPAddr("tcp", b.SourceIP+":0")
+		}
+		
+		if err == nil {
+			client.Dialer = &net.Dialer{
+				LocalAddr: localAddr,
+				Timeout:   b.ConnectTimeout,
+			}
+		}
+	}
+
+	return client
 }

@@ -824,3 +824,75 @@ func (suite *PlainDNSTestSuite) TestBenchmark_RandomRequestDelay() {
 	assertResult(suite.T(), rs)
 	suite.InDelta(4*time.Second, benchDuration, float64(2*time.Second))
 }
+
+func (suite *PlainDNSTestSuite) TestBenchmark_SourceIP() {
+	type args struct {
+		protocol string
+		sourceIP string
+	}
+	tests := []struct {
+		name               string
+		args               args
+		wantOutputTemplate string
+	}{
+		{
+			name: "DNS over UDP with source IP loopback",
+			args: args{
+				protocol: dnsbench.UDPTransport,
+				sourceIP: "127.0.0.1",
+			},
+			wantOutputTemplate: "Using 1 hostnames\nBenchmarking %s via udp with 2 concurrent requests \n",
+		},
+		{
+			name: "DNS over TCP with source IP loopback",
+			args: args{
+				protocol: dnsbench.TCPTransport,
+				sourceIP: "127.0.0.1",
+			},
+			wantOutputTemplate: "Using 1 hostnames\nBenchmarking %s via tcp with 2 concurrent requests \n",
+		},
+	}
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			s := NewServer(tt.args.protocol, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+				ret := new(dns.Msg)
+				ret.SetReply(r)
+				ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+				// wait some time to actually have some observable duration
+				time.Sleep(time.Millisecond * 500)
+
+				w.WriteMsg(ret)
+			})
+			defer s.Close()
+
+			buf := bytes.Buffer{}
+			bench := dnsbench.Benchmark{
+				Queries:        []string{"example.org"},
+				Types:          []string{"A", "AAAA"},
+				Server:         s.Addr,
+				TCP:            tt.args.protocol == dnsbench.TCPTransport,
+				SourceIP:       tt.args.sourceIP,
+				Concurrency:    2,
+				Count:          1,
+				Probability:    1,
+				WriteTimeout:   1 * time.Second,
+				ReadTimeout:    3 * time.Second,
+				ConnectTimeout: 1 * time.Second,
+				RequestTimeout: 5 * time.Second,
+				Rcodes:         true,
+				Recurse:        true,
+				Writer:         &buf,
+			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			rs, err := bench.Run(ctx)
+
+			suite.Require().NoError(err, "expected no error from benchmark run")
+			assertResult(suite.T(), rs)
+			suite.Equal(fmt.Sprintf(tt.wantOutputTemplate, s.Addr), buf.String())
+		})
+	}
+}
+

@@ -215,6 +215,10 @@ type Benchmark struct {
 	// PrometheusMetricsAddr configures address for Prometheus metrics endpoint.
 	PrometheusMetricsAddr string
 
+	// SourceIP specifies the source IP address to use for outgoing DNS requests.
+	// If empty, the default network interface and source IP will be used.
+	SourceIP string
+
 	// internal variable so we do not have to parse the address with each request.
 	useDoH            bool
 	useQuic           bool
