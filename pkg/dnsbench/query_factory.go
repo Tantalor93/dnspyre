@@ -14,6 +14,11 @@ import (
 	"golang.org/x/net/http2"
 )
 
+const (
+	// sourcePortWildcard is used to specify any available source port (0 = let OS choose)
+	sourcePortWildcard = ":0"
+)
+
 func workerQueryFactory(b *Benchmark) func() queryFunc {
 	switch {
 	case b.useDoH:
@@ -87,7 +92,7 @@ func dohQuery(b *Benchmark) queryFunc {
 	// Set up dialer with source IP if specified
 	var dialer *net.Dialer
 	if b.SourceIP != "" {
-		localAddr, err := net.ResolveTCPAddr("tcp", b.SourceIP+":0")
+		localAddr, err := net.ResolveTCPAddr("tcp", b.SourceIP+sourcePortWildcard)
 		if err != nil {
 			// This should not happen as source IP is validated in init()
 			log.Printf("Warning: failed to resolve source IP %s for DoH: %v", b.SourceIP, err)
@@ -102,7 +107,7 @@ func dohQuery(b *Benchmark) queryFunc {
 	switch b.DohProtocol {
 	case HTTP3Proto:
 		// nolint:gosec
-		// HTTP3 doesn't support custom dialer with source IP in a straightforward way
+		// HTTP/3 doesn't support custom dialer with source IP in a straightforward way
 		tr = &http3.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
 	case HTTP2Proto:
 		// nolint:gosec
@@ -183,10 +188,10 @@ func getDNSClient(b *Benchmark) *dns.Client {
 		var err error
 		
 		if network == UDPTransport {
-			localAddr, err = net.ResolveUDPAddr("udp", b.SourceIP+":0")
+			localAddr, err = net.ResolveUDPAddr("udp", b.SourceIP+sourcePortWildcard)
 		} else {
 			// For TCP and TLS (tcp-tls), use TCP address
-			localAddr, err = net.ResolveTCPAddr("tcp", b.SourceIP+":0")
+			localAddr, err = net.ResolveTCPAddr("tcp", b.SourceIP+sourcePortWildcard)
 		}
 		
 		if err != nil {
