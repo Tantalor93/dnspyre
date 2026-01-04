@@ -3,6 +3,7 @@ package dnsbench
 import (
 	"context"
 	"crypto/tls"
+	"log"
 	"net"
 	"net/http"
 
@@ -87,7 +88,10 @@ func dohQuery(b *Benchmark) queryFunc {
 	var dialer *net.Dialer
 	if b.SourceIP != "" {
 		localAddr, err := net.ResolveTCPAddr("tcp", b.SourceIP+":0")
-		if err == nil {
+		if err != nil {
+			// This should not happen as source IP is validated in init()
+			log.Printf("Warning: failed to resolve source IP %s for DoH: %v", b.SourceIP, err)
+		} else {
 			dialer = &net.Dialer{
 				LocalAddr: localAddr,
 				Timeout:   b.ConnectTimeout,
@@ -185,7 +189,10 @@ func getDNSClient(b *Benchmark) *dns.Client {
 			localAddr, err = net.ResolveTCPAddr("tcp", b.SourceIP+":0")
 		}
 		
-		if err == nil {
+		if err != nil {
+			// This should not happen as source IP is validated in init()
+			log.Printf("Warning: failed to resolve source IP %s for DNS: %v", b.SourceIP, err)
+		} else {
 			client.Dialer = &net.Dialer{
 				LocalAddr: localAddr,
 				Timeout:   b.ConnectTimeout,
