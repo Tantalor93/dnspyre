@@ -215,6 +215,10 @@ type Benchmark struct {
 	// PrometheusMetricsAddr configures address for Prometheus metrics endpoint.
 	PrometheusMetricsAddr string
 
+	// SourceIP specifies the source IP address to use for outgoing DNS requests.
+	// If empty, the default network interface and source IP will be used.
+	SourceIP string
+
 	// internal variable so we do not have to parse the address with each request.
 	useDoH            bool
 	useQuic           bool
@@ -285,6 +289,13 @@ func (b *Benchmark) init() error {
 
 	if b.RequestLogEnabled && len(b.RequestLogPath) == 0 {
 		b.RequestLogPath = DefaultRequestLogPath
+	}
+
+	if b.SourceIP != "" {
+		// Validate the source IP address can be parsed
+		if ip := net.ParseIP(b.SourceIP); ip == nil {
+			return fmt.Errorf("--source-ip is not a valid IP address: %s", b.SourceIP)
+		}
 	}
 
 	if err := b.parseRequestDelay(); err != nil {

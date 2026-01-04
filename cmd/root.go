@@ -169,6 +169,9 @@ func init() {
 	pApp.Flag("prometheus", "Enables Prometheus metrics endpoint on the specified address. For example :8080 or localhost:8080. The endpoint is available at /metrics path.").
 		PlaceHolder(":8080").StringVar(&benchmark.PrometheusMetricsAddr)
 
+	pApp.Flag("source-ip", "Source IP address to use for outgoing DNS requests. If not specified, the default network interface and source IP will be used.").
+		PlaceHolder("192.0.2.1").StringVar(&benchmark.SourceIP)
+
 	pApp.Arg("queries", "Queries to issue. It can be a local file referenced using @<file-path>, for example @data/2-domains. "+
 		"It can also be resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that "+
 		"case, the file will be downloaded and saved in-memory. "+

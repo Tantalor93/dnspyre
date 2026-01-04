@@ -3,6 +3,7 @@ package dnsbench
 import (
 	"context"
 	"crypto/tls"
+	"log"
 	"net"
 	"net/http"
 
@@ -11,6 +12,11 @@ import (
 	"github.com/tantalor93/doh-go/doh"
 	"github.com/tantalor93/doq-go/doq"
 	"golang.org/x/net/http2"
+)
+
+const (
+	// sourcePortWildcard is used to specify any available source port (0 = let OS choose)
+	sourcePortWildcard = ":0"
 )
 
 func workerQueryFactory(b *Benchmark) func() queryFunc {
@@ -82,18 +88,55 @@ func dohQueryFactory(b *Benchmark) func() queryFunc {
 
 func dohQuery(b *Benchmark) queryFunc {
 	var tr http.RoundTripper
+
+	// Set up dialer with source IP if specified
+	var dialer *net.Dialer
+	if b.SourceIP != "" {
+		localAddr, err := net.ResolveTCPAddr("tcp", b.SourceIP+sourcePortWildcard)
+		if err != nil {
+			// This should not happen as source IP is validated in init()
+			log.Printf("Warning: failed to resolve source IP %s for DoH: %v", b.SourceIP, err)
+		} else {
+			dialer = &net.Dialer{
+				LocalAddr: localAddr,
+				Timeout:   b.ConnectTimeout,
+			}
+		}
+	}
+
 	switch b.DohProtocol {
 	case HTTP3Proto:
 		// nolint:gosec
+		// HTTP/3 doesn't support custom dialer with source IP in a straightforward way
 		tr = &http3.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
 	case HTTP2Proto:
 		// nolint:gosec
-		tr = &http2.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
+		h2Transport := &http2.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
+		if dialer != nil {
+			h2Transport.DialTLS = func(network, addr string, cfg *tls.Config) (net.Conn, error) {
+				// Use "tcp" network for the underlying connection
+				conn, err := dialer.Dial("tcp", addr)
+				if err != nil {
+					return nil, err
+				}
+				tlsConn := tls.Client(conn, cfg)
+				if err := tlsConn.Handshake(); err != nil {
+					conn.Close()
+					return nil, err
+				}
+				return tlsConn, nil
+			}
+		}
+		tr = h2Transport
 	case HTTP1Proto:
 		fallthrough
 	default:
 		// nolint:gosec
-		tr = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
+		h1Transport := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
+		if dialer != nil {
+			h1Transport.DialContext = dialer.DialContext
+		}
+		tr = h1Transport
 	}
 	c := http.Client{Transport: tr, Timeout: b.ReadTimeout}
 	dohClient := doh.NewClient(b.Server, doh.WithHTTPClient(&c))
@@ -128,7 +171,7 @@ func getDNSClient(b *Benchmark) *dns.Client {
 		network = TLSTransport
 	}
 
-	return &dns.Client{
+	client := &dns.Client{
 		Net:          network,
 		DialTimeout:  b.ConnectTimeout,
 		WriteTimeout: b.WriteTimeout,
@@ -137,4 +180,30 @@ func getDNSClient(b *Benchmark) *dns.Client {
 		// nolint:gosec
 		TLSConfig: &tls.Config{InsecureSkipVerify: b.Insecure},
 	}
+
+	// Set up custom dialer if source IP is specified
+	if b.SourceIP != "" {
+		// Determine which address type to use based on network
+		var localAddr net.Addr
+		var err error
+		
+		if network == UDPTransport {
+			localAddr, err = net.ResolveUDPAddr("udp", b.SourceIP+sourcePortWildcard)
+		} else {
+			// For TCP and TLS (tcp-tls), use TCP address
+			localAddr, err = net.ResolveTCPAddr("tcp", b.SourceIP+sourcePortWildcard)
+		}
+		
+		if err != nil {
+			// This should not happen as source IP is validated in init()
+			log.Printf("Warning: failed to resolve source IP %s for DNS: %v", b.SourceIP, err)
+		} else {
+			client.Dialer = &net.Dialer{
+				LocalAddr: localAddr,
+				Timeout:   b.ConnectTimeout,
+			}
+		}
+	}
+
+	return client
 }
