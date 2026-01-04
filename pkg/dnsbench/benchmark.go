@@ -291,6 +291,13 @@ func (b *Benchmark) init() error {
 		b.RequestLogPath = DefaultRequestLogPath
 	}
 
+	if b.SourceIP != "" {
+		// Validate the source IP address can be parsed
+		if ip := net.ParseIP(b.SourceIP); ip == nil {
+			return fmt.Errorf("--source-ip is not a valid IP address: %s", b.SourceIP)
+		}
+	}
+
 	if err := b.parseRequestDelay(); err != nil {
 		return err
 	}

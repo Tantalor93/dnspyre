@@ -132,6 +132,11 @@ func TestBenchmark_init(t *testing.T) {
 			benchmark:    Benchmark{Server: "8.8.8.8", SourceIP: "192.0.2.1"},
 			assertServer: assertServerEqual("8.8.8.8:53"),
 		},
+		{
+			name:      "invalid source IP",
+			benchmark: Benchmark{Server: "8.8.8.8", SourceIP: "not-an-ip"},
+			wantErr:   true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

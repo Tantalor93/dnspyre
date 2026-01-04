@@ -105,7 +105,8 @@ func dohQuery(b *Benchmark) queryFunc {
 		h2Transport := &http2.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: b.Insecure}}
 		if dialer != nil {
 			h2Transport.DialTLS = func(network, addr string, cfg *tls.Config) (net.Conn, error) {
-				conn, err := dialer.Dial(network, addr)
+				// Use "tcp" network for the underlying connection
+				conn, err := dialer.Dial("tcp", addr)
 				if err != nil {
 					return nil, err
 				}
