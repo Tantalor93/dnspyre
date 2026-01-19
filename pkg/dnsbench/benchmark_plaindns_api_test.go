@@ -238,6 +238,193 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_edns0_ednsopt() {
 	assertResult(suite.T(), rs)
 }
 
+func (suite *PlainDNSTestSuite) TestBenchmark_Run_ecs() {
+	testCIDR := "192.0.2.0/24"
+
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+		opt := r.IsEdns0()
+		if suite.NotNil(opt) {
+			expectedECS := false
+			for _, v := range opt.Option {
+				if v.Option() == dns.EDNS0SUBNET {
+					if subnetOpt, ok := v.(*dns.EDNS0_SUBNET); ok {
+						suite.Equal(uint16(1), subnetOpt.Family) // IPv4
+						suite.Equal(uint8(24), subnetOpt.SourceNetmask)
+						suite.Equal(uint8(0), subnetOpt.SourceScope)
+						suite.Equal("192.0.2.0", subnetOpt.Address.String())
+						expectedECS = true
+					}
+				}
+			}
+			suite.True(expectedECS, "ECS option should be present in the request")
+		}
+
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.SetEdns0(dnsbench.DefaultEdns0BufferSize, false)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 500)
+
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         s.Addr,
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		Ecs:            testCIDR,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	suite.Require().NoError(err, "expected no error from benchmark run")
+	assertResult(suite.T(), rs)
+}
+
+func (suite *PlainDNSTestSuite) TestBenchmark_Run_ecs_ipv6() {
+	testCIDR := "2001:db8::/32"
+
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+		opt := r.IsEdns0()
+		if suite.NotNil(opt) {
+			expectedECS := false
+			for _, v := range opt.Option {
+				if v.Option() == dns.EDNS0SUBNET {
+					if subnetOpt, ok := v.(*dns.EDNS0_SUBNET); ok {
+						suite.Equal(uint16(2), subnetOpt.Family) // IPv6
+						suite.Equal(uint8(32), subnetOpt.SourceNetmask)
+						suite.Equal(uint8(0), subnetOpt.SourceScope)
+						suite.Equal("2001:db8::", subnetOpt.Address.String())
+						expectedECS = true
+					}
+				}
+			}
+			suite.True(expectedECS, "ECS option should be present in the request")
+		}
+
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.SetEdns0(dnsbench.DefaultEdns0BufferSize, false)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 500)
+
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         s.Addr,
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		Ecs:            testCIDR,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	suite.Require().NoError(err, "expected no error from benchmark run")
+	assertResult(suite.T(), rs)
+}
+
+func (suite *PlainDNSTestSuite) TestBenchmark_Run_ecs_and_ednsopt() {
+	testCIDR := "192.0.2.0/24"
+	testOpt := uint16(65518)
+	testOptData := "test"
+	testHexOptData := hex.EncodeToString([]byte(testOptData))
+
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+		opt := r.IsEdns0()
+		if suite.NotNil(opt) {
+			expectedECS := false
+			expectedCustomOpt := false
+			
+			for _, v := range opt.Option {
+				if v.Option() == dns.EDNS0SUBNET {
+					if subnetOpt, ok := v.(*dns.EDNS0_SUBNET); ok {
+						suite.Equal(uint16(1), subnetOpt.Family) // IPv4
+						suite.Equal(uint8(24), subnetOpt.SourceNetmask)
+						suite.Equal("192.0.2.0", subnetOpt.Address.String())
+						expectedECS = true
+					}
+				}
+				if v.Option() == testOpt {
+					if localOpt, ok := v.(*dns.EDNS0_LOCAL); ok {
+						suite.Equal(testOptData, string(localOpt.Data))
+						expectedCustomOpt = true
+					}
+				}
+			}
+			
+			suite.True(expectedECS, "ECS option should be present in the request")
+			suite.True(expectedCustomOpt, "Custom EDNS option should be present in the request")
+		}
+
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.SetEdns0(dnsbench.DefaultEdns0BufferSize, false)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 500)
+
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         s.Addr,
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		Ecs:            testCIDR,
+		EdnsOpt:        strconv.Itoa(int(testOpt)) + ":" + testHexOptData,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	suite.Require().NoError(err, "expected no error from benchmark run")
+	assertResult(suite.T(), rs)
+}
+
 func (suite *PlainDNSTestSuite) TestBenchmark_Run_probability() {
 	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
