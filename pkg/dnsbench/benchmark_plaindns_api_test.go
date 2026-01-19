@@ -365,7 +365,7 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_ecs_and_ednsopt() {
 		if suite.NotNil(opt) {
 			expectedECS := false
 			expectedCustomOpt := false
-			
+
 			for _, v := range opt.Option {
 				if v.Option() == dns.EDNS0SUBNET {
 					if subnetOpt, ok := v.(*dns.EDNS0_SUBNET); ok {
@@ -382,7 +382,7 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_ecs_and_ednsopt() {
 					}
 				}
 			}
-			
+
 			suite.True(expectedECS, "ECS option should be present in the request")
 			suite.True(expectedCustomOpt, "Custom EDNS option should be present in the request")
 		}
