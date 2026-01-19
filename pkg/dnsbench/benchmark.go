@@ -131,6 +131,10 @@ type Benchmark struct {
 	// code must be an arbitrary numeric value.
 	EdnsOpt string
 
+	// Ecs specifies EDNS Client Subnet option in CIDR notation (e.g., "192.0.2.0/24" or "2001:db8::/32").
+	// This is a more user-friendly alternative to using EdnsOpt for ECS.
+	Ecs string
+
 	// DNSSEC Allow DNSSEC (sets DO bit for all DNS requests to 1)
 	DNSSEC bool
 
@@ -281,6 +285,16 @@ func (b *Benchmark) init() error {
 		if err != nil {
 			return errors.New("--ednsopt is not in correct format, code is not a decimal number")
 		}
+	}
+
+	if len(b.Ecs) != 0 {
+		if _, err := parseECS(b.Ecs); err != nil {
+			return fmt.Errorf("--ecs is not in correct format: %w", err)
+		}
+	}
+
+	if len(b.EdnsOpt) != 0 && len(b.Ecs) != 0 {
+		return errors.New("--ednsopt and --ecs cannot be used together")
 	}
 
 	if b.RequestLogEnabled && len(b.RequestLogPath) == 0 {
@@ -461,6 +475,12 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 						if ednsOpt := b.EdnsOpt; len(ednsOpt) > 0 {
 							addEdnsOpt(&req, ednsOpt)
 						}
+						if ecs := b.Ecs; len(ecs) > 0 {
+							if err := addECS(&req, ecs); err != nil {
+								// This shouldn't happen as validation is done earlier, but handle it just in case
+								log.Printf("Failed to add ECS option: %v", err)
+							}
+						}
 						if b.DNSSEC {
 							edns0 := req.IsEdns0()
 							if edns0 == nil {
@@ -596,6 +616,50 @@ func addEdnsOpt(m *dns.Msg, ednsOpt string) {
 	data, _ := hex.DecodeString(s[1])
 	code, _ := strconv.ParseUint(s[0], 10, 16)
 	o.Option = append(o.Option, &dns.EDNS0_LOCAL{Code: uint16(code), Data: data})
+}
+
+// parseECS parses CIDR notation (e.g., "192.0.2.0/24" or "2001:db8::/32") and returns an EDNS0_SUBNET option.
+func parseECS(cidr string) (*dns.EDNS0_SUBNET, error) {
+	ip, ipnet, err := net.ParseCIDR(cidr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid CIDR notation: %w", err)
+	}
+
+	subnet := &dns.EDNS0_SUBNET{
+		Code:        dns.EDNS0SUBNET,
+		SourceScope: 0,
+	}
+
+	// Determine if IPv4 or IPv6
+	if ip.To4() != nil {
+		subnet.Family = 1 // IPv4
+		subnet.Address = ip.To4()
+	} else {
+		subnet.Family = 2 // IPv6
+		subnet.Address = ip.To16()
+	}
+
+	// Get the netmask size
+	ones, _ := ipnet.Mask.Size()
+	subnet.SourceNetmask = uint8(ones)
+
+	return subnet, nil
+}
+
+// addECS adds an EDNS Client Subnet option to the DNS message.
+func addECS(m *dns.Msg, ecs string) error {
+	subnet, err := parseECS(ecs)
+	if err != nil {
+		return err
+	}
+
+	o := m.IsEdns0()
+	if o == nil {
+		m.SetEdns0(DefaultEdns0BufferSize, false)
+		o = m.IsEdns0()
+	}
+	o.Option = append(o.Option, subnet)
+	return nil
 }
 
 func (b *Benchmark) addPortIfMissing() {
