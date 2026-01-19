@@ -104,6 +104,31 @@ func TestBenchmark_init(t *testing.T) {
 			wantErr:   true,
 		},
 		{
+			name:         "valid IPv4 ECS",
+			benchmark:    Benchmark{Server: "8.8.8.8", Ecs: "192.0.2.0/24"},
+			assertServer: assertServerEqual("8.8.8.8:53"),
+		},
+		{
+			name:         "valid IPv6 ECS",
+			benchmark:    Benchmark{Server: "8.8.8.8", Ecs: "2001:db8::/32"},
+			assertServer: assertServerEqual("8.8.8.8:53"),
+		},
+		{
+			name:      "invalid ECS format",
+			benchmark: Benchmark{Server: "8.8.8.8", Ecs: "invalid"},
+			wantErr:   true,
+		},
+		{
+			name:      "invalid ECS CIDR",
+			benchmark: Benchmark{Server: "8.8.8.8", Ecs: "192.0.2.256/24"},
+			wantErr:   true,
+		},
+		{
+			name:      "both ednsopt and ecs specified",
+			benchmark: Benchmark{Server: "8.8.8.8", EdnsOpt: "8:000118005100c6", Ecs: "192.0.2.0/24"},
+			wantErr:   true,
+		},
+		{
 			name:               "request log - default path",
 			benchmark:          Benchmark{Server: "8.8.8.8", RequestLogEnabled: true},
 			assertServer:       assertServerEqual("8.8.8.8:53"),
@@ -139,6 +164,92 @@ func TestBenchmark_init(t *testing.T) {
 				assert.Equal(t, tt.wantRequestDelayStart, tt.benchmark.requestDelayStart)
 				assert.Equal(t, tt.wantRequestDelayEnd, tt.benchmark.requestDelayEnd)
 			}
+		})
+	}
+}
+
+func TestParseECS(t *testing.T) {
+	tests := []struct {
+		name         string
+		cidr         string
+		wantFamily   uint16
+		wantNetmask  uint8
+		wantAddress  string
+		wantErr      bool
+	}{
+		{
+			name:        "valid IPv4 /24",
+			cidr:        "192.0.2.0/24",
+			wantFamily:  1,
+			wantNetmask: 24,
+			wantAddress: "192.0.2.0",
+		},
+		{
+			name:        "valid IPv4 /22",
+			cidr:        "204.15.220.0/22",
+			wantFamily:  1,
+			wantNetmask: 22,
+			wantAddress: "204.15.220.0",
+		},
+		{
+			name:        "valid IPv4 /32",
+			cidr:        "8.8.8.8/32",
+			wantFamily:  1,
+			wantNetmask: 32,
+			wantAddress: "8.8.8.8",
+		},
+		{
+			name:        "valid IPv6 /32",
+			cidr:        "2001:db8::/32",
+			wantFamily:  2,
+			wantNetmask: 32,
+			wantAddress: "2001:db8::",
+		},
+		{
+			name:        "valid IPv6 /64",
+			cidr:        "2001:db8:abcd::/64",
+			wantFamily:  2,
+			wantNetmask: 64,
+			wantAddress: "2001:db8:abcd::",
+		},
+		{
+			name:        "valid IPv6 /128",
+			cidr:        "2001:db8::1/128",
+			wantFamily:  2,
+			wantNetmask: 128,
+			wantAddress: "2001:db8::1",
+		},
+		{
+			name:    "invalid CIDR format",
+			cidr:    "invalid",
+			wantErr: true,
+		},
+		{
+			name:    "invalid IP address",
+			cidr:    "999.999.999.999/24",
+			wantErr: true,
+		},
+		{
+			name:    "missing netmask",
+			cidr:    "192.0.2.0",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			subnet, err := parseECS(tt.cidr)
+			
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantFamily, subnet.Family)
+			assert.Equal(t, tt.wantNetmask, subnet.SourceNetmask)
+			assert.Equal(t, uint8(0), subnet.SourceScope)
+			assert.Equal(t, tt.wantAddress, subnet.Address.String())
 		})
 	}
 }
