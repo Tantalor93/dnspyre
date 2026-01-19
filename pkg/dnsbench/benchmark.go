@@ -281,9 +281,13 @@ func (b *Benchmark) init() error {
 		if err != nil {
 			return errors.New("--ednsopt is not in correct format, data is not hexadecimal string")
 		}
-		_, err = strconv.ParseUint(split[0], 10, 16)
+		code, err := strconv.ParseUint(split[0], 10, 16)
 		if err != nil {
 			return errors.New("--ednsopt is not in correct format, code is not a decimal number")
+		}
+		// Check if ednsopt is trying to use ECS code (8) when --ecs is also specified
+		if len(b.Ecs) != 0 && code == 8 {
+			return errors.New("--ednsopt with code 8 (ECS) cannot be used together with --ecs flag, use only --ecs")
 		}
 	}
 
@@ -291,10 +295,6 @@ func (b *Benchmark) init() error {
 		if _, err := parseECS(b.Ecs); err != nil {
 			return fmt.Errorf("--ecs is not in correct format: %w", err)
 		}
-	}
-
-	if len(b.EdnsOpt) != 0 && len(b.Ecs) != 0 {
-		return errors.New("--ednsopt and --ecs cannot be used together")
 	}
 
 	if b.RequestLogEnabled && len(b.RequestLogPath) == 0 {

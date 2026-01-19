@@ -124,9 +124,14 @@ func TestBenchmark_init(t *testing.T) {
 			wantErr:   true,
 		},
 		{
-			name:      "both ednsopt and ecs specified",
+			name:      "both ednsopt code 8 and ecs specified",
 			benchmark: Benchmark{Server: "8.8.8.8", EdnsOpt: "8:000118005100c6", Ecs: "192.0.2.0/24"},
 			wantErr:   true,
+		},
+		{
+			name:         "ednsopt with non-ECS code and ecs can be used together",
+			benchmark:    Benchmark{Server: "8.8.8.8", EdnsOpt: "10:0001", Ecs: "192.0.2.0/24"},
+			assertServer: assertServerEqual("8.8.8.8:53"),
 		},
 		{
 			name:               "request log - default path",
