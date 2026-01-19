@@ -244,7 +244,7 @@ func TestParseECS(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			subnet, err := parseECS(tt.cidr)
-			
+
 			if tt.wantErr {
 				require.Error(t, err)
 				return
