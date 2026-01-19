@@ -31,3 +31,22 @@ for example to send [client subnet EDNS0 option](https://datatracker.ietf.org/do
 ```
 dnspyre  --server '8.8.8.8' aws.amazon.com --ednsopt '8:000118005100c6'
 ```
+
+### EDNS Client Subnet (ECS)
+For easier specification of [EDNS Client Subnet (ECS)](https://datatracker.ietf.org/doc/html/rfc7871) option, you can use the `--ecs` flag with CIDR notation instead of manually constructing the hex string with `--ednsopt`.
+
+#### IPv4 example
+```
+dnspyre --server '8.8.8.8' aws.amazon.com --ecs '204.15.220.0/22'
+```
+
+#### IPv6 example
+```
+dnspyre --server '8.8.8.8' aws.amazon.com --ecs '2001:db8::/32'
+```
+
+The `--ecs` flag can be combined with `--ednsopt` to send additional EDNS options (as long as `--ednsopt` doesn't use code 8, which is reserved for ECS):
+
+```
+dnspyre --server '8.8.8.8' aws.amazon.com --ecs '192.0.2.0/24' --ednsopt '10:0001'
+```
