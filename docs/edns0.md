@@ -33,6 +33,8 @@ dnspyre  --server '8.8.8.8' aws.amazon.com --ednsopt '8:000118005100c6'
 ```
 
 ### EDNS Client Subnet (ECS)
+v3.8.0
+{: .label .label-yellow }
 For easier specification of [EDNS Client Subnet (ECS)](https://datatracker.ietf.org/doc/html/rfc7871) option, you can use the `--ecs` flag with CIDR notation instead of manually constructing the hex string with `--ednsopt`.
 
 #### IPv4 example

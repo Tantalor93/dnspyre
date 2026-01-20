@@ -455,40 +455,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 							}
 						}
 
-						req := dns.Msg{}
-						req.RecursionDesired = b.Recurse
-
-						req.Question = make([]dns.Question, 1)
-						question := dns.Question{Name: q, Qtype: qt, Qclass: dns.ClassINET}
-						req.Question[0] = question
-
-						if b.useQuic {
-							req.Id = 0
-						} else {
-							// nolint:gosec
-							req.Id = uint16(rand.Intn(1 << 16))
-						}
-
-						if b.Edns0 > 0 {
-							req.SetEdns0(b.Edns0, false)
-						}
-						if ednsOpt := b.EdnsOpt; len(ednsOpt) > 0 {
-							addEdnsOpt(&req, ednsOpt)
-						}
-						if ecs := b.Ecs; len(ecs) > 0 {
-							if err := addECS(&req, ecs); err != nil {
-								// This shouldn't happen as validation is done earlier, but handle it just in case
-								log.Printf("Failed to add ECS option: %v", err)
-							}
-						}
-						if b.DNSSEC {
-							edns0 := req.IsEdns0()
-							if edns0 == nil {
-								req.SetEdns0(DefaultEdns0BufferSize, false)
-								edns0 = req.IsEdns0()
-							}
-							edns0.SetDo(true)
-						}
+						req := b.createReqMsg(q, qt)
 
 						start := time.Now()
 
@@ -523,6 +490,41 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	}
 
 	return stats, nil
+}
+
+func (b *Benchmark) createReqMsg(domain string, qtype uint16) dns.Msg {
+	req := dns.Msg{}
+	req.RecursionDesired = b.Recurse
+
+	req.Question = make([]dns.Question, 1)
+	question := dns.Question{Name: domain, Qtype: qtype, Qclass: dns.ClassINET}
+	req.Question[0] = question
+
+	if b.useQuic {
+		req.Id = 0
+	} else {
+		// nolint:gosec
+		req.Id = uint16(rand.Intn(1 << 16))
+	}
+
+	if b.Edns0 > 0 {
+		req.SetEdns0(b.Edns0, false)
+	}
+	if ednsOpt := b.EdnsOpt; len(ednsOpt) > 0 {
+		addEdnsOpt(&req, ednsOpt)
+	}
+	if ecs := b.Ecs; len(ecs) > 0 {
+		addECS(&req, ecs)
+	}
+	if b.DNSSEC {
+		edns0 := req.IsEdns0()
+		if edns0 == nil {
+			req.SetEdns0(DefaultEdns0BufferSize, false)
+			edns0 = req.IsEdns0()
+		}
+		edns0.SetDo(true)
+	}
+	return req
 }
 
 func (b *Benchmark) measureProm(req dns.Msg, resp *dns.Msg, time time.Duration, err error) {
@@ -647,10 +649,10 @@ func parseECS(cidr string) (*dns.EDNS0_SUBNET, error) {
 }
 
 // addECS adds an EDNS Client Subnet option to the DNS message.
-func addECS(m *dns.Msg, ecs string) error {
+func addECS(m *dns.Msg, ecs string) {
 	subnet, err := parseECS(ecs)
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	o := m.IsEdns0()
@@ -659,7 +661,6 @@ func addECS(m *dns.Msg, ecs string) error {
 		o = m.IsEdns0()
 	}
 	o.Option = append(o.Option, subnet)
-	return nil
 }
 
 func (b *Benchmark) addPortIfMissing() {
