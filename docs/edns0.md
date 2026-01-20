@@ -4,7 +4,12 @@ layout: default
 parent: Examples
 ---
 
+
 # EDNS0 and DNSSEC
+
+- TOC
+{:toc}
+
 *dnspyre* supports sending DNS requests with [EDNS0](https://datatracker.ietf.org/doc/html/rfc6891) extension, currently these EDNS0 features are supported:
 
 ## UDP message size
@@ -37,12 +42,12 @@ v3.8.0
 {: .label .label-yellow }
 For easier specification of [EDNS Client Subnet (ECS)](https://datatracker.ietf.org/doc/html/rfc7871) option, you can use the `--ecs` flag with CIDR notation instead of manually constructing the hex string with `--ednsopt`.
 
-#### IPv4 example
+IPv4 example
 ```
 dnspyre --server '8.8.8.8' aws.amazon.com --ecs '204.15.220.0/22'
 ```
 
-#### IPv6 example
+IPv6 example
 ```
 dnspyre --server '8.8.8.8' aws.amazon.com --ecs '2001:db8::/32'
 ```

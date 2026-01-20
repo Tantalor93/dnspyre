@@ -55,6 +55,8 @@ Flags:
                                benchmark goroutines.
       --ednsopt=""             code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal
                                string. code must be an arbitrary numeric value.
+      --ecs=""                 Specify EDNS Client Subnet option in CIDR notation (e.g., '192.0.2.0/24' or '2001:db8::/32'). 
+                               This is a more user-friendly alternative to --ednsopt for specifying ECS.
       --[no-]dnssec            Allow DNSSEC (sets DO bit for all DNS requests to 1)
       --edns0=0                Configures EDNS0 usage in DNS requests send by benchmark and configures EDNS0 buffer size to the
                                specified value. When 0 is configured, then EDNS0 is not used.
