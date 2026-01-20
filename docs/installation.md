@@ -6,10 +6,9 @@ nav_order: 1
 
 # Installation
 
-You can install *dnspyre* using [Homebrew](https://brew.sh) package manager
+You can install *dnspyre* using [Homebrew](https://brew.sh) package manager, see [Homebrew Formula](https://formulae.brew.sh/formula/dnspyre)
 
 ```
-brew tap tantalor93/dnspyre
 brew install dnspyre
 ```
 

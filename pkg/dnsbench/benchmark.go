@@ -643,6 +643,7 @@ func parseECS(cidr string) (*dns.EDNS0_SUBNET, error) {
 
 	// Get the netmask size
 	ones, _ := ipnet.Mask.Size()
+	//nolint:gosec // G115: Mask size for IP (max 128) always fits in uint8
 	subnet.SourceNetmask = uint8(ones)
 
 	return subnet, nil
