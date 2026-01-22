@@ -136,8 +136,9 @@ type Benchmark struct {
 	Ecs string
 
 	// Cookie specifies DNS cookie as a hex-encoded string to be added to DNS requests.
-	// The cookie should be at least 8 bytes (16 hex characters) for client cookie,
-	// and may optionally include server cookie (up to 32 additional bytes).
+	// According to RFC 7873, the cookie should be 16-80 hex characters (8-40 bytes):
+	// - 8-byte (16 hex chars) client cookie (required)
+	// - optionally followed by 8-32 byte (16-64 hex chars) server cookie
 	Cookie string
 
 	// DNSSEC Allow DNSSEC (sets DO bit for all DNS requests to 1)
@@ -299,6 +300,18 @@ func (b *Benchmark) init() error {
 	if len(b.Ecs) != 0 {
 		if _, err := parseECS(b.Ecs); err != nil {
 			return fmt.Errorf("--ecs is not in correct format: %w", err)
+		}
+	}
+
+	if len(b.Cookie) != 0 {
+		if len(b.Cookie) < 16 || len(b.Cookie) > 80 {
+			return fmt.Errorf("--cookie must be 16-80 hex characters (8-40 bytes), got %d", len(b.Cookie))
+		}
+		if len(b.Cookie)%2 != 0 {
+			return fmt.Errorf("--cookie must have even number of hex characters, got %d", len(b.Cookie))
+		}
+		if _, err := hex.DecodeString(b.Cookie); err != nil {
+			return fmt.Errorf("--cookie must be hex-encoded string: %w", err)
 		}
 	}
 
@@ -673,6 +686,9 @@ func addECS(m *dns.Msg, ecs string) {
 }
 
 // addCookie adds a DNS cookie EDNS option to the DNS message.
+// According to RFC 7873, cookies consist of an 8-byte client cookie,
+// optionally followed by an 8-32 byte server cookie.
+// The cookie parameter is expected to be already validated by the init() function.
 func addCookie(m *dns.Msg, cookie string) {
 	o := m.IsEdns0()
 	if o == nil {
