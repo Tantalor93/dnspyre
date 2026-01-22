@@ -231,7 +231,9 @@ type Benchmark struct {
 	useQuic           bool
 	requestDelayStart time.Duration
 	requestDelayEnd   time.Duration
-	cookieSecret      []byte // Secret for generating DNS cookies per RFC 7873
+	cookieSecret      []byte     // Secret for generating DNS cookies per RFC 7873
+	clientIP          string     // Cached client IP for cookie generation
+	clientIPOnce      *sync.Once // Ensures client IP is determined only once
 }
 
 type queryFunc func(context.Context, *dns.Msg) (*dns.Msg, error)
@@ -312,6 +314,8 @@ func (b *Benchmark) init() error {
 		if _, err := rand.Read(b.cookieSecret); err != nil {
 			return fmt.Errorf("failed to generate cookie secret: %w", err)
 		}
+		// Initialize sync.Once for clientIP caching
+		b.clientIPOnce = &sync.Once{}
 	}
 
 	if b.RequestLogEnabled && len(b.RequestLogPath) == 0 {
@@ -534,7 +538,7 @@ func (b *Benchmark) createReqMsg(domain string, qtype uint16) dns.Msg {
 		addECS(&req, ecs)
 	}
 	if b.Cookie {
-		addCookie(&req, b.Server, b.cookieSecret)
+		addCookie(&req, b.Server, b.cookieSecret, b)
 	}
 	if b.DNSSEC {
 		edns0 := req.IsEdns0()
@@ -690,7 +694,7 @@ func addECS(m *dns.Msg, ecs string) {
 // - Server IP Address
 // - A secret quantity known only to the client
 // This function generates an 8-byte client cookie using HMAC-SHA256.
-func addCookie(m *dns.Msg, serverAddr string, secret []byte) {
+func addCookie(m *dns.Msg, serverAddr string, secret []byte, b *Benchmark) {
 	o := m.IsEdns0()
 	if o == nil {
 		m.SetEdns0(DefaultEdns0BufferSize, false)
@@ -704,14 +708,15 @@ func addCookie(m *dns.Msg, serverAddr string, secret []byte) {
 		serverIP = serverAddr
 	}
 
-	// Get client IP address
-	// We'll use the outbound IP that would be used to connect to the server
-	clientIP := getOutboundIP(serverIP)
+	// Get client IP address (cached for performance)
+	b.clientIPOnce.Do(func() {
+		b.clientIP = getOutboundIP(serverIP)
+	})
 
 	// Generate client cookie using HMAC-SHA256 per RFC 7873
 	// Cookie = HMAC-SHA256(secret, client_ip || server_ip)
 	h := hmac.New(sha256.New, secret)
-	h.Write([]byte(clientIP))
+	h.Write([]byte(b.clientIP))
 	h.Write([]byte(serverIP))
 	hash := h.Sum(nil)
 
@@ -729,7 +734,12 @@ func addCookie(m *dns.Msg, serverAddr string, secret []byte) {
 // getOutboundIP returns the preferred outbound IP address to reach the given destination.
 func getOutboundIP(dest string) string {
 	// Try to resolve the destination if it's a hostname
-	ips, err := net.LookupIP(dest)
+	// Use a timeout context to prevent hanging
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	var r net.Resolver
+	ips, err := r.LookupIP(ctx, "ip", dest)
 	var destIP string
 	if err == nil && len(ips) > 0 {
 		destIP = ips[0].String()
@@ -746,7 +756,11 @@ func getOutboundIP(dest string) string {
 	}
 	defer conn.Close()
 
-	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	localAddr, ok := conn.LocalAddr().(*net.UDPAddr)
+	if !ok {
+		// Fallback if the connection type is unexpected
+		return "127.0.0.1"
+	}
 	return localAddr.IP.String()
 }
 
