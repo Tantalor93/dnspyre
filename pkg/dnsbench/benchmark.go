@@ -135,6 +135,11 @@ type Benchmark struct {
 	// This is a more user-friendly alternative to using EdnsOpt for ECS.
 	Ecs string
 
+	// Cookie specifies DNS cookie as a hex-encoded string to be added to DNS requests.
+	// The cookie should be at least 8 bytes (16 hex characters) for client cookie,
+	// and may optionally include server cookie (up to 32 additional bytes).
+	Cookie string
+
 	// DNSSEC Allow DNSSEC (sets DO bit for all DNS requests to 1)
 	DNSSEC bool
 
@@ -516,6 +521,9 @@ func (b *Benchmark) createReqMsg(domain string, qtype uint16) dns.Msg {
 	if ecs := b.Ecs; len(ecs) > 0 {
 		addECS(&req, ecs)
 	}
+	if cookie := b.Cookie; len(cookie) > 0 {
+		addCookie(&req, cookie)
+	}
 	if b.DNSSEC {
 		edns0 := req.IsEdns0()
 		if edns0 == nil {
@@ -662,6 +670,21 @@ func addECS(m *dns.Msg, ecs string) {
 		o = m.IsEdns0()
 	}
 	o.Option = append(o.Option, subnet)
+}
+
+// addCookie adds a DNS cookie EDNS option to the DNS message.
+func addCookie(m *dns.Msg, cookie string) {
+	o := m.IsEdns0()
+	if o == nil {
+		m.SetEdns0(DefaultEdns0BufferSize, false)
+		o = m.IsEdns0()
+	}
+
+	cookieOpt := &dns.EDNS0_COOKIE{
+		Code:   dns.EDNS0COOKIE,
+		Cookie: cookie,
+	}
+	o.Option = append(o.Option, cookieOpt)
 }
 
 func (b *Benchmark) addPortIfMissing() {
