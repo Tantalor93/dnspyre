@@ -536,6 +536,55 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_cookie_with_server() {
 	assertResult(suite.T(), rs)
 }
 
+func (suite *PlainDNSTestSuite) TestBenchmark_Run_cookie_invalid() {
+	testCases := []struct {
+		name   string
+		cookie string
+	}{
+		{"too short", "24a5ac"},
+		{"odd length", "24a5ac012345678"},
+		{"invalid hex", "gg24a5ac0123456789"},
+		{"too long", "24a5ac01234567890123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01"},
+	}
+
+	for _, tc := range testCases {
+		suite.Run(tc.name, func() {
+			s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+				ret := new(dns.Msg)
+				ret.SetReply(r)
+				ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+				w.WriteMsg(ret)
+			})
+			defer s.Close()
+
+			bench := dnsbench.Benchmark{
+				Queries:        []string{"example.org"},
+				Types:          []string{"A"},
+				Server:         s.Addr,
+				TCP:            false,
+				Concurrency:    1,
+				Count:          1,
+				Probability:    1,
+				WriteTimeout:   1 * time.Second,
+				ReadTimeout:    3 * time.Second,
+				ConnectTimeout: 1 * time.Second,
+				RequestTimeout: 5 * time.Second,
+				Rcodes:         true,
+				Recurse:        true,
+				Cookie:         tc.cookie,
+			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+
+			// This should return an error with invalid cookie
+			_, err := bench.Run(ctx)
+			suite.Require().Error(err, "Expected error for invalid cookie: %s", tc.cookie)
+			suite.Contains(err.Error(), "cookie", "Error should mention cookie")
+		})
+	}
+}
+
 func (suite *PlainDNSTestSuite) TestBenchmark_Run_probability() {
 	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
