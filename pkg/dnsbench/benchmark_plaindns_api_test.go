@@ -479,6 +479,89 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_cookie() {
 	assertResult(suite.T(), rs)
 }
 
+func (suite *PlainDNSTestSuite) TestBenchmark_Run_cookie_with_server_response() {
+	requestCount := 0
+	serverCookieHex := "0123456789abcdef0123456789abcdef" // 16 bytes = 32 hex chars
+
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+		requestCount++
+		opt := r.IsEdns0()
+		if suite.NotNil(opt) {
+			for _, v := range opt.Option {
+				if v.Option() == dns.EDNS0COOKIE {
+					if cookieOpt, ok := v.(*dns.EDNS0_COOKIE); ok {
+						if requestCount == 1 {
+							// First request should only have client cookie (16 hex chars)
+							suite.Len(cookieOpt.Cookie, 16, "First request should have only client cookie")
+						} else {
+							// Subsequent requests should have both client and server cookie
+							suite.Greater(len(cookieOpt.Cookie), 16, "Subsequent requests should have client + server cookie")
+							// Verify server cookie is present (last 32 hex chars should match what we sent)
+							if len(cookieOpt.Cookie) > 16 {
+								receivedServerCookie := cookieOpt.Cookie[16:]
+								suite.Equal(serverCookieHex, receivedServerCookie, "Server cookie should be included in subsequent requests")
+							}
+						}
+					}
+				}
+			}
+		}
+
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.SetEdns0(dnsbench.DefaultEdns0BufferSize, false)
+		retEdns := ret.IsEdns0()
+
+		// Add server cookie to the response
+		// Copy client cookie from request and append server cookie
+		if opt != nil {
+			for _, v := range opt.Option {
+				if cookieOpt, ok := v.(*dns.EDNS0_COOKIE); ok {
+					// Extract client cookie (first 16 hex chars)
+					clientCookie := cookieOpt.Cookie[:16]
+					// Create response with client cookie + server cookie
+					responseCookie := &dns.EDNS0_COOKIE{
+						Code:   dns.EDNS0COOKIE,
+						Cookie: clientCookie + serverCookieHex,
+					}
+					retEdns.Option = append(retEdns.Option, responseCookie)
+					break
+				}
+			}
+		}
+
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+		time.Sleep(time.Millisecond * 100)
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A"},
+		Server:         s.Addr,
+		TCP:            false,
+		Concurrency:    1,
+		Count:          3, // Make 3 requests to test server cookie reuse
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		Cookie:         true,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	suite.Require().NoError(err, "expected no error from benchmark run")
+	suite.Require().Len(rs, 1, "Should have 1 result stat for 1 concurrent worker")
+	suite.Equal(3, requestCount, "Should have made 3 requests")
+}
+
 func (suite *PlainDNSTestSuite) TestBenchmark_Run_probability() {
 	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)

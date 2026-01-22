@@ -229,6 +229,8 @@ type Benchmark struct {
 	useQuic           bool
 	requestDelayStart time.Duration
 	requestDelayEnd   time.Duration
+	serverCookie      string      // Server cookie received from DNS server (RFC 7873)
+	serverCookieMutex *sync.Mutex // Protects serverCookie
 }
 
 type queryFunc func(context.Context, *dns.Msg) (*dns.Msg, error)
@@ -300,6 +302,11 @@ func (b *Benchmark) init() error {
 		if _, err := parseECS(b.Ecs); err != nil {
 			return fmt.Errorf("--ecs is not in correct format: %w", err)
 		}
+	}
+
+	if b.Cookie {
+		// Initialize mutex for server cookie storage
+		b.serverCookieMutex = &sync.Mutex{}
 	}
 
 	if b.RequestLogEnabled && len(b.RequestLogPath) == 0 {
@@ -472,6 +479,12 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 							return
 						}
 						dur := time.Since(start)
+
+						// Extract server cookie from response if DNS cookies are enabled
+						if b.Cookie && resp != nil && err == nil {
+							b.extractServerCookie(resp)
+						}
+
 						if b.RequestLogEnabled {
 							logRequest(workerID, req, resp, err, dur)
 						}
@@ -522,7 +535,7 @@ func (b *Benchmark) createReqMsg(domain string, qtype uint16) dns.Msg {
 		addECS(&req, ecs)
 	}
 	if b.Cookie {
-		addCookie(&req)
+		addCookie(&req, b)
 	}
 	if b.DNSSEC {
 		edns0 := req.IsEdns0()
@@ -674,7 +687,8 @@ func addECS(m *dns.Msg, ecs string) {
 
 // addCookie adds a DNS cookie EDNS option to the DNS message.
 // Generates a random 8-byte client cookie per RFC 7873.
-func addCookie(m *dns.Msg) {
+// If a server cookie has been received from previous responses, it is included.
+func addCookie(m *dns.Msg, b *Benchmark) {
 	o := m.IsEdns0()
 	if o == nil {
 		m.SetEdns0(DefaultEdns0BufferSize, false)
@@ -690,11 +704,44 @@ func addCookie(m *dns.Msg) {
 	}
 	cookieHex := hex.EncodeToString(clientCookie)
 
+	// Append server cookie if we have one from a previous response
+	b.serverCookieMutex.Lock()
+	if b.serverCookie != "" {
+		cookieHex += b.serverCookie
+	}
+	b.serverCookieMutex.Unlock()
+
 	cookieOpt := &dns.EDNS0_COOKIE{
 		Code:   dns.EDNS0COOKIE,
 		Cookie: cookieHex,
 	}
 	o.Option = append(o.Option, cookieOpt)
+}
+
+// extractServerCookie extracts the server cookie from a DNS response.
+// According to RFC 7873, the server cookie starts after the 16 hex character client cookie.
+func (b *Benchmark) extractServerCookie(resp *dns.Msg) {
+	if resp == nil {
+		return
+	}
+
+	opt := resp.IsEdns0()
+	if opt == nil {
+		return
+	}
+
+	for _, option := range opt.Option {
+		if cookie, ok := option.(*dns.EDNS0_COOKIE); ok {
+			// Cookie format: first 16 hex chars are client cookie, rest is server cookie
+			if len(cookie.Cookie) > 16 {
+				serverCookie := cookie.Cookie[16:]
+				b.serverCookieMutex.Lock()
+				b.serverCookie = serverCookie
+				b.serverCookieMutex.Unlock()
+			}
+			return
+		}
+	}
 }
 
 func (b *Benchmark) addPortIfMissing() {
