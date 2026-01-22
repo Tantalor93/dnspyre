@@ -440,6 +440,14 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 
 			query := queryFactory()
 
+			// Generate client cookie once for this worker (RFC 7873)
+			clientCookie := make([]byte, 8)
+			if _, err := rand.Read(clientCookie); err != nil {
+				// If random generation fails, use zero cookie
+				clientCookie = make([]byte, 8)
+			}
+			clientCookieHex := hex.EncodeToString(clientCookie)
+
 			// Store server cookie locally for this worker (RFC 7873)
 			var serverCookie string
 
@@ -463,7 +471,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 							}
 						}
 
-						req := b.createReqMsg(q, qt, serverCookie)
+						req := b.createReqMsg(q, qt, clientCookieHex, serverCookie)
 
 						start := time.Now()
 
@@ -506,7 +514,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	return stats, nil
 }
 
-func (b *Benchmark) createReqMsg(domain string, qtype uint16, serverCookie string) dns.Msg {
+func (b *Benchmark) createReqMsg(domain string, qtype uint16, clientCookie string, serverCookie string) dns.Msg {
 	req := dns.Msg{}
 	req.RecursionDesired = b.Recurse
 
@@ -531,7 +539,7 @@ func (b *Benchmark) createReqMsg(domain string, qtype uint16, serverCookie strin
 		addECS(&req, ecs)
 	}
 	if b.Cookie {
-		addCookie(&req, serverCookie)
+		addCookie(&req, clientCookie, serverCookie)
 	}
 	if b.DNSSEC {
 		edns0 := req.IsEdns0()
@@ -682,25 +690,17 @@ func addECS(m *dns.Msg, ecs string) {
 }
 
 // addCookie adds a DNS cookie EDNS option to the DNS message.
-// Generates a random 8-byte client cookie per RFC 7873.
-// If a server cookie is provided, it is appended to the client cookie.
-func addCookie(m *dns.Msg, serverCookie string) {
+// Uses the provided client cookie (hex-encoded) and appends the server cookie if available.
+// Per RFC 7873, the client cookie should be reused across requests.
+func addCookie(m *dns.Msg, clientCookie string, serverCookie string) {
 	o := m.IsEdns0()
 	if o == nil {
 		m.SetEdns0(DefaultEdns0BufferSize, false)
 		o = m.IsEdns0()
 	}
 
-	// Generate random 8-byte client cookie
-	clientCookie := make([]byte, 8)
-	if _, err := rand.Read(clientCookie); err != nil {
-		// If random generation fails, this is a critical error
-		// but we'll continue with a zero cookie rather than panicking
-		clientCookie = make([]byte, 8)
-	}
-	cookieHex := hex.EncodeToString(clientCookie)
-
-	// Append server cookie if we have one from a previous response
+	// Use provided client cookie and append server cookie if available
+	cookieHex := clientCookie
 	if serverCookie != "" {
 		cookieHex += serverCookie
 	}
