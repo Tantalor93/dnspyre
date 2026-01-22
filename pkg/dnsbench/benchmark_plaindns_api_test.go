@@ -481,7 +481,7 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_cookie() {
 }
 
 func (suite *PlainDNSTestSuite) TestBenchmark_Run_cookie_with_server() {
-	// 8-byte client cookie + 16-byte server cookie
+	// 8-byte client cookie + 16-byte server cookie = 24 bytes total (48 hex characters)
 	testCookie := "24a5ac01234567890123456789abcdef0123456789abcdef"
 
 	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
