@@ -79,6 +79,9 @@ func init() {
 	pApp.Flag("ecs", "Specify EDNS Client Subnet option in CIDR notation (e.g., '192.0.2.0/24' or '2001:db8::/32'). This is a more user-friendly alternative to --ednsopt for specifying ECS.").
 		Default("").StringVar(&benchmark.Ecs)
 
+	pApp.Flag("cookie", "Specify DNS cookie as a hex-encoded string. The cookie should be at least 16 hex characters (8 bytes) for client cookie, and may optionally include server cookie (up to 64 additional hex characters/32 bytes).").
+		Default("").StringVar(&benchmark.Cookie)
+
 	pApp.Flag("dnssec", "Allow DNSSEC (sets DO bit for all DNS requests to 1)").BoolVar(&benchmark.DNSSEC)
 
 	pApp.Flag("edns0", "Configures EDNS0 usage in DNS requests send by benchmark and configures EDNS0 buffer size to the specified value. When 0 is configured, then EDNS0 is not used.").
