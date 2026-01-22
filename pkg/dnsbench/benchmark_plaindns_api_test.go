@@ -480,6 +480,62 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_cookie() {
 	assertResult(suite.T(), rs)
 }
 
+func (suite *PlainDNSTestSuite) TestBenchmark_Run_cookie_with_server() {
+	// 8-byte client cookie + 16-byte server cookie
+	testCookie := "24a5ac01234567890123456789abcdef0123456789abcdef"
+
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+		opt := r.IsEdns0()
+		if suite.NotNil(opt) {
+			expectedCookie := false
+			for _, v := range opt.Option {
+				if v.Option() == dns.EDNS0COOKIE {
+					if cookieOpt, ok := v.(*dns.EDNS0_COOKIE); ok {
+						suite.Equal(testCookie, cookieOpt.Cookie)
+						expectedCookie = true
+					}
+				}
+			}
+			suite.True(expectedCookie, "Cookie option should be present in the request")
+		}
+
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.SetEdns0(dnsbench.DefaultEdns0BufferSize, false)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+		// wait some time to actually have some observable duration
+		time.Sleep(time.Millisecond * 500)
+
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	bench := dnsbench.Benchmark{
+		Queries:        []string{"example.org"},
+		Types:          []string{"A", "AAAA"},
+		Server:         s.Addr,
+		TCP:            false,
+		Concurrency:    2,
+		Count:          1,
+		Probability:    1,
+		WriteTimeout:   1 * time.Second,
+		ReadTimeout:    3 * time.Second,
+		ConnectTimeout: 1 * time.Second,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+		Cookie:         testCookie,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	rs, err := bench.Run(ctx)
+
+	suite.Require().NoError(err, "expected no error from benchmark run")
+	assertResult(suite.T(), rs)
+}
+
 func (suite *PlainDNSTestSuite) TestBenchmark_Run_probability() {
 	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
