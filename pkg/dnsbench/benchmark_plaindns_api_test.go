@@ -426,8 +426,6 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_ecs_and_ednsopt() {
 }
 
 func (suite *PlainDNSTestSuite) TestBenchmark_Run_cookie() {
-	testCookie := "24a5ac0123456789" // 8-byte client cookie
-
 	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		opt := r.IsEdns0()
 		if suite.NotNil(opt) {
@@ -435,7 +433,8 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_cookie() {
 			for _, v := range opt.Option {
 				if v.Option() == dns.EDNS0COOKIE {
 					if cookieOpt, ok := v.(*dns.EDNS0_COOKIE); ok {
-						suite.Equal(testCookie, cookieOpt.Cookie)
+						// Verify cookie is present and has correct length (16 hex chars = 8 bytes)
+						suite.Len(cookieOpt.Cookie, 16, "Cookie should be 16 hex characters (8 bytes)")
 						expectedCookie = true
 					}
 				}
@@ -469,7 +468,7 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_cookie() {
 		RequestTimeout: 5 * time.Second,
 		Rcodes:         true,
 		Recurse:        true,
-		Cookie:         testCookie,
+		Cookie:         true,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -478,111 +477,6 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_cookie() {
 
 	suite.Require().NoError(err, "expected no error from benchmark run")
 	assertResult(suite.T(), rs)
-}
-
-func (suite *PlainDNSTestSuite) TestBenchmark_Run_cookie_with_server() {
-	// 8-byte client cookie + 16-byte server cookie = 24 bytes total (48 hex characters)
-	testCookie := "24a5ac01234567890123456789abcdef0123456789abcdef"
-
-	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
-		opt := r.IsEdns0()
-		if suite.NotNil(opt) {
-			expectedCookie := false
-			for _, v := range opt.Option {
-				if v.Option() == dns.EDNS0COOKIE {
-					if cookieOpt, ok := v.(*dns.EDNS0_COOKIE); ok {
-						suite.Equal(testCookie, cookieOpt.Cookie)
-						expectedCookie = true
-					}
-				}
-			}
-			suite.True(expectedCookie, "Cookie option should be present in the request")
-		}
-
-		ret := new(dns.Msg)
-		ret.SetReply(r)
-		ret.SetEdns0(dnsbench.DefaultEdns0BufferSize, false)
-		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
-
-		// wait some time to actually have some observable duration
-		time.Sleep(time.Millisecond * 500)
-
-		w.WriteMsg(ret)
-	})
-	defer s.Close()
-
-	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         s.Addr,
-		TCP:            false,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		Cookie:         testCookie,
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	rs, err := bench.Run(ctx)
-
-	suite.Require().NoError(err, "expected no error from benchmark run")
-	assertResult(suite.T(), rs)
-}
-
-func (suite *PlainDNSTestSuite) TestBenchmark_Run_cookie_invalid() {
-	testCases := []struct {
-		name   string
-		cookie string
-	}{
-		{"too short", "24a5ac"},
-		{"odd length", "24a5ac012345678"},
-		{"invalid hex", "gg24a5ac0123456789"},
-		{"too long", "24a5ac01234567890123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01"},
-	}
-
-	for _, tc := range testCases {
-		suite.Run(tc.name, func() {
-			s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
-				ret := new(dns.Msg)
-				ret.SetReply(r)
-				ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
-				w.WriteMsg(ret)
-			})
-			defer s.Close()
-
-			bench := dnsbench.Benchmark{
-				Queries:        []string{"example.org"},
-				Types:          []string{"A"},
-				Server:         s.Addr,
-				TCP:            false,
-				Concurrency:    1,
-				Count:          1,
-				Probability:    1,
-				WriteTimeout:   1 * time.Second,
-				ReadTimeout:    3 * time.Second,
-				ConnectTimeout: 1 * time.Second,
-				RequestTimeout: 5 * time.Second,
-				Rcodes:         true,
-				Recurse:        true,
-				Cookie:         tc.cookie,
-			}
-
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-			defer cancel()
-
-			// This should return an error with invalid cookie
-			_, err := bench.Run(ctx)
-			suite.Require().Error(err, "Expected error for invalid cookie: %s", tc.cookie)
-			suite.Contains(err.Error(), "cookie", "Error should mention cookie")
-		})
-	}
 }
 
 func (suite *PlainDNSTestSuite) TestBenchmark_Run_probability() {

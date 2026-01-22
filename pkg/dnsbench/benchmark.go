@@ -3,12 +3,15 @@ package dnsbench
 import (
 	"bufio"
 	"context"
+	"crypto/hmac"
+	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
 	"log"
-	"math/rand"
+	mathrand "math/rand"
 	"net"
 	"net/http"
 	"net/url"
@@ -135,11 +138,9 @@ type Benchmark struct {
 	// This is a more user-friendly alternative to using EdnsOpt for ECS.
 	Ecs string
 
-	// Cookie specifies DNS cookie as a hex-encoded string to be added to DNS requests.
-	// According to RFC 7873, the cookie should be 16-80 hex characters (8-40 bytes):
-	// - 8-byte (16 hex chars) client cookie (required)
-	// - optionally followed by 8-32 byte (16-64 hex chars) server cookie
-	Cookie string
+	// Cookie enables automatic DNS cookie generation (RFC 7873).
+	// When enabled, an 8-byte client cookie is automatically generated for each DNS request.
+	Cookie bool
 
 	// DNSSEC Allow DNSSEC (sets DO bit for all DNS requests to 1)
 	DNSSEC bool
@@ -230,6 +231,7 @@ type Benchmark struct {
 	useQuic           bool
 	requestDelayStart time.Duration
 	requestDelayEnd   time.Duration
+	cookieSecret      []byte // Secret for generating DNS cookies per RFC 7873
 }
 
 type queryFunc func(context.Context, *dns.Msg) (*dns.Msg, error)
@@ -303,15 +305,12 @@ func (b *Benchmark) init() error {
 		}
 	}
 
-	if len(b.Cookie) != 0 {
-		if len(b.Cookie) < 16 || len(b.Cookie) > 80 {
-			return fmt.Errorf("--cookie must be 16-80 hex characters (8-40 bytes), got %d", len(b.Cookie))
-		}
-		if len(b.Cookie)%2 != 0 {
-			return fmt.Errorf("--cookie must have even number of hex characters, got %d", len(b.Cookie))
-		}
-		if _, err := hex.DecodeString(b.Cookie); err != nil {
-			return fmt.Errorf("--cookie must be hex-encoded string: %w", err)
+	if b.Cookie {
+		// Generate a secret for DNS cookie generation per RFC 7873
+		// The secret should be unique to this benchmark run
+		b.cookieSecret = make([]byte, 32)
+		if _, err := rand.Read(b.cookieSecret); err != nil {
+			return fmt.Errorf("failed to generate cookie secret: %w", err)
 		}
 	}
 
@@ -444,7 +443,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 
 			// create a new lock free rand source for this goroutine
 			// nolint:gosec
-			rando := rand.New(rand.NewSource(time.Now().UnixNano()))
+			rando := mathrand.New(mathrand.NewSource(time.Now().UnixNano()))
 
 			var workerLimit ratelimit.Limiter
 			if b.RateLimitWorker > 0 {
@@ -522,7 +521,7 @@ func (b *Benchmark) createReqMsg(domain string, qtype uint16) dns.Msg {
 		req.Id = 0
 	} else {
 		// nolint:gosec
-		req.Id = uint16(rand.Intn(1 << 16))
+		req.Id = uint16(mathrand.Intn(1 << 16))
 	}
 
 	if b.Edns0 > 0 {
@@ -534,8 +533,8 @@ func (b *Benchmark) createReqMsg(domain string, qtype uint16) dns.Msg {
 	if ecs := b.Ecs; len(ecs) > 0 {
 		addECS(&req, ecs)
 	}
-	if cookie := b.Cookie; len(cookie) > 0 {
-		addCookie(&req, cookie)
+	if b.Cookie {
+		addCookie(&req, b.Server, b.cookieSecret)
 	}
 	if b.DNSSEC {
 		edns0 := req.IsEdns0()
@@ -564,7 +563,7 @@ func (b *Benchmark) measureProm(req dns.Msg, resp *dns.Msg, time time.Duration, 
 	dnsRequestsDurationMetrics.WithLabelValues(reqType).Observe(time.Seconds())
 }
 
-func (b *Benchmark) delay(ctx context.Context, rando *rand.Rand) {
+func (b *Benchmark) delay(ctx context.Context, rando *mathrand.Rand) {
 	switch {
 	case b.requestDelayStart > 0 && b.requestDelayEnd > 0:
 		delay := time.Duration(rando.Int63n(int64(b.requestDelayEnd-b.requestDelayStart))) + b.requestDelayStart
@@ -686,21 +685,69 @@ func addECS(m *dns.Msg, ecs string) {
 }
 
 // addCookie adds a DNS cookie EDNS option to the DNS message.
-// According to RFC 7873, cookies consist of an 8-byte client cookie,
-// optionally followed by an 8-32 byte server cookie.
-// The cookie parameter is expected to be already validated by the init() function.
-func addCookie(m *dns.Msg, cookie string) {
+// According to RFC 7873, the client cookie should be a pseudorandom function of:
+// - Client IP Address
+// - Server IP Address
+// - A secret quantity known only to the client
+// This function generates an 8-byte client cookie using HMAC-SHA256.
+func addCookie(m *dns.Msg, serverAddr string, secret []byte) {
 	o := m.IsEdns0()
 	if o == nil {
 		m.SetEdns0(DefaultEdns0BufferSize, false)
 		o = m.IsEdns0()
 	}
 
+	// Extract server IP from address (may include port)
+	serverIP, _, err := net.SplitHostPort(serverAddr)
+	if err != nil {
+		// No port, use the address as-is
+		serverIP = serverAddr
+	}
+
+	// Get client IP address
+	// We'll use the outbound IP that would be used to connect to the server
+	clientIP := getOutboundIP(serverIP)
+
+	// Generate client cookie using HMAC-SHA256 per RFC 7873
+	// Cookie = HMAC-SHA256(secret, client_ip || server_ip)
+	h := hmac.New(sha256.New, secret)
+	h.Write([]byte(clientIP))
+	h.Write([]byte(serverIP))
+	hash := h.Sum(nil)
+
+	// Take first 8 bytes as the client cookie
+	clientCookie := hash[:8]
+	cookieHex := hex.EncodeToString(clientCookie)
+
 	cookieOpt := &dns.EDNS0_COOKIE{
 		Code:   dns.EDNS0COOKIE,
-		Cookie: cookie,
+		Cookie: cookieHex,
 	}
 	o.Option = append(o.Option, cookieOpt)
+}
+
+// getOutboundIP returns the preferred outbound IP address to reach the given destination.
+func getOutboundIP(dest string) string {
+	// Try to resolve the destination if it's a hostname
+	ips, err := net.LookupIP(dest)
+	var destIP string
+	if err == nil && len(ips) > 0 {
+		destIP = ips[0].String()
+	} else {
+		destIP = dest
+	}
+
+	// Determine which local IP would be used to connect to the destination
+	// We use a UDP connection (which doesn't actually send anything) to determine routing
+	conn, err := net.Dial("udp", net.JoinHostPort(destIP, "53"))
+	if err != nil {
+		// Fallback to localhost if we can't determine the outbound IP
+		return "127.0.0.1"
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	return localAddr.IP.String()
 }
 
 func (b *Benchmark) addPortIfMissing() {
