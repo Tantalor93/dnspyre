@@ -3,9 +3,7 @@ package dnsbench
 import (
 	"bufio"
 	"context"
-	"crypto/hmac"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -231,9 +229,6 @@ type Benchmark struct {
 	useQuic           bool
 	requestDelayStart time.Duration
 	requestDelayEnd   time.Duration
-	cookieSecret      []byte     // Secret for generating DNS cookies per RFC 7873
-	clientIP          string     // Cached client IP for cookie generation
-	clientIPOnce      *sync.Once // Ensures client IP is determined only once
 }
 
 type queryFunc func(context.Context, *dns.Msg) (*dns.Msg, error)
@@ -305,17 +300,6 @@ func (b *Benchmark) init() error {
 		if _, err := parseECS(b.Ecs); err != nil {
 			return fmt.Errorf("--ecs is not in correct format: %w", err)
 		}
-	}
-
-	if b.Cookie {
-		// Generate a secret for DNS cookie generation per RFC 7873
-		// The secret should be unique to this benchmark run
-		b.cookieSecret = make([]byte, 32)
-		if _, err := rand.Read(b.cookieSecret); err != nil {
-			return fmt.Errorf("failed to generate cookie secret: %w", err)
-		}
-		// Initialize sync.Once for clientIP caching
-		b.clientIPOnce = &sync.Once{}
 	}
 
 	if b.RequestLogEnabled && len(b.RequestLogPath) == 0 {
@@ -538,7 +522,7 @@ func (b *Benchmark) createReqMsg(domain string, qtype uint16) dns.Msg {
 		addECS(&req, ecs)
 	}
 	if b.Cookie {
-		addCookie(&req, b.Server, b.cookieSecret, b)
+		addCookie(&req)
 	}
 	if b.DNSSEC {
 		edns0 := req.IsEdns0()
@@ -689,39 +673,21 @@ func addECS(m *dns.Msg, ecs string) {
 }
 
 // addCookie adds a DNS cookie EDNS option to the DNS message.
-// According to RFC 7873, the client cookie should be a pseudorandom function of:
-// - Client IP Address
-// - Server IP Address
-// - A secret quantity known only to the client
-// This function generates an 8-byte client cookie using HMAC-SHA256.
-func addCookie(m *dns.Msg, serverAddr string, secret []byte, b *Benchmark) {
+// Generates a random 8-byte client cookie per RFC 7873.
+func addCookie(m *dns.Msg) {
 	o := m.IsEdns0()
 	if o == nil {
 		m.SetEdns0(DefaultEdns0BufferSize, false)
 		o = m.IsEdns0()
 	}
 
-	// Extract server IP from address (may include port)
-	serverIP, _, err := net.SplitHostPort(serverAddr)
-	if err != nil {
-		// No port, use the address as-is
-		serverIP = serverAddr
+	// Generate random 8-byte client cookie
+	clientCookie := make([]byte, 8)
+	if _, err := rand.Read(clientCookie); err != nil {
+		// If random generation fails, this is a critical error
+		// but we'll continue with a zero cookie rather than panicking
+		clientCookie = make([]byte, 8)
 	}
-
-	// Get client IP address (cached for performance)
-	b.clientIPOnce.Do(func() {
-		b.clientIP = getOutboundIP(serverIP)
-	})
-
-	// Generate client cookie using HMAC-SHA256 per RFC 7873
-	// Cookie = HMAC-SHA256(secret, client_ip || server_ip)
-	h := hmac.New(sha256.New, secret)
-	h.Write([]byte(b.clientIP))
-	h.Write([]byte(serverIP))
-	hash := h.Sum(nil)
-
-	// Take first 8 bytes as the client cookie
-	clientCookie := hash[:8]
 	cookieHex := hex.EncodeToString(clientCookie)
 
 	cookieOpt := &dns.EDNS0_COOKIE{
@@ -729,39 +695,6 @@ func addCookie(m *dns.Msg, serverAddr string, secret []byte, b *Benchmark) {
 		Cookie: cookieHex,
 	}
 	o.Option = append(o.Option, cookieOpt)
-}
-
-// getOutboundIP returns the preferred outbound IP address to reach the given destination.
-func getOutboundIP(dest string) string {
-	// Try to resolve the destination if it's a hostname
-	// Use a timeout context to prevent hanging
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-
-	var r net.Resolver
-	ips, err := r.LookupIP(ctx, "ip", dest)
-	var destIP string
-	if err == nil && len(ips) > 0 {
-		destIP = ips[0].String()
-	} else {
-		destIP = dest
-	}
-
-	// Determine which local IP would be used to connect to the destination
-	// We use a UDP connection (which doesn't actually send anything) to determine routing
-	conn, err := net.Dial("udp", net.JoinHostPort(destIP, "53"))
-	if err != nil {
-		// Fallback to localhost if we can't determine the outbound IP
-		return "127.0.0.1"
-	}
-	defer conn.Close()
-
-	localAddr, ok := conn.LocalAddr().(*net.UDPAddr)
-	if !ok {
-		// Fallback if the connection type is unexpected
-		return "127.0.0.1"
-	}
-	return localAddr.IP.String()
 }
 
 func (b *Benchmark) addPortIfMissing() {
