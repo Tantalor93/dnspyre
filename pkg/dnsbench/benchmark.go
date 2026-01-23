@@ -3,13 +3,12 @@ package dnsbench
 import (
 	"bufio"
 	"context"
-	"crypto/rand"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
 	"log"
-	mathrand "math/rand"
+	"math/rand"
 	"net"
 	"net/http"
 	"net/url"
@@ -431,7 +430,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 
 			// create a new lock free rand source for this goroutine
 			// nolint:gosec
-			rando := mathrand.New(mathrand.NewSource(time.Now().UnixNano()))
+			rando := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 			var workerLimit ratelimit.Limiter
 			if b.RateLimitWorker > 0 {
@@ -441,15 +440,13 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 			query := queryFactory()
 
 			// Generate client cookie once for this worker (RFC 7873)
-			clientCookie := make([]byte, 8)
-			if _, err := rand.Read(clientCookie); err != nil {
-				// If random generation fails, use zero cookie
-				clientCookie = make([]byte, 8)
-			}
-			clientCookieHex := hex.EncodeToString(clientCookie)
+			cookie := make([]byte, 8)
 
-			// Store server cookie locally for this worker (RFC 7873)
-			var serverCookie string
+			if _, err := rando.Read(cookie); err != nil {
+				// If random generation fails, use zero cookie
+				cookie = make([]byte, 8)
+			}
+			cookieHex := hex.EncodeToString(cookie)
 
 			for i := int64(0); i < b.Count || b.Duration != 0; i++ {
 				for _, q := range questions {
@@ -471,7 +468,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 							}
 						}
 
-						req := b.createReqMsg(q, qt, clientCookieHex, serverCookie)
+						req := b.createReqMsg(q, qt, cookieHex)
 
 						start := time.Now()
 
@@ -485,8 +482,11 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 						dur := time.Since(start)
 
 						// Extract server cookie from response if DNS cookies are enabled
-						if b.Cookie && resp != nil && err == nil {
-							serverCookie = extractServerCookie(resp)
+						if b.Cookie && resp != nil {
+							respCookie := extractCookieFromResponse(resp)
+							if len(respCookie) > 0 {
+								cookieHex = respCookie
+							}
 						}
 
 						if b.RequestLogEnabled {
@@ -514,7 +514,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	return stats, nil
 }
 
-func (b *Benchmark) createReqMsg(domain string, qtype uint16, clientCookie string, serverCookie string) dns.Msg {
+func (b *Benchmark) createReqMsg(domain string, qtype uint16, cookie string) dns.Msg {
 	req := dns.Msg{}
 	req.RecursionDesired = b.Recurse
 
@@ -526,7 +526,7 @@ func (b *Benchmark) createReqMsg(domain string, qtype uint16, clientCookie strin
 		req.Id = 0
 	} else {
 		// nolint:gosec
-		req.Id = uint16(mathrand.Intn(1 << 16))
+		req.Id = uint16(rand.Intn(1 << 16))
 	}
 
 	if b.Edns0 > 0 {
@@ -539,7 +539,7 @@ func (b *Benchmark) createReqMsg(domain string, qtype uint16, clientCookie strin
 		addECS(&req, ecs)
 	}
 	if b.Cookie {
-		addCookie(&req, clientCookie, serverCookie)
+		addCookie(&req, cookie)
 	}
 	if b.DNSSEC {
 		edns0 := req.IsEdns0()
@@ -568,7 +568,7 @@ func (b *Benchmark) measureProm(req dns.Msg, resp *dns.Msg, time time.Duration, 
 	dnsRequestsDurationMetrics.WithLabelValues(reqType).Observe(time.Seconds())
 }
 
-func (b *Benchmark) delay(ctx context.Context, rando *mathrand.Rand) {
+func (b *Benchmark) delay(ctx context.Context, rando *rand.Rand) {
 	switch {
 	case b.requestDelayStart > 0 && b.requestDelayEnd > 0:
 		delay := time.Duration(rando.Int63n(int64(b.requestDelayEnd-b.requestDelayStart))) + b.requestDelayStart
@@ -690,19 +690,12 @@ func addECS(m *dns.Msg, ecs string) {
 }
 
 // addCookie adds a DNS cookie EDNS option to the DNS message.
-// Uses the provided client cookie (hex-encoded) and appends the server cookie if available.
-// Per RFC 7873, the client cookie should be reused across requests.
-func addCookie(m *dns.Msg, clientCookie string, serverCookie string) {
+// Uses the provided cookie (hex-encoded).
+func addCookie(m *dns.Msg, cookieHex string) {
 	o := m.IsEdns0()
 	if o == nil {
 		m.SetEdns0(DefaultEdns0BufferSize, false)
 		o = m.IsEdns0()
-	}
-
-	// Use provided client cookie and append server cookie if available
-	cookieHex := clientCookie
-	if serverCookie != "" {
-		cookieHex += serverCookie
 	}
 
 	cookieOpt := &dns.EDNS0_COOKIE{
@@ -712,10 +705,9 @@ func addCookie(m *dns.Msg, clientCookie string, serverCookie string) {
 	o.Option = append(o.Option, cookieOpt)
 }
 
-// extractServerCookie extracts the server cookie from a DNS response.
-// According to RFC 7873, the server cookie starts after the 16 hex character client cookie.
+// extractCookieFromResponse extracts the cookie from a DNS response.
 // Returns the server cookie string, or empty string if not found.
-func extractServerCookie(resp *dns.Msg) string {
+func extractCookieFromResponse(resp *dns.Msg) string {
 	if resp == nil {
 		return ""
 	}
@@ -727,11 +719,7 @@ func extractServerCookie(resp *dns.Msg) string {
 
 	for _, option := range opt.Option {
 		if cookie, ok := option.(*dns.EDNS0_COOKIE); ok {
-			// Cookie format: first 16 hex chars are client cookie, rest is server cookie
-			if len(cookie.Cookie) > 16 {
-				return cookie.Cookie[16:]
-			}
-			return ""
+			return cookie.Cookie
 		}
 	}
 	return ""
