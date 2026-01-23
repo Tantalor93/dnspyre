@@ -79,7 +79,7 @@ func init() {
 	pApp.Flag("ecs", "Specify EDNS Client Subnet option in CIDR notation (e.g., '192.0.2.0/24' or '2001:db8::/32'). This is a more user-friendly alternative to --ednsopt for specifying ECS.").
 		Default("").StringVar(&benchmark.Ecs)
 
-	pApp.Flag("cookie", "Enable DNS cookies (RFC 7873). When enabled, an 8-byte client cookie is automatically generated for each DNS request.").
+	pApp.Flag("cookie", "Enable DNS cookies (RFC 7873). When enabled, an 8-byte client cookie is automatically added to each DNS request together with server cookie if available.").
 		BoolVar(&benchmark.Cookie)
 
 	pApp.Flag("dnssec", "Allow DNSSEC (sets DO bit for all DNS requests to 1)").BoolVar(&benchmark.DNSSEC)
