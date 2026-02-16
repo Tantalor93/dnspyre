@@ -3,6 +3,7 @@ package dnsbench
 import (
 	"bufio"
 	"context"
+	_ "embed"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -74,6 +75,9 @@ const (
 	// DefaultWriteTimeout is a default read timeout.
 	DefaultWriteTimeout = time.Second
 )
+
+//go:embed testdata/default-domains
+var defaultDomains string
 
 // Benchmark is representation of runnable DNS benchmark scenario.
 // based on domains provided in Benchmark.Queries, it will be firing DNS queries until
@@ -240,6 +244,10 @@ func (b *Benchmark) init() error {
 
 	if len(b.Server) == 0 {
 		b.Server = DefaultNameServer()
+	}
+
+	if len(b.Queries) == 0 {
+		b.Queries = strings.Split(strings.TrimSpace(defaultDomains), "\n")
 	}
 
 	b.useDoH, _ = isHTTPUrl(b.Server)
