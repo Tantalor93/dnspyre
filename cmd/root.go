@@ -178,8 +178,9 @@ func init() {
 	pApp.Arg("queries", "Queries to issue. It can be a local file referenced using @<file-path>, for example @data/2-domains. "+
 		"It can also be resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that "+
 		"case, the file will be downloaded and saved in-memory. "+
-		"These data sources can be combined, for example \"google.com @data/2-domains https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/2-domains\"").
-		Required().StringsVar(&benchmark.Queries)
+		"These data sources can be combined, for example \"google.com @data/2-domains https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/2-domains\". "+
+		"If not provided, default list of domains will be used.").
+		StringsVar(&benchmark.Queries)
 
 	info, ok := debug.ReadBuildInfo()
 	if ok && len(Version) == 0 {
