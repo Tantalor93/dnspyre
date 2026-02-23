@@ -44,3 +44,10 @@ _site
 .jekyll-cache
 completions
 manpages/
+
+# VSCode
+.vscode/*      # Maybe .vscode/**/* instead - see comments
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json

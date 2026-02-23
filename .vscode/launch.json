@@ -10,17 +10,15 @@
             "console": "integratedTerminal",
         },
         {
-            "name": "Run 10s",
+            "name": "Run 5s",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
             "console": "integratedTerminal",
             "args": [
-                "--duration=10s"
+                "--duration=5s"
             ]
         }
-
-
     ]
 }
