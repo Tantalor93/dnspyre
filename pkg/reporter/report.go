@@ -60,6 +60,9 @@ func PrintReport(b *dnsbench.Benchmark, stats []*dnsbench.ResultStats, benchStar
 		if err := directoryExists(b.PlotDir); err != nil {
 			return fmt.Errorf("unable to plot results: %w", err)
 		}
+		if len(b.PlotFormat) == 0 {
+			b.PlotFormat = dnsbench.DefaultPlotFormat
+		}
 
 		now := time.Now().Format("2006-01-02T15-04-05")
 		dir := filepath.Join(b.PlotDir, fmt.Sprintf("graphs-%s", now))

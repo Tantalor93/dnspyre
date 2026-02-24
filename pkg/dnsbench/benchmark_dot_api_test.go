@@ -55,22 +55,16 @@ func (suite *DoTTestSuite) TestBenchmark_Run() {
 
 	buf := bytes.Buffer{}
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         server.Addr,
-		TCP:            false,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		Insecure:       true,
-		DOT:            true,
-		Writer:         &buf,
+		Queries:     []string{"example.org"},
+		Types:       []string{"A", "AAAA"},
+		Server:      server.Addr,
+		TCP:         false,
+		Concurrency: 2,
+		Rcodes:      true,
+		Recurse:     true,
+		Insecure:    true,
+		DOT:         true,
+		Writer:      &buf,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -114,21 +108,15 @@ func (suite *DoTTestSuite) TestBenchmark_Run_truncated() {
 	defer server.Close()
 
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         server.Addr,
-		TCP:            false,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		Insecure:       true,
-		DOT:            true,
+		Queries:     []string{"example.org"},
+		Types:       []string{"A", "AAAA"},
+		Server:      server.Addr,
+		TCP:         false,
+		Concurrency: 2,
+		Rcodes:      true,
+		Recurse:     true,
+		Insecure:    true,
+		DOT:         true,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -172,8 +160,6 @@ func (suite *DoTTestSuite) TestBenchmark_Run_error() {
 		Server:         server.Addr,
 		TCP:            false,
 		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
 		WriteTimeout:   100 * time.Millisecond,
 		ReadTimeout:    300 * time.Millisecond,
 		ConnectTimeout: 100 * time.Millisecond,

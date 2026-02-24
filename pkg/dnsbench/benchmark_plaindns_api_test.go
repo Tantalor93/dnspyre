@@ -65,20 +65,14 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run() {
 
 			buf := bytes.Buffer{}
 			bench := dnsbench.Benchmark{
-				Queries:        []string{"example.org"},
-				Types:          []string{"A", "AAAA"},
-				Server:         s.Addr,
-				TCP:            tt.args.protocol == dnsbench.TCPTransport,
-				Concurrency:    2,
-				Count:          1,
-				Probability:    1,
-				WriteTimeout:   1 * time.Second,
-				ReadTimeout:    3 * time.Second,
-				ConnectTimeout: 1 * time.Second,
-				RequestTimeout: 5 * time.Second,
-				Rcodes:         true,
-				Recurse:        true,
-				Writer:         &buf,
+				Queries:     []string{"example.org"},
+				Types:       []string{"A", "AAAA"},
+				Server:      s.Addr,
+				TCP:         tt.args.protocol == dnsbench.TCPTransport,
+				Concurrency: 2,
+				Rcodes:      true,
+				Recurse:     true,
+				Writer:      &buf,
 			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -108,20 +102,14 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_dnssec() {
 	defer s.Close()
 
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         s.Addr,
-		TCP:            false,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		DNSSEC:         true,
+		Queries:     []string{"example.org"},
+		Types:       []string{"A", "AAAA"},
+		Server:      s.Addr,
+		TCP:         false,
+		Concurrency: 2,
+		Rcodes:      true,
+		Recurse:     true,
+		DNSSEC:      true,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -155,20 +143,14 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_edns0() {
 	defer s.Close()
 
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         s.Addr,
-		TCP:            false,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		Edns0:          1024,
+		Queries:     []string{"example.org"},
+		Types:       []string{"A", "AAAA"},
+		Server:      s.Addr,
+		TCP:         false,
+		Concurrency: 2,
+		Rcodes:      true,
+		Recurse:     true,
+		Edns0:       1024,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -213,21 +195,15 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_edns0_ednsopt() {
 	defer s.Close()
 
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         s.Addr,
-		TCP:            false,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		Edns0:          1024,
-		EdnsOpt:        strconv.Itoa(int(testOpt)) + ":" + testHexOptData,
+		Queries:     []string{"example.org"},
+		Types:       []string{"A", "AAAA"},
+		Server:      s.Addr,
+		TCP:         false,
+		Concurrency: 2,
+		Rcodes:      true,
+		Recurse:     true,
+		Edns0:       1024,
+		EdnsOpt:     strconv.Itoa(int(testOpt)) + ":" + testHexOptData,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -272,20 +248,14 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_ecs() {
 	defer s.Close()
 
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         s.Addr,
-		TCP:            false,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		Ecs:            testCIDR,
+		Queries:     []string{"example.org"},
+		Types:       []string{"A", "AAAA"},
+		Server:      s.Addr,
+		TCP:         false,
+		Concurrency: 2,
+		Rcodes:      true,
+		Recurse:     true,
+		Ecs:         testCIDR,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -330,20 +300,14 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_ecs_ipv6() {
 	defer s.Close()
 
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         s.Addr,
-		TCP:            false,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		Ecs:            testCIDR,
+		Queries:     []string{"example.org"},
+		Types:       []string{"A", "AAAA"},
+		Server:      s.Addr,
+		TCP:         false,
+		Concurrency: 2,
+		Rcodes:      true,
+		Recurse:     true,
+		Ecs:         testCIDR,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -400,21 +364,15 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_ecs_and_ednsopt() {
 	defer s.Close()
 
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         s.Addr,
-		TCP:            false,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		Ecs:            testCIDR,
-		EdnsOpt:        strconv.Itoa(int(testOpt)) + ":" + testHexOptData,
+		Queries:     []string{"example.org"},
+		Types:       []string{"A", "AAAA"},
+		Server:      s.Addr,
+		TCP:         false,
+		Concurrency: 2,
+		Rcodes:      true,
+		Recurse:     true,
+		Ecs:         testCIDR,
+		EdnsOpt:     strconv.Itoa(int(testOpt)) + ":" + testHexOptData,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -455,20 +413,14 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_cookie() {
 	defer s.Close()
 
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         s.Addr,
-		TCP:            false,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		Cookie:         true,
+		Queries:     []string{"example.org"},
+		Types:       []string{"A", "AAAA"},
+		Server:      s.Addr,
+		TCP:         false,
+		Concurrency: 2,
+		Rcodes:      true,
+		Recurse:     true,
+		Cookie:      true,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -537,20 +489,13 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_cookie_with_server_response() 
 	defer s.Close()
 
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A"},
-		Server:         s.Addr,
-		TCP:            false,
-		Concurrency:    1,
-		Count:          3, // Make 3 requests to test server cookie reuse
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		Cookie:         true,
+		Queries: []string{"example.org"},
+		Server:  s.Addr,
+		TCP:     false,
+		Count:   3, // Make 3 requests to test server cookie reuse
+		Rcodes:  true,
+		Recurse: true,
+		Cookie:  true,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -560,45 +505,6 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_cookie_with_server_response() 
 	suite.Require().NoError(err, "expected no error from benchmark run")
 	suite.Require().Len(rs, 1, "Should have 1 result stat for 1 concurrent worker")
 	suite.Equal(3, requestCount, "Should have made 3 requests")
-}
-
-func (suite *PlainDNSTestSuite) TestBenchmark_Run_probability() {
-	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
-		ret := new(dns.Msg)
-		ret.SetReply(r)
-		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
-
-		// wait some time to actually have some observable duration
-		time.Sleep(time.Millisecond * 500)
-
-		w.WriteMsg(ret)
-	})
-	defer s.Close()
-
-	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         s.Addr,
-		TCP:            false,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    0,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	rs, err := bench.Run(ctx)
-
-	suite.Require().NoError(err, "expected no error from benchmark run")
-	suite.Require().Len(rs, 2, "expected results from two workers")
-	suite.Zero(rs[0].Counters.Total, "Run(ctx) total counter")
-	suite.Zero(rs[1].Counters.Total, "Run(ctx) total counter")
 }
 
 func (suite *PlainDNSTestSuite) TestBenchmark_Run_download_external_datasource_using_http() {
@@ -623,19 +529,13 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_download_external_datasource_u
 	defer ts.Close()
 
 	bench := dnsbench.Benchmark{
-		Queries:        []string{ts.URL},
-		Types:          []string{"A", "AAAA"},
-		Server:         s.Addr,
-		TCP:            false,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
+		Queries:     []string{ts.URL},
+		Types:       []string{"A", "AAAA"},
+		Server:      s.Addr,
+		TCP:         false,
+		Concurrency: 2,
+		Rcodes:      true,
+		Recurse:     true,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -653,19 +553,13 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_download_external_datasource_u
 	ts.Close()
 
 	bench := dnsbench.Benchmark{
-		Queries:        []string{ts.URL},
-		Types:          []string{"A", "AAAA"},
-		Server:         "8.8.8.8",
-		TCP:            false,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
+		Queries:     []string{ts.URL},
+		Types:       []string{"A", "AAAA"},
+		Server:      "8.8.8.8",
+		TCP:         false,
+		Concurrency: 2,
+		Rcodes:      true,
+		Recurse:     true,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -682,19 +576,13 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_download_external_datasource_u
 	defer ts.Close()
 
 	bench := dnsbench.Benchmark{
-		Queries:        []string{ts.URL},
-		Types:          []string{"A", "AAAA"},
-		Server:         "8.8.8.8",
-		TCP:            false,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
+		Queries:     []string{ts.URL},
+		Types:       []string{"A", "AAAA"},
+		Server:      "8.8.8.8",
+		TCP:         false,
+		Concurrency: 2,
+		Rcodes:      true,
+		Recurse:     true,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -714,18 +602,11 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_duration() {
 	defer s.Close()
 
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A"},
-		Server:         s.Addr,
-		Concurrency:    1,
-		Duration:       2 * time.Second,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
+		Queries:  []string{"example.org"},
+		Server:   s.Addr,
+		Duration: 2 * time.Second,
+		Rcodes:   true,
+		Recurse:  true,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -738,20 +619,13 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_duration() {
 
 func (suite *PlainDNSTestSuite) TestBenchmark_Run_duration_and_count_specified_at_once() {
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A"},
-		Server:         "8.8.8.8",
-		TCP:            false,
-		Count:          1,
-		Duration:       time.Second,
-		Concurrency:    1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
+		Queries:  []string{"example.org"},
+		Server:   "8.8.8.8",
+		TCP:      false,
+		Duration: time.Second,
+		Count:    1,
+		Rcodes:   true,
+		Recurse:  true,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -774,18 +648,11 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_default_count() {
 	defer s.Close()
 
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A"},
-		Server:         s.Addr,
-		TCP:            false,
-		Concurrency:    1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
+		Queries: []string{"example.org"},
+		Server:  s.Addr,
+		TCP:     false,
+		Rcodes:  true,
+		Recurse: true,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -813,21 +680,15 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_global_ratelimit() {
 
 	buf := bytes.Buffer{}
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A"},
-		Server:         s.Addr,
-		TCP:            false,
-		Concurrency:    2,
-		Duration:       5 * time.Second,
-		Rate:           1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		Writer:         &buf,
+		Queries:     []string{"example.org"},
+		Server:      s.Addr,
+		TCP:         false,
+		Concurrency: 2,
+		Duration:    5 * time.Second,
+		Rate:        1,
+		Rcodes:      true,
+		Recurse:     true,
+		Writer:      &buf,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -861,17 +722,11 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_worker_ratelimit() {
 	buf := bytes.Buffer{}
 	bench := dnsbench.Benchmark{
 		Queries:         []string{"example.org"},
-		Types:           []string{"A"},
 		Server:          s.Addr,
 		TCP:             false,
 		Concurrency:     2,
 		Duration:        5 * time.Second,
 		RateLimitWorker: 1,
-		Probability:     1,
-		WriteTimeout:    1 * time.Second,
-		ReadTimeout:     3 * time.Second,
-		ConnectTimeout:  1 * time.Second,
-		RequestTimeout:  5 * time.Second,
 		Rcodes:          true,
 		Recurse:         true,
 		Writer:          &buf,
@@ -910,18 +765,12 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_global_ratelimit_precendence()
 	buf := bytes.Buffer{}
 	bench := dnsbench.Benchmark{
 		Queries:         []string{"example.org"},
-		Types:           []string{"A"},
 		Server:          s.Addr,
 		TCP:             false,
 		Concurrency:     2,
 		Duration:        5 * time.Second,
 		RateLimitWorker: 2,
 		Rate:            1,
-		Probability:     1,
-		WriteTimeout:    1 * time.Second,
-		ReadTimeout:     3 * time.Second,
-		ConnectTimeout:  1 * time.Second,
-		RequestTimeout:  5 * time.Second,
 		Rcodes:          true,
 		Recurse:         true,
 		Writer:          &buf,
@@ -955,8 +804,6 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_error() {
 		Server:         s.Addr,
 		TCP:            false,
 		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
 		WriteTimeout:   100 * time.Millisecond,
 		ReadTimeout:    300 * time.Millisecond,
 		ConnectTimeout: 100 * time.Millisecond,
@@ -993,19 +840,13 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_truncated() {
 	defer s.Close()
 
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         s.Addr,
-		TCP:            false,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
+		Queries:     []string{"example.org"},
+		Types:       []string{"A", "AAAA"},
+		Server:      s.Addr,
+		TCP:         false,
+		Concurrency: 2,
+		Rcodes:      true,
+		Recurse:     true,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -1043,12 +884,6 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Requestlog() {
 		Server:            s.Addr,
 		TCP:               false,
 		Concurrency:       2,
-		Count:             1,
-		Probability:       1,
-		WriteTimeout:      1 * time.Second,
-		ReadTimeout:       3 * time.Second,
-		ConnectTimeout:    1 * time.Second,
-		RequestTimeout:    5 * time.Second,
 		Rcodes:            true,
 		Recurse:           true,
 		Writer:            &buf,
@@ -1080,21 +915,15 @@ func (suite *PlainDNSTestSuite) TestBenchmark_ConstantRequestDelay() {
 	defer s.Close()
 
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         s.Addr,
-		TCP:            false,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		DNSSEC:         true,
-		RequestDelay:   "1s",
+		Queries:      []string{"example.org"},
+		Types:        []string{"A", "AAAA"},
+		Server:       s.Addr,
+		TCP:          false,
+		Concurrency:  2,
+		Rcodes:       true,
+		Recurse:      true,
+		DNSSEC:       true,
+		RequestDelay: "1s",
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -1120,21 +949,15 @@ func (suite *PlainDNSTestSuite) TestBenchmark_RandomRequestDelay() {
 	defer s.Close()
 
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         s.Addr,
-		TCP:            false,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		DNSSEC:         true,
-		RequestDelay:   "1s-2s",
+		Queries:      []string{"example.org"},
+		Types:        []string{"A", "AAAA"},
+		Server:       s.Addr,
+		TCP:          false,
+		Concurrency:  2,
+		Rcodes:       true,
+		Recurse:      true,
+		DNSSEC:       true,
+		RequestDelay: "1s-2s",
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -1149,7 +972,7 @@ func (suite *PlainDNSTestSuite) TestBenchmark_RandomRequestDelay() {
 	suite.InDelta(4*time.Second, benchDuration, float64(2*time.Second))
 }
 
-func (suite *PlainDNSTestSuite) TestBenchmark_DefaultQueries() {
+func (suite *PlainDNSTestSuite) TestBenchmark_Defaults() {
 	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
@@ -1160,17 +983,9 @@ func (suite *PlainDNSTestSuite) TestBenchmark_DefaultQueries() {
 	defer s.Close()
 
 	bench := dnsbench.Benchmark{
-		Server:         s.Addr,
-		Types:          []string{"A"},
-		Concurrency:    1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		DNSSEC:         true,
+		Server:  s.Addr,
+		Rcodes:  true,
+		Recurse: true,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -1183,4 +998,35 @@ func (suite *PlainDNSTestSuite) TestBenchmark_DefaultQueries() {
 	suite.EqualValues(10, rs[0].Counters.Total)
 	suite.EqualValues(10, rs[0].Codes[dns.RcodeSuccess])
 	suite.EqualValues(10, rs[0].Qtypes["A"])
+}
+
+func (suite *PlainDNSTestSuite) TestBenchmark_probability() {
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	bench := dnsbench.Benchmark{
+		Server:         s.Addr,
+		Queries:        []string{"example.org"},
+		Count:          10,
+		Probability:    0.5,
+		RequestTimeout: 5 * time.Second,
+		Rcodes:         true,
+		Recurse:        true,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	rs, err := bench.Run(ctx)
+
+	suite.Require().NoError(err, "expected no error from benchmark run")
+	suite.Len(rs, 1)
+	suite.GreaterOrEqual(rs[0].Counters.Total, int64(1), "There should atleast be 1 request")
+	suite.Less(rs[0].Counters.Total, int64(10), "There should be less than 10 requests")
 }

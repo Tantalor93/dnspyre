@@ -53,27 +53,6 @@ const (
 	HTTP2Proto = "2"
 	// HTTP3Proto represents HTTP/3 protocol for DoH.
 	HTTP3Proto = "3"
-
-	// DefaultEdns0BufferSize default EDNS0 buffer size according to the http://www.dnsflagday.net/2020/
-	DefaultEdns0BufferSize = 1232
-
-	// DefaultRequestLogPath is a default path to the file, where the requests will be logged.
-	DefaultRequestLogPath = "requests.log"
-
-	// DefaultPlotFormat is a default format for plots.
-	DefaultPlotFormat = "svg"
-
-	// DefaultRequestTimeout is a default request timeout.
-	DefaultRequestTimeout = 5 * time.Second
-
-	// DefaultConnectTimeout is a default connect timeout.
-	DefaultConnectTimeout = time.Second
-
-	// DefaultReadTimeout is a default read timeout.
-	DefaultReadTimeout = 3 * time.Second
-
-	// DefaultWriteTimeout is a default read timeout.
-	DefaultWriteTimeout = time.Second
 )
 
 //go:embed testdata/default-domains
@@ -241,13 +220,32 @@ func (b *Benchmark) init() error {
 	if b.Writer == nil {
 		b.Writer = os.Stdout
 	}
-
 	if len(b.Server) == 0 {
 		b.Server = DefaultNameServer()
 	}
-
 	if len(b.Queries) == 0 {
 		b.Queries = strings.Split(strings.TrimSpace(defaultDomains), "\n")
+	}
+	if b.Probability == 0 {
+		b.Probability = DefaultProbability
+	}
+	if b.Concurrency == 0 {
+		b.Concurrency = DefaultConcurrency
+	}
+	if b.WriteTimeout == 0 {
+		b.WriteTimeout = DefaultWriteTimeout
+	}
+	if b.ReadTimeout == 0 {
+		b.ReadTimeout = DefaultReadTimeout
+	}
+	if b.ConnectTimeout == 0 {
+		b.ConnectTimeout = DefaultConnectTimeout
+	}
+	if b.RequestTimeout == 0 {
+		b.RequestTimeout = DefaultRequestTimeout
+	}
+	if len(b.Types) == 0 {
+		b.Types = []string{DefaultQueryType}
 	}
 
 	b.useDoH, _ = isHTTPUrl(b.Server)
@@ -269,7 +267,7 @@ func (b *Benchmark) init() error {
 	b.addPortIfMissing()
 
 	if b.Count == 0 && b.Duration == 0 {
-		b.Count = 1
+		b.Count = DefaultCount
 	}
 
 	if b.Duration > 0 && b.Count > 0 {
@@ -278,6 +276,9 @@ func (b *Benchmark) init() error {
 
 	if b.HistMax == 0 {
 		b.HistMax = b.RequestTimeout
+	}
+	if b.HistPre == 0 {
+		b.HistPre = DefaultHistPrecision
 	}
 
 	if b.Edns0 != 0 && (b.Edns0 < 512 || b.Edns0 > 4096) {
