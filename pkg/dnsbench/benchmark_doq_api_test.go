@@ -43,21 +43,15 @@ func (suite *DoQTestSuite) TestBenchmark_Run() {
 
 	buf := bytes.Buffer{}
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         "quic://" + server.addr,
-		TCP:            true,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		Insecure:       true,
-		Writer:         &buf,
+		Queries:     []string{"example.org"},
+		Types:       []string{"A", "AAAA"},
+		Server:      "quic://" + server.addr,
+		TCP:         true,
+		Concurrency: 2,
+		Rcodes:      true,
+		Recurse:     true,
+		Insecure:    true,
+		Writer:      &buf,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -107,16 +101,10 @@ func (suite *DoQTestSuite) TestBenchmark_Run_separate_connections() {
 			buf := bytes.Buffer{}
 			bench := dnsbench.Benchmark{
 				Queries:                   []string{"example.org"},
-				Types:                     []string{"A"},
 				Server:                    "quic://" + server.addr,
 				TCP:                       true,
 				Concurrency:               5,
 				Count:                     2,
-				Probability:               1,
-				WriteTimeout:              1 * time.Second,
-				ReadTimeout:               3 * time.Second,
-				ConnectTimeout:            1 * time.Second,
-				RequestTimeout:            5 * time.Second,
 				Rcodes:                    true,
 				Recurse:                   true,
 				DohMethod:                 dnsbench.PostHTTPMethod,
@@ -158,20 +146,14 @@ func (suite *DoQTestSuite) TestBenchmark_Run_truncated() {
 	defer server.stop()
 
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         "quic://" + server.addr,
-		TCP:            true,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		Insecure:       true,
+		Queries:     []string{"example.org"},
+		Types:       []string{"A", "AAAA"},
+		Server:      "quic://" + server.addr,
+		TCP:         true,
+		Concurrency: 2,
+		Rcodes:      true,
+		Recurse:     true,
+		Insecure:    true,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -200,8 +182,6 @@ func (suite *DoQTestSuite) TestBenchmark_Run_error() {
 		Server:         "quic://" + server.addr,
 		TCP:            true,
 		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
 		WriteTimeout:   100 * time.Millisecond,
 		ReadTimeout:    300 * time.Millisecond,
 		ConnectTimeout: 100 * time.Millisecond,

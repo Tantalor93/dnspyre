@@ -60,21 +60,15 @@ func (suite *DoHTestSuite) TestBenchmark_Run_post() {
 
 	buf := bytes.Buffer{}
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         ts.URL,
-		TCP:            true,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		DohMethod:      dnsbench.PostHTTPMethod,
-		Writer:         &buf,
+		Queries:     []string{"example.org"},
+		Types:       []string{"A", "AAAA"},
+		Server:      ts.URL,
+		TCP:         true,
+		Concurrency: 2,
+		Rcodes:      true,
+		Recurse:     true,
+		DohMethod:   dnsbench.PostHTTPMethod,
+		Writer:      &buf,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -120,21 +114,15 @@ func (suite *DoHTestSuite) TestBenchmark_Run_get() {
 
 	buf := bytes.Buffer{}
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         ts.URL,
-		TCP:            true,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		DohMethod:      dnsbench.GetHTTPMethod,
-		Writer:         &buf,
+		Queries:     []string{"example.org"},
+		Types:       []string{"A", "AAAA"},
+		Server:      ts.URL,
+		TCP:         true,
+		Concurrency: 2,
+		Rcodes:      true,
+		Recurse:     true,
+		DohMethod:   dnsbench.GetHTTPMethod,
+		Writer:      &buf,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -177,20 +165,14 @@ func (suite *DoHTestSuite) TestBenchmark_Run_http1() {
 	defer ts.Close()
 
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         ts.URL,
-		TCP:            true,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		DohProtocol:    dnsbench.HTTP1Proto,
+		Queries:     []string{"example.org"},
+		Types:       []string{"A", "AAAA"},
+		Server:      ts.URL,
+		TCP:         true,
+		Concurrency: 2,
+		Rcodes:      true,
+		Recurse:     true,
+		DohProtocol: dnsbench.HTTP1Proto,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -253,22 +235,16 @@ func (suite *DoHTestSuite) TestBenchmark_Run_http2() {
 
 	buf := bytes.Buffer{}
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         ts.URL,
-		TCP:            true,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		DohProtocol:    dnsbench.HTTP2Proto,
-		Insecure:       true,
-		Writer:         &buf,
+		Queries:     []string{"example.org"},
+		Types:       []string{"A", "AAAA"},
+		Server:      ts.URL,
+		TCP:         true,
+		Concurrency: 2,
+		Rcodes:      true,
+		Recurse:     true,
+		DohProtocol: dnsbench.HTTP2Proto,
+		Insecure:    true,
+		Writer:      &buf,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -314,20 +290,14 @@ func (suite *DoHTestSuite) TestBenchmark_Run_truncated() {
 	defer ts.Close()
 
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         ts.URL,
-		TCP:            true,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		DohMethod:      dnsbench.PostHTTPMethod,
+		Queries:     []string{"example.org"},
+		Types:       []string{"A", "AAAA"},
+		Server:      ts.URL,
+		TCP:         true,
+		Concurrency: 2,
+		Rcodes:      true,
+		Recurse:     true,
+		DohMethod:   dnsbench.PostHTTPMethod,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -350,20 +320,14 @@ func (suite *DoHTestSuite) TestBenchmark_Run_error() {
 	defer ts.Close()
 
 	bench := dnsbench.Benchmark{
-		Queries:        []string{"example.org"},
-		Types:          []string{"A", "AAAA"},
-		Server:         ts.URL,
-		TCP:            true,
-		Concurrency:    2,
-		Count:          1,
-		Probability:    1,
-		WriteTimeout:   1 * time.Second,
-		ReadTimeout:    3 * time.Second,
-		ConnectTimeout: 1 * time.Second,
-		RequestTimeout: 5 * time.Second,
-		Rcodes:         true,
-		Recurse:        true,
-		DohMethod:      dnsbench.PostHTTPMethod,
+		Queries:     []string{"example.org"},
+		Types:       []string{"A", "AAAA"},
+		Server:      ts.URL,
+		TCP:         true,
+		Concurrency: 2,
+		Rcodes:      true,
+		Recurse:     true,
+		DohMethod:   dnsbench.PostHTTPMethod,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -454,17 +418,11 @@ func (suite *DoHTestSuite) TestBenchmark_Run_separate_connections() {
 			buf := bytes.Buffer{}
 			bench := dnsbench.Benchmark{
 				Queries:                   []string{"example.org"},
-				Types:                     []string{"A"},
 				Server:                    ts.URL,
 				DohProtocol:               "2",
 				TCP:                       true,
 				Concurrency:               5,
 				Count:                     2,
-				Probability:               1,
-				WriteTimeout:              1 * time.Second,
-				ReadTimeout:               3 * time.Second,
-				ConnectTimeout:            1 * time.Second,
-				RequestTimeout:            5 * time.Second,
 				Rcodes:                    true,
 				Recurse:                   true,
 				DohMethod:                 dnsbench.PostHTTPMethod,

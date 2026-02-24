@@ -3,6 +3,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"runtime/debug"
@@ -26,9 +27,7 @@ var (
 var (
 	pApp = kingpin.New("dnspyre", "A high QPS DNS benchmark.").Author(author)
 
-	benchmark = dnsbench.Benchmark{
-		Writer: os.Stdout,
-	}
+	benchmark = dnsbench.Benchmark{}
 
 	failConditions []string
 )
@@ -50,13 +49,13 @@ func init() {
 		"If no server is provided, then system resolver is used or 127.0.0.1").Short('s').StringVar(&benchmark.Server)
 
 	pApp.Flag("type", "Query type. Repeatable flag. If multiple query types are specified then each query will be duplicated for each type.").
-		Short('t').Default("A").EnumsVar(&benchmark.Types, getSupportedDNSTypes()...)
+		Short('t').Default(dnsbench.DefaultQueryType).EnumsVar(&benchmark.Types, getSupportedDNSTypes()...)
 
 	pApp.Flag("number", "How many times the provided queries are repeated. Note that the total number of queries issued = types*number*concurrency*len(queries).").
-		Short('n').PlaceHolder("1").Int64Var(&benchmark.Count)
+		Short('n').Int64Var(&benchmark.Count)
 
 	pApp.Flag("concurrency", "Number of concurrent queries to issue.").
-		Short('c').Default("1").Uint32Var(&benchmark.Concurrency)
+		Short('c').Default(fmt.Sprintf("%d", dnsbench.DefaultConcurrency)).Uint32Var(&benchmark.Concurrency)
 
 	pApp.Flag("rate-limit", "Apply a global questions / second rate limit.").
 		Short('l').Default("0").IntVar(&benchmark.Rate)
@@ -71,13 +70,13 @@ func init() {
 		Short('r').Default("true").BoolVar(&benchmark.Recurse)
 
 	pApp.Flag("probability", "Each provided hostname will be used with provided probability. Value 1 and above means that each hostname will be used by each concurrent benchmark goroutine. Useful for randomizing queries across benchmark goroutines.").
-		Default("1").Float64Var(&benchmark.Probability)
+		Default(fmt.Sprintf("%.1f", dnsbench.DefaultProbability)).Float64Var(&benchmark.Probability)
 
 	pApp.Flag("ednsopt", "code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal string. code must be an arbitrary numeric value.").
-		Default("").StringVar(&benchmark.EdnsOpt)
+		StringVar(&benchmark.EdnsOpt)
 
 	pApp.Flag("ecs", "Specify EDNS Client Subnet option in CIDR notation (e.g., '192.0.2.0/24' or '2001:db8::/32'). This is a more user-friendly alternative to --ednsopt for specifying ECS.").
-		Default("").StringVar(&benchmark.Ecs)
+		StringVar(&benchmark.Ecs)
 
 	pApp.Flag("cookie", "Enable DNS cookies (RFC 7873). When enabled, an 8-byte client cookie is automatically added to each DNS request together with server cookie if available.").
 		BoolVar(&benchmark.Cookie)
@@ -106,19 +105,19 @@ func init() {
 	pApp.Flag("codes", "Enable counting DNS return codes. Enabled by default.").
 		Default("true").BoolVar(&benchmark.Rcodes)
 
-	pApp.Flag("min", "Minimum value for timing histogram.").
-		Default((time.Microsecond * 400).String()).DurationVar(&benchmark.HistMin)
+	pApp.Flag("min", "Minimum value for timing histogram.").PlaceHolder("0ms").DurationVar(&benchmark.HistMin)
 
-	pApp.Flag("max", "Maximum value for timing histogram.").DurationVar(&benchmark.HistMax)
+	pApp.Flag("max", "Maximum value for timing histogram.").PlaceHolder(dnsbench.DefaultRequestTimeout.String()).
+		DurationVar(&benchmark.HistMax)
 
 	pApp.Flag("precision", "Significant figure for histogram precision.").
-		Default("1").PlaceHolder("[1-5]").IntVar(&benchmark.HistPre)
+		Default(fmt.Sprintf("%d", dnsbench.DefaultHistPrecision)).IntVar(&benchmark.HistPre)
 
 	pApp.Flag("distribution", "Display distribution histogram of timings to stdout. Enabled by default.").
 		Default("true").BoolVar(&benchmark.HistDisplay)
 
 	pApp.Flag("csv", "Export distribution to CSV.").
-		Default("").PlaceHolder("/path/to/file.csv").StringVar(&benchmark.Csv)
+		PlaceHolder("PATH_TO_FILE").StringVar(&benchmark.Csv)
 
 	pApp.Flag("json", "Report benchmark results as JSON.").BoolVar(&benchmark.JSON)
 
@@ -128,7 +127,7 @@ func init() {
 		Default("true").BoolVar(&benchmark.Color)
 
 	pApp.Flag("plot", "Plot benchmark results and export them to the directory.").
-		Default("").PlaceHolder("/path/to/folder").StringVar(&benchmark.PlotDir)
+		PlaceHolder("PATH_TO_FOLDER").StringVar(&benchmark.PlotDir)
 
 	pApp.Flag("plotf", "Format of graphs. Supported formats: svg, png and jpg.").
 		Default(dnsbench.DefaultPlotFormat).EnumVar(&benchmark.PlotFormat, "svg", "png", "jpg")
@@ -145,7 +144,7 @@ func init() {
 	pApp.Flag("duration", "Specifies for how long the benchmark should be executing, the benchmark will run for the specified time "+
 		"while sending DNS requests in an infinite loop based on the data source. After running for the specified duration, the benchmark is canceled. "+
 		"This option is exclusive with --number option. The duration is specified in GO duration format e.g. 10s, 15m, 1h.").
-		PlaceHolder("1m").Short('d').DurationVar(&benchmark.Duration)
+		Short('d').DurationVar(&benchmark.Duration)
 
 	pApp.Flag("progress", "Controls whether the progress bar is shown. Enabled by default.").
 		Default("true").BoolVar(&benchmark.ProgressBar)
@@ -153,7 +152,7 @@ func init() {
 	pApp.Flag("fail", "Controls conditions upon which the dnspyre will exit with a non-zero exit code. Repeatable flag. "+
 		"Supported options are 'ioerror' (fail if there is at least 1 IO error), 'negative' (fail if there is at least 1 negative DNS answer), "+
 		"'error' (fail if there is at least 1 error DNS response), 'idmismatch' (fail there is at least 1 ID mismatch between DNS request and response).").
-		PlaceHolder(ioerrorFailCondition).
+		PlaceHolder("CONDITION").
 		EnumsVar(&failConditions, ioerrorFailCondition, negativeFailCondition, errorFailCondition, idmismatchFailCondition)
 
 	pApp.Flag("log-requests", "Controls whether the Benchmark requests are logged. Requests are logged into the file specified by --log-requests-path flag. Disabled by default.").
@@ -173,7 +172,7 @@ func init() {
 		"is randomized after each request.").Default("0s").StringVar(&benchmark.RequestDelay)
 
 	pApp.Flag("prometheus", "Enables Prometheus metrics endpoint on the specified address. For example :8080 or localhost:8080. The endpoint is available at /metrics path.").
-		PlaceHolder(":8080").StringVar(&benchmark.PrometheusMetricsAddr)
+		PlaceHolder("ADDRESS").StringVar(&benchmark.PrometheusMetricsAddr)
 
 	pApp.Arg("queries", "Queries to issue. It can be a local file referenced using @<file-path>, for example @data/2-domains. "+
 		"It can also be resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that "+
