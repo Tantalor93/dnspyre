@@ -1,6 +1,6 @@
 module github.com/tantalor93/dnspyre/v3
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.2.0
@@ -17,7 +17,7 @@ require (
 	github.com/tantalor93/doq-go v0.13.0
 	go-hep.org/x/hep v0.38.1
 	go.uber.org/ratelimit v0.3.1
-	golang.org/x/net v0.50.0
+	golang.org/x/net v0.51.0
 	gonum.org/v1/gonum v0.17.0
 	gonum.org/v1/plot v0.16.0
 )
