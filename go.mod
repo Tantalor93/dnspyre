@@ -7,7 +7,7 @@ require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/fatih/color v1.18.0
 	github.com/miekg/dns v1.1.72
-	github.com/montanaflynn/stats v0.7.1
+	github.com/montanaflynn/stats v0.8.2
 	github.com/olekukonko/tablewriter v1.1.4
 	github.com/prometheus/client_golang v1.23.2
 	github.com/quic-go/quic-go v0.58.0
