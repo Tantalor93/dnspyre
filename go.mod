@@ -14,7 +14,7 @@ require (
 	github.com/schollz/progressbar/v3 v3.19.0
 	github.com/stretchr/testify v1.11.1
 	github.com/tantalor93/doh-go v0.4.0
-	github.com/tantalor93/doq-go v0.13.0
+	github.com/tantalor93/doq-go v0.14.0
 	go-hep.org/x/hep v0.38.1
 	go.uber.org/ratelimit v0.3.1
 	golang.org/x/net v0.50.0
