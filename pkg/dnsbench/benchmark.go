@@ -769,24 +769,37 @@ func (b *Benchmark) prepareQuestions() ([]string, error) {
 	var questions []string
 	for _, q := range b.Queries {
 		if ok, _ := isHTTPUrl(q); ok {
-			resp, err := client.Get(q)
+			lines, err := downloadURL(q)
 			if err != nil {
-				return nil, fmt.Errorf("failed to download file '%s' with error '%v'", q, err)
+				return nil, err
 			}
-			if resp.StatusCode < 200 || resp.StatusCode > 299 {
-				resp.Body.Close()
-				return nil, fmt.Errorf("failed to download file '%s' with status '%s'", q, resp.Status)
-			}
-			scanner := bufio.NewScanner(resp.Body)
-			for scanner.Scan() {
-				questions = append(questions, dns.Fqdn(scanner.Text()))
-			}
-			resp.Body.Close()
+			questions = append(questions, lines...)
 		} else {
 			questions = append(questions, dns.Fqdn(q))
 		}
 	}
 	return questions, nil
+}
+
+func downloadURL(url string) ([]string, error) {
+	resp, err := client.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to download file '%s' with error '%v'", url, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return nil, fmt.Errorf("failed to download file '%s' with status '%s'", url, resp.Status)
+	}
+	var lines []string
+	scanner := bufio.NewScanner(resp.Body)
+	for scanner.Scan() {
+		lines = append(lines, dns.Fqdn(scanner.Text()))
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("failed to read file '%s' with error '%v'", url, err)
+	}
+	return lines, nil
 }
 
 func checkLimit(ctx context.Context, limiter ratelimit.Limiter) error {
