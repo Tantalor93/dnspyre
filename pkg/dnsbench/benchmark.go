@@ -773,14 +773,15 @@ func (b *Benchmark) prepareQuestions() ([]string, error) {
 			if err != nil {
 				return nil, fmt.Errorf("failed to download file '%s' with error '%v'", q, err)
 			}
-			defer resp.Body.Close()
 			if resp.StatusCode < 200 || resp.StatusCode > 299 {
+				resp.Body.Close()
 				return nil, fmt.Errorf("failed to download file '%s' with status '%s'", q, resp.Status)
 			}
 			scanner := bufio.NewScanner(resp.Body)
 			for scanner.Scan() {
 				questions = append(questions, dns.Fqdn(scanner.Text()))
 			}
+			resp.Body.Close()
 		} else {
 			questions = append(questions, dns.Fqdn(q))
 		}
