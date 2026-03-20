@@ -33,8 +33,7 @@ type Datapoint struct {
 	Start    time.Time
 }
 
-// ErrorDatapoint one datapoint representing single IO error of benchmark.
-// Datapoint one datapoint of benchmark (single DNS request).
+// ErrorDatapoint represents one datapoint of single IO error of benchmark.
 type ErrorDatapoint struct {
 	Start time.Time
 	Err   error

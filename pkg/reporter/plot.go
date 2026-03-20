@@ -187,19 +187,18 @@ func plotLineThroughput(file string, benchStart time.Time, times []dnsbench.Data
 	p.Y.Tick.Marker = hplot.Ticks{N: 3, Format: "%.0f"}
 
 	l, err := plotter.NewLine(values)
-	l.Width = vg.Points(0.5)
-	l.FillColor = color.RGBA{R: 175, G: 238, B: 238, A: 255}
 	if err != nil {
 		panic(err)
 	}
+	l.Width = vg.Points(0.5)
+	l.FillColor = color.RGBA{R: 175, G: 238, B: 238, A: 255}
 	p.Add(l)
 
 	scatter, err := plotter.NewScatter(values)
-	scatter.Shape = draw.CircleGlyph{}
-
 	if err != nil {
 		panic(err)
 	}
+	scatter.Shape = draw.CircleGlyph{}
 	p.Add(scatter)
 
 	if err := p.Save(6*vg.Inch, 6*vg.Inch, file); err != nil {
@@ -331,11 +330,11 @@ func plotErrorRate(file string, benchStart time.Time, times []dnsbench.ErrorData
 	p.Y.Tick.Marker = hplot.Ticks{N: 3, Format: "%.0f"}
 
 	l, err := plotter.NewLine(values)
-	l.Width = vg.Points(0.5)
-
 	if err != nil {
 		panic(err)
 	}
+	l.Width = vg.Points(0.5)
+
 	p.Add(l)
 
 	scatter, err := plotter.NewScatter(values)
@@ -354,10 +353,10 @@ func plotErrorRate(file string, benchStart time.Time, times []dnsbench.ErrorData
 
 func plotLine(p *plot.Plot, values plotter.XYs, color color.Color, fill color.Color, name string) {
 	l, err := plotter.NewLine(values)
-	l.Color = color
 	if err != nil {
 		panic(err)
 	}
+	l.Color = color
 	l.FillColor = fill
 	p.Add(l)
 	p.Legend.Add(name, l)
