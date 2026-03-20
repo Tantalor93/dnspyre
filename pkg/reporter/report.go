@@ -139,7 +139,7 @@ func printer(b *dnsbench.Benchmark) reportPrinter {
 }
 
 func fileName(b *dnsbench.Benchmark, dir, name string) string {
-	return dir + "/" + name + "." + b.PlotFormat
+	return filepath.Join(dir, name+"."+b.PlotFormat)
 }
 
 func writeBars(f *os.File, bars []hdrhistogram.Bar) {
