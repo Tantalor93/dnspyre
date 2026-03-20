@@ -76,6 +76,11 @@ type Benchmark struct {
 	// For DoQ the format is quic://<IP/host>[:port], if port is not provided then port 853 is used.
 	Server string
 
+	// LocalAddr specifies the local address to bind to when making DNS queries.
+	// Format is <IP>[:port]. If not specified, the system will choose an appropriate local address.
+	// This is useful for controlling which network interface or source IP is used for queries.
+	LocalAddr string
+
 	// Types is an array of DNS query types, that should be used in benchmark. All domains retrieved from domain data source will be fired with each
 	// type specified here.
 	Types []string
