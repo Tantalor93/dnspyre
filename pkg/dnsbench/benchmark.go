@@ -206,6 +206,10 @@ type Benchmark struct {
 	// PrometheusMetricsAddr configures address for Prometheus metrics endpoint.
 	PrometheusMetricsAddr string
 
+	// RandomizeQnames controls whether qnames are selected randomly from the provided list instead of sequentially.
+	// When true, each worker will randomly select a qname for each query. When false (default), qnames are used sequentially.
+	RandomizeQnames bool
+
 	// internal variable so we do not have to parse the address with each request.
 	useDoH            bool
 	useQuic           bool
@@ -458,7 +462,25 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 			cookieHex := hex.EncodeToString(cookie)
 
 			for i := int64(0); i < b.Count || b.Duration != 0; i++ {
-				for _, q := range questions {
+				// Determine which questions to iterate over
+				var questionsToUse []string
+				if b.RandomizeQnames {
+					// When randomizing, we still need to process each query type
+					// but we'll select a random qname for each type
+					questionsToUse = make([]string, 1)
+				} else {
+					questionsToUse = questions
+				}
+
+				for qIdx := range questionsToUse {
+					var q string
+					if b.RandomizeQnames {
+						// Select a random qname from the list
+						q = questions[rando.Intn(len(questions))]
+					} else {
+						q = questions[qIdx]
+					}
+
 					for _, qt := range qTypes {
 						if ctx.Err() != nil {
 							return
