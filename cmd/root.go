@@ -48,6 +48,11 @@ func init() {
 		"For DoQ the format is quic://<IP/host>[:port], if port is not provided then port 853 is used. "+
 		"If no server is provided, then system resolver is used or 127.0.0.1").Short('s').StringVar(&benchmark.Server)
 
+	pApp.Flag("local-addr", "Local address to bind to when making DNS queries. "+
+		"Format is <IP>[:port]. If not specified, the system will choose an appropriate local address. "+
+		"Supported for plain DNS (UDP/TCP), DoT, and DoH (HTTP/1.1, HTTP/2). Not supported for DoQ and DoH HTTP/3.").
+		StringVar(&benchmark.LocalAddr)
+
 	pApp.Flag("type", "Query type. Repeatable flag. If multiple query types are specified then each query will be duplicated for each type.").
 		Short('t').Default(dnsbench.DefaultQueryType).EnumsVar(&benchmark.Types, getSupportedDNSTypes()...)
 
