@@ -1,6 +1,8 @@
 package dnsbench
 
 import (
+	"math/rand"
+	"net"
 	"testing"
 	"time"
 
@@ -157,6 +159,36 @@ func TestBenchmark_init(t *testing.T) {
 			benchmark: Benchmark{Server: "8.8.8.8", RequestDelay: "invalid"},
 			wantErr:   true,
 		},
+		{
+			name:         "valid IPv4 local address",
+			benchmark:    Benchmark{Server: "8.8.8.8", LocalAddr: "192.168.1.100"},
+			assertServer: assertServerEqual("8.8.8.8:53"),
+		},
+		{
+			name:         "valid IPv4 CIDR local address",
+			benchmark:    Benchmark{Server: "8.8.8.8", LocalAddr: "192.168.1.0/24"},
+			assertServer: assertServerEqual("8.8.8.8:53"),
+		},
+		{
+			name:         "valid IPv6 local address",
+			benchmark:    Benchmark{Server: "8.8.8.8", LocalAddr: "2001:db8::1"},
+			assertServer: assertServerEqual("8.8.8.8:53"),
+		},
+		{
+			name:         "valid IPv6 CIDR local address",
+			benchmark:    Benchmark{Server: "8.8.8.8", LocalAddr: "2001:db8::/32"},
+			assertServer: assertServerEqual("8.8.8.8:53"),
+		},
+		{
+			name:      "invalid local address",
+			benchmark: Benchmark{Server: "8.8.8.8", LocalAddr: "invalid"},
+			wantErr:   true,
+		},
+		{
+			name:      "invalid CIDR local address",
+			benchmark: Benchmark{Server: "8.8.8.8", LocalAddr: "192.168.1.0/33"},
+			wantErr:   true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -176,5 +208,119 @@ func TestBenchmark_init(t *testing.T) {
 func assertServerEqual(server string) assert.ValueAssertionFunc {
 	return func(t assert.TestingT, val any, i2 ...interface{}) bool {
 		return assert.Equal(t, server, val, i2)
+	}
+}
+
+func TestRandomIPFromCIDR(t *testing.T) {
+	tests := []struct {
+		name string
+		cidr string
+	}{
+		{
+			name: "IPv4 /24 network",
+			cidr: "192.168.1.0/24",
+		},
+		{
+			name: "IPv4 /28 network",
+			cidr: "10.0.0.0/28",
+		},
+		{
+			name: "IPv4 /32 network (single IP)",
+			cidr: "192.168.1.100/32",
+		},
+		{
+			name: "IPv6 /64 network",
+			cidr: "2001:db8::/64",
+		},
+		{
+			name: "IPv6 /128 network (single IP)",
+			cidr: "2001:db8::1/128",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, ipnet, err := net.ParseCIDR(tt.cidr)
+			require.NoError(t, err)
+
+			// Generate multiple random IPs and verify they're all within the network
+			// nolint:gosec
+			rnd := rand.New(rand.NewSource(42))
+			for i := 0; i < 100; i++ {
+				randomIP := randomIPFromCIDR(ipnet, rnd)
+
+				// Verify the generated IP is within the network
+				assert.True(t, ipnet.Contains(randomIP),
+					"Generated IP %s should be within network %s", randomIP, tt.cidr)
+			}
+		})
+	}
+}
+
+func TestParseLocalAddr(t *testing.T) {
+	tests := []struct {
+		name             string
+		localAddr        string
+		wantErr          bool
+		wantLocalAddrIP  string
+		wantLocalAddrNet string
+	}{
+		{
+			name:            "IPv4 address",
+			localAddr:       "192.168.1.100",
+			wantLocalAddrIP: "192.168.1.100",
+		},
+		{
+			name:             "IPv4 CIDR",
+			localAddr:        "192.168.1.0/24",
+			wantLocalAddrIP:  "192.168.1.0",
+			wantLocalAddrNet: "192.168.1.0/24",
+		},
+		{
+			name:            "IPv6 address",
+			localAddr:       "2001:db8::1",
+			wantLocalAddrIP: "2001:db8::1",
+		},
+		{
+			name:             "IPv6 CIDR",
+			localAddr:        "2001:db8::/32",
+			wantLocalAddrIP:  "2001:db8::",
+			wantLocalAddrNet: "2001:db8::/32",
+		},
+		{
+			name:      "invalid address",
+			localAddr: "invalid",
+			wantErr:   true,
+		},
+		{
+			name:      "invalid CIDR",
+			localAddr: "192.168.1.0/33",
+			wantErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := &Benchmark{
+				Server:    "8.8.8.8",
+				LocalAddr: tt.localAddr,
+			}
+
+			err := b.parseLocalAddr()
+
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.wantLocalAddrIP, b.localAddrIP.String())
+
+				if tt.wantLocalAddrNet != "" {
+					require.NotNil(t, b.localAddrNet)
+					assert.Equal(t, tt.wantLocalAddrNet, b.localAddrNet.String())
+				} else {
+					assert.Nil(t, b.localAddrNet)
+				}
+			}
+		})
 	}
 }
