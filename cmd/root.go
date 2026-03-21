@@ -49,7 +49,8 @@ func init() {
 		"If no server is provided, then system resolver is used or 127.0.0.1").Short('s').StringVar(&benchmark.Server)
 
 	pApp.Flag("local-addr", "Local address to bind to when making DNS queries. "+
-		"Format is <IP>[:port]. If not specified, the system will choose an appropriate local address. "+
+		"Format is <IP> or <CIDR>. When a single IP is specified, all queries use that source address. "+
+		"When a CIDR network is specified (e.g., 192.168.1.0/24), each query randomly selects a source IP from that range. "+
 		"Supported for plain DNS (UDP/TCP), DoT, and DoH (HTTP/1.1, HTTP/2). Not supported for DoQ and DoH HTTP/3.").
 		StringVar(&benchmark.LocalAddr)
 

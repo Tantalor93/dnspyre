@@ -220,6 +220,8 @@ type Benchmark struct {
 	useQuic           bool
 	requestDelayStart time.Duration
 	requestDelayEnd   time.Duration
+	localAddrNet      *net.IPNet // parsed CIDR network if LocalAddr is in CIDR notation
+	localAddrIP       net.IP     // parsed IP if LocalAddr is a single address
 }
 
 type queryFunc func(context.Context, *dns.Msg) (*dns.Msg, error)
@@ -327,7 +329,74 @@ func (b *Benchmark) init() error {
 		return err
 	}
 
+	if err := b.parseLocalAddr(); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+// parseLocalAddr parses the LocalAddr field to determine if it's a CIDR network or a single IP address.
+func (b *Benchmark) parseLocalAddr() error {
+	if len(b.LocalAddr) == 0 {
+		return nil
+	}
+
+	// Try to parse as CIDR first
+	ip, ipnet, err := net.ParseCIDR(b.LocalAddr)
+	if err == nil {
+		// It's a CIDR network
+		b.localAddrNet = ipnet
+		b.localAddrIP = ip
+		return nil
+	}
+
+	// Try to parse as a single IP address (with optional port)
+	host, _, err := net.SplitHostPort(b.LocalAddr)
+	if err != nil {
+		// No port specified, treat as IP only
+		host = b.LocalAddr
+	}
+
+	ip = net.ParseIP(host)
+	if ip == nil {
+		return fmt.Errorf("--local-addr '%s' is not a valid IP address or CIDR notation", b.LocalAddr)
+	}
+
+	b.localAddrIP = ip
+	return nil
+}
+
+// randomIPFromCIDR generates a random IP address within the given CIDR network.
+func randomIPFromCIDR(ipnet *net.IPNet, rnd *rand.Rand) net.IP {
+	ip := ipnet.IP
+	mask := ipnet.Mask
+
+	// Calculate the number of host bits
+	ones, bits := mask.Size()
+	hostBits := bits - ones
+
+	// For very large networks, we need to be careful with the random generation
+	// Generate random bytes for the host portion
+	randomIP := make(net.IP, len(ip))
+	copy(randomIP, ip)
+
+	// Generate random host bits
+	if hostBits > 0 {
+		// For IPv4 or IPv6, generate random bytes for host portion
+		hostBytes := (hostBits + 7) / 8 // number of bytes needed for host bits
+
+		for i := len(randomIP) - hostBytes; i < len(randomIP); i++ {
+			randomIP[i] = byte(rnd.Intn(256))
+		}
+
+		// Apply the network mask to ensure we stay within the network
+		for i := range randomIP {
+			randomIP[i] = (randomIP[i] & ^mask[i]) | (ip[i] & mask[i])
+		}
+	}
+
+	return randomIP
 }
 
 // Run executes benchmark, if benchmark is unable to start the error is returned, otherwise array of results from parallel benchmark goroutines is returned.
