@@ -160,7 +160,7 @@ func dohQuery(b *Benchmark) queryFunc {
 		}
 	}
 	c := http.Client{Transport: tr, Timeout: b.ReadTimeout}
-	dohClient := doh.NewClient(b.Server, doh.WithHTTPClient(&c))
+	dohClient := doh.NewClient(b.Server, doh.WithHTTPClient(&c), doh.WithUserAgent(b.DohUserAgent))
 
 	switch b.DohMethod {
 	case PostHTTPMethod:

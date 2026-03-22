@@ -19,6 +19,17 @@
             "args": [
                 "--duration=5s"
             ]
+        },
+         {
+            "name": "DoH",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "args": [
+                "--server=https://cloudflare-dns.com/dns-query",
+            ]
         }
     ]
 }
