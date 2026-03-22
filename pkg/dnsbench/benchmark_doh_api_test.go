@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -132,6 +133,95 @@ func (suite *DoHTestSuite) TestBenchmark_Run_get() {
 	suite.Require().NoError(err, "expected no error from benchmark run")
 	assertResult(suite.T(), rs)
 	suite.Equal(fmt.Sprintf("Using 1 hostnames\nBenchmarking %s/dns-query via http/1.1 (GET) with 2 concurrent requests \n", ts.URL), buf.String())
+}
+
+func (suite *DoHTestSuite) TestBenchmark_Run_default_user_agent() {
+	var capturedUserAgent string
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedUserAgent = r.Header.Get("User-Agent")
+
+		bd, err := io.ReadAll(r.Body)
+		if err != nil {
+			panic(err)
+		}
+
+		msg := dns.Msg{}
+		err = msg.Unpack(bd)
+		if err != nil {
+			panic(err)
+		}
+
+		msg.Answer = append(msg.Answer, A("example.org. IN A 127.0.0.1"))
+
+		pack, err := msg.Pack()
+		if err != nil {
+			panic(err)
+		}
+
+		_, err = w.Write(pack)
+		if err != nil {
+			panic(err)
+		}
+	}))
+	defer ts.Close()
+
+	bench := dnsbench.Benchmark{
+		Queries: []string{"example.org"},
+		Server:  ts.URL,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	_, err := bench.Run(ctx)
+
+	suite.Require().NoError(err, "expected no error from benchmark run")
+	suite.Equal(bench.DohUserAgent, capturedUserAgent)
+	suite.True(strings.HasPrefix(capturedUserAgent, "dnspyre/"), "expected dnspyre/{version} User-Agent")
+}
+
+func (suite *DoHTestSuite) TestBenchmark_Run_custom_user_agent() {
+	var capturedUserAgent string
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedUserAgent = r.Header.Get("User-Agent")
+
+		bd, err := io.ReadAll(r.Body)
+		if err != nil {
+			panic(err)
+		}
+
+		msg := dns.Msg{}
+		err = msg.Unpack(bd)
+		if err != nil {
+			panic(err)
+		}
+
+		msg.Answer = append(msg.Answer, A("example.org. IN A 127.0.0.1"))
+
+		pack, err := msg.Pack()
+		if err != nil {
+			panic(err)
+		}
+
+		_, err = w.Write(pack)
+		if err != nil {
+			panic(err)
+		}
+	}))
+	defer ts.Close()
+
+	bench := dnsbench.Benchmark{
+		Queries:      []string{"example.org"},
+		Server:       ts.URL,
+		DohUserAgent: "custom/1.0",
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	_, err := bench.Run(ctx)
+
+	suite.Require().NoError(err, "expected no error from benchmark run")
+	suite.NotEmpty(bench.DohUserAgent)
+	suite.Equal("custom/1.0", capturedUserAgent)
 }
 
 func (suite *DoHTestSuite) TestBenchmark_Run_http1() {

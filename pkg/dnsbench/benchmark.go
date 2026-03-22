@@ -174,6 +174,8 @@ type Benchmark struct {
 	DohMethod string
 	// DohProtocol controls HTTP protocol version used fo sending DoH requests. Supported values are "1.1", "2" and "3". Default is "1.1".
 	DohProtocol string
+	// DohUserAgent controls User-Agent header used for DoH requests. Default is dnspyre/{version}.
+	DohUserAgent string
 
 	// Insecure disables server TLS certificate validation. Applicable for DoT, DoH and DoQ.
 	Insecure bool
@@ -246,6 +248,9 @@ func (b *Benchmark) init() error {
 	}
 	if len(b.Types) == 0 {
 		b.Types = []string{DefaultQueryType}
+	}
+	if len(b.DohUserAgent) == 0 {
+		b.DohUserAgent = defaultDoHUserAgent()
 	}
 
 	b.useDoH, _ = isHTTPUrl(b.Server)

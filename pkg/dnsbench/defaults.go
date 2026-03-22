@@ -1,6 +1,7 @@
 package dnsbench
 
 import (
+	"runtime/debug"
 	"time"
 )
 
@@ -41,3 +42,11 @@ const (
 	// DefaultHistPrecision is a default precision for histogram.
 	DefaultHistPrecision = 1
 )
+
+func defaultDoHUserAgent() string {
+	version := "unknown"
+	if info, ok := debug.ReadBuildInfo(); ok && len(info.Main.Version) > 0 {
+		version = info.Main.Version
+	}
+	return "dnspyre/" + version
+}
