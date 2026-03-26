@@ -11,3 +11,4 @@ gem "jekyll-relative-links", "0.7.0"
 gem "csv"
 gem "base64"
 gem "logger"
+gem "ffi", ">= 1.17.4" # 1.17.4+ required for Ruby 4 compatibility
