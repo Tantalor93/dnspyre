@@ -10,3 +10,4 @@ gem "jekyll-relative-links", "0.7.0"
 
 gem "csv"
 gem "base64"
+gem "logger"
