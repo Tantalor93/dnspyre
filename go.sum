@@ -105,8 +105,6 @@ github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
-github.com/tantalor93/doh-go v0.4.0 h1:CnYWM4usBzckGXERWWXDaKVaelHCelS4bwATftwt+LU=
-github.com/tantalor93/doh-go v0.4.0/go.mod h1:KR0h7zQtIqJ62ZwdpbTOSREnpHrPL0VEnm++pskTFPo=
 github.com/tantalor93/doh-go v0.5.0 h1:PHVpqUcWSYqtzpAZD5xMXcErwBMK/+KpanmXpRBK6b8=
 github.com/tantalor93/doh-go v0.5.0/go.mod h1:qEDFz0gnkAv7+qxlqAPHCw3sBgSSDmmkUkZZfmlZGaA=
 github.com/tantalor93/doq-go v0.14.0 h1:IoHdDUDsowdnRVfsx/PwoQWA4vOlQqgpMzITKcCjwys=

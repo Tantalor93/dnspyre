@@ -10,7 +10,7 @@ jobs:
       arch:
         type: string
     docker:
-      - image: cimg/go:1.24
+      - image: cimg/go:1.25
     steps:
       - checkout
       - run:
@@ -20,7 +20,7 @@ jobs:
   tests:
     working_directory: ~/repo
     docker:
-      - image: cimg/go:1.24
+      - image: cimg/go:1.25
     steps:
       - checkout
       - restore_cache:
