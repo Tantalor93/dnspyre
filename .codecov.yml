@@ -1,6 +1,4 @@
 coverage:
-  ignore:
-    - "cmd/root.go"
   status:
     project:
       default:
