@@ -1,0 +1,11 @@
+coverage:
+  ignore:
+    - "cmd/root.go"
+  status:
+  project:
+    default:
+      informational: true
+  patch:
+    default:
+      target: auto
+      only_pulls: true
