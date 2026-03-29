@@ -862,7 +862,7 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Run_truncated() {
 	suite.EqualValues(2, rs[1].Counters.Truncated, "there should be truncated messages")
 }
 
-func (suite *PlainDNSTestSuite) TestBenchmark_Requestlog() {
+func (suite *PlainDNSTestSuite) TestBenchmark_Run_requestlog() {
 	requestLogPath := suite.T().TempDir() + "/requests.log"
 
 	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
@@ -904,7 +904,7 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Requestlog() {
 	assertRequestLogStructure(suite.T(), requestLogFile)
 }
 
-func (suite *PlainDNSTestSuite) TestBenchmark_ConstantRequestDelay() {
+func (suite *PlainDNSTestSuite) TestBenchmark_Run_constantRequestDelay() {
 	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
@@ -938,7 +938,7 @@ func (suite *PlainDNSTestSuite) TestBenchmark_ConstantRequestDelay() {
 	suite.InDelta(2*time.Second, benchDuration, float64(100*time.Millisecond))
 }
 
-func (suite *PlainDNSTestSuite) TestBenchmark_RandomRequestDelay() {
+func (suite *PlainDNSTestSuite) TestBenchmark_Run_randomRequestDelay() {
 	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
@@ -972,7 +972,7 @@ func (suite *PlainDNSTestSuite) TestBenchmark_RandomRequestDelay() {
 	suite.InDelta(4*time.Second, benchDuration, float64(2*time.Second))
 }
 
-func (suite *PlainDNSTestSuite) TestBenchmark_Defaults() {
+func (suite *PlainDNSTestSuite) TestBenchmark_Run_defaults() {
 	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
@@ -1000,7 +1000,7 @@ func (suite *PlainDNSTestSuite) TestBenchmark_Defaults() {
 	suite.EqualValues(10, rs[0].Qtypes["A"])
 }
 
-func (suite *PlainDNSTestSuite) TestBenchmark_probability() {
+func (suite *PlainDNSTestSuite) TestBenchmark_Run_probability() {
 	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
 		ret := new(dns.Msg)
 		ret.SetReply(r)
@@ -1029,4 +1029,28 @@ func (suite *PlainDNSTestSuite) TestBenchmark_probability() {
 	suite.Len(rs, 1)
 	suite.GreaterOrEqual(rs[0].Counters.Total, int64(1), "There should atleast be 1 request")
 	suite.Less(rs[0].Counters.Total, int64(10), "There should be less than 10 requests")
+}
+
+func (suite *PlainDNSTestSuite) TestBenchmark_Run_cancellation() {
+	s := NewServer(dnsbench.UDPTransport, nil, func(w dns.ResponseWriter, r *dns.Msg) {
+		ret := new(dns.Msg)
+		ret.SetReply(r)
+		ret.Answer = append(ret.Answer, A("example.org. IN A 127.0.0.1"))
+		w.WriteMsg(ret)
+	})
+	defer s.Close()
+
+	bench := dnsbench.Benchmark{
+		Queries: []string{"example.org"},
+		Server:  s.Addr,
+		Rcodes:  true,
+		Recurse: true,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	cancel() // cancel immediately to test cancellation behavior
+	rs, err := bench.Run(ctx)
+
+	suite.Require().NoError(err, "expected no error from benchmark run")
+	suite.Zero(rs[0].Counters.Total, "there should be no executions due to immediate cancellation")
 }
