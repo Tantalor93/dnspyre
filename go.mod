@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.2.0
 	github.com/alecthomas/kingpin/v2 v2.4.0
-	github.com/fatih/color v1.18.0
+	github.com/fatih/color v1.19.0
 	github.com/miekg/dns v1.1.72
 	github.com/montanaflynn/stats v0.7.1
 	github.com/olekukonko/tablewriter v1.1.4
