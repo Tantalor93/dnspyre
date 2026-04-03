@@ -1,6 +1,7 @@
 package dnsbench
 
 import (
+	"bytes"
 	"testing"
 	"time"
 
@@ -17,6 +18,7 @@ func TestBenchmark_init(t *testing.T) {
 		wantErr               bool
 		wantRequestDelayStart time.Duration
 		wantRequestDelayEnd   time.Duration
+		wantWarnings          []string
 	}{
 		{
 			name:         "server - IPv4",
@@ -157,9 +159,43 @@ func TestBenchmark_init(t *testing.T) {
 			benchmark: Benchmark{Server: "8.8.8.8", RequestDelay: "invalid"},
 			wantErr:   true,
 		},
+		{
+			name:         "DoH with plain DNS transport flags",
+			benchmark:    Benchmark{Server: "https://1.1.1.1/dns-query", TCP: true, DOT: true, QperConn: 10},
+			assertServer: assertServerEqual("https://1.1.1.1/dns-query"),
+			wantWarnings: []string{
+				"--tcp is ignored when using DoH server",
+				"--dot is ignored when using DoH server",
+				"--query-per-conn is ignored when using DoH server",
+			},
+		},
+		{
+			name:         "DoQ with plain DNS transport and DoH flags",
+			benchmark:    Benchmark{Server: "quic://dns.adguard-dns.com", TCP: true, DOT: true, QperConn: 5, DohMethod: GetHTTPMethod, DohProtocol: HTTP3Proto},
+			assertServer: assertServerEqual("dns.adguard-dns.com:853"),
+			wantWarnings: []string{
+				"--tcp is ignored when using DoQ server",
+				"--dot is ignored when using DoQ server",
+				"--query-per-conn is ignored when using DoQ server",
+				"--doh-method is ignored unless DoH server is used",
+				"--doh-protocol is ignored unless DoH server is used",
+			},
+		},
+		{
+			name:         "plain DNS with DoH flags",
+			benchmark:    Benchmark{Server: "8.8.8.8", DohMethod: GetHTTPMethod, DohProtocol: HTTP2Proto},
+			assertServer: assertServerEqual("8.8.8.8:53"),
+			wantWarnings: []string{
+				"--doh-method is ignored unless DoH server is used",
+				"--doh-protocol is ignored unless DoH server is used",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			var errOut bytes.Buffer
+			tt.benchmark.ErrWriter = &errOut
+
 			err := tt.benchmark.init()
 
 			require.Equal(t, tt.wantErr, err != nil)
@@ -168,6 +204,14 @@ func TestBenchmark_init(t *testing.T) {
 				assert.Equal(t, tt.wantRequestLogPath, tt.benchmark.RequestLogPath)
 				assert.Equal(t, tt.wantRequestDelayStart, tt.benchmark.requestDelayStart)
 				assert.Equal(t, tt.wantRequestDelayEnd, tt.benchmark.requestDelayEnd)
+				if len(tt.wantWarnings) > 0 {
+					for _, warning := range tt.wantWarnings {
+						assert.Contains(t, errOut.String(), "Warning: "+warning)
+					}
+				}
+				if len(tt.wantWarnings) == 0 {
+					assert.Empty(t, errOut.String())
+				}
 			}
 		})
 	}
