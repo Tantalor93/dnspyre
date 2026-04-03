@@ -46,7 +46,8 @@ func Test_plotHistogramLatency(t *testing.T) {
 	dir := t.TempDir()
 
 	file := dir + "/histogram-latency.svg"
-	plotHistogramLatency(file, testDatapoints)
+	err := plotHistogramLatency(file, testDatapoints)
+	require.NoError(t, err)
 
 	expected, err := os.ReadFile("testdata/test-histogram-latency.svg")
 	require.NoError(t, err)
@@ -61,7 +62,8 @@ func Test_plotBoxPlotLatency(t *testing.T) {
 	dir := t.TempDir()
 
 	file := dir + "/boxplot-latency.svg"
-	plotBoxPlotLatency(file, "127.0.0.1", testDatapoints)
+	err := plotBoxPlotLatency(file, "127.0.0.1", testDatapoints)
+	require.NoError(t, err)
 
 	expected, err := os.ReadFile("testdata/test-boxplot-latency.svg")
 	require.NoError(t, err)
@@ -76,7 +78,8 @@ func Test_plotResponses(t *testing.T) {
 	dir := t.TempDir()
 
 	file := dir + "/responses-barchart.svg"
-	plotResponses(file, testRcodes)
+	err := plotResponses(file, testRcodes)
+	require.NoError(t, err)
 
 	expected, err := os.ReadFile("testdata/test-responses-barchart.svg")
 	require.NoError(t, err)
@@ -91,7 +94,8 @@ func Test_plotLineThroughput(t *testing.T) {
 	dir := t.TempDir()
 
 	file := dir + "/throughput-lineplot.svg"
-	plotLineThroughput(file, testStart, testDatapoints)
+	err := plotLineThroughput(file, testStart, testDatapoints)
+	require.NoError(t, err)
 
 	expected, err := os.ReadFile("testdata/test-throughput-lineplot.svg")
 	require.NoError(t, err)
@@ -106,7 +110,8 @@ func Test_plotLineLatencies(t *testing.T) {
 	dir := t.TempDir()
 
 	file := dir + "/latency-lineplot.svg"
-	plotLineLatencies(file, testStart, testDatapoints)
+	err := plotLineLatencies(file, testStart, testDatapoints)
+	require.NoError(t, err)
 
 	expected, err := os.ReadFile("testdata/test-latency-lineplot.svg")
 	require.NoError(t, err)
@@ -121,7 +126,8 @@ func Test_plotErrorRate(t *testing.T) {
 	dir := t.TempDir()
 
 	file := dir + "/errorrate-lineplot.svg"
-	plotErrorRate(file, testStart, testErrorDatapoints)
+	err := plotErrorRate(file, testStart, testErrorDatapoints)
+	require.NoError(t, err)
 
 	expected, err := os.ReadFile("testdata/test-errorrate-lineplot.svg")
 	require.NoError(t, err)

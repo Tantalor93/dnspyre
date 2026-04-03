@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"image/color"
 	"math"
-	"os"
 	"sort"
 	"time"
 
@@ -20,10 +19,10 @@ import (
 	"gonum.org/v1/plot/vg/draw"
 )
 
-func plotHistogramLatency(file string, times []dnsbench.Datapoint) {
+func plotHistogramLatency(file string, times []dnsbench.Datapoint) error {
 	if len(times) == 0 {
 		// nothing to plot
-		return
+		return nil
 	}
 	var values plotter.Values
 	for _, v := range times {
@@ -34,7 +33,7 @@ func plotHistogramLatency(file string, times []dnsbench.Datapoint) {
 
 	hist, err := plotter.NewHist(values, numBins(values))
 	if err != nil {
-		panic(err)
+		return err
 	}
 	p.X.Label.Text = "Latencies (ms)"
 	p.X.Tick.Marker = hplot.Ticks{N: 5, Format: "%.0f"}
@@ -44,8 +43,9 @@ func plotHistogramLatency(file string, times []dnsbench.Datapoint) {
 	p.Add(hist)
 
 	if err := p.Save(6*vg.Inch, 6*vg.Inch, file); err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to save plot.", err)
+		return fmt.Errorf("failed to save plot %q: %w", file, err)
 	}
+	return nil
 }
 
 // numBins calculates number of bins for histogram.
@@ -74,10 +74,10 @@ func numBins(values plotter.Values) int {
 	return int(math.Min(50, doane))
 }
 
-func plotBoxPlotLatency(file, server string, times []dnsbench.Datapoint) {
+func plotBoxPlotLatency(file, server string, times []dnsbench.Datapoint) error {
 	if len(times) == 0 {
 		// nothing to plot
-		return
+		return nil
 	}
 	var values plotter.Values
 	for _, v := range times {
@@ -91,20 +91,21 @@ func plotBoxPlotLatency(file, server string, times []dnsbench.Datapoint) {
 
 	boxplot, err := plotter.NewBoxPlot(vg.Length(120), 0, values)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	boxplot.FillColor = color.RGBA{R: 127, G: 188, B: 165, A: 255}
 	p.Add(boxplot)
 
 	if err := p.Save(6*vg.Inch, 6*vg.Inch, file); err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to save plot.", err)
+		return fmt.Errorf("failed to save plot %q: %w", file, err)
 	}
+	return nil
 }
 
-func plotResponses(file string, rcodes map[int]int64) {
+func plotResponses(file string, rcodes map[int]int64) error {
 	if len(rcodes) == 0 {
 		// nothing to plot
-		return
+		return nil
 	}
 	sortedKeys := make([]int, 0)
 	for k := range rcodes {
@@ -134,7 +135,7 @@ func plotResponses(file string, rcodes map[int]int64) {
 	for _, v := range sortedKeys {
 		bar, err := plotter.NewBarChart(plotter.Values{float64(rcodes[v])}, width)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		p.Legend.Add(dns.RcodeToString[v], bar)
 		bar.Color = colors[c%len(colors)]
@@ -149,14 +150,15 @@ func plotResponses(file string, rcodes map[int]int64) {
 	p.Legend.Top = true
 
 	if err := p.Save(6*vg.Inch, 6*vg.Inch, file); err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to save plot.", err)
+		return fmt.Errorf("failed to save plot %q: %w", file, err)
 	}
+	return nil
 }
 
-func plotLineThroughput(file string, benchStart time.Time, times []dnsbench.Datapoint) {
+func plotLineThroughput(file string, benchStart time.Time, times []dnsbench.Datapoint) error {
 	if len(times) == 0 {
 		// nothing to plot
-		return
+		return nil
 	}
 	var values plotter.XYs
 	m := make(map[int64]int64)
@@ -188,7 +190,7 @@ func plotLineThroughput(file string, benchStart time.Time, times []dnsbench.Data
 
 	l, err := plotter.NewLine(values)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	l.Width = vg.Points(0.5)
 	l.FillColor = color.RGBA{R: 175, G: 238, B: 238, A: 255}
@@ -196,14 +198,15 @@ func plotLineThroughput(file string, benchStart time.Time, times []dnsbench.Data
 
 	scatter, err := plotter.NewScatter(values)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	scatter.Shape = draw.CircleGlyph{}
 	p.Add(scatter)
 
 	if err := p.Save(6*vg.Inch, 6*vg.Inch, file); err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to save plot.", err)
+		return fmt.Errorf("failed to save plot %q: %w", file, err)
 	}
+	return nil
 }
 
 type latencyMeasurements struct {
@@ -213,10 +216,10 @@ type latencyMeasurements struct {
 	p50 float64
 }
 
-func plotLineLatencies(file string, benchStart time.Time, times []dnsbench.Datapoint) {
+func plotLineLatencies(file string, benchStart time.Time, times []dnsbench.Datapoint) error {
 	if len(times) == 0 {
 		// nothing to plot
-		return
+		return nil
 	}
 
 	measurements := make(map[int64]latencyMeasurements)
@@ -226,12 +229,16 @@ func plotLineLatencies(file string, benchStart time.Time, times []dnsbench.Datap
 	for _, v := range times {
 		offset := v.Start.Unix() - benchStart.Unix()
 		if offset != last {
-			collectMeasurements(timings, measurements, last)
+			if err := collectMeasurements(timings, measurements, last); err != nil {
+				return err
+			}
 			last = offset
 		}
 		timings = append(timings, float64(v.Duration.Milliseconds()))
 	}
-	collectMeasurements(timings, measurements, last)
+	if err := collectMeasurements(timings, measurements, last); err != nil {
+		return err
+	}
 
 	var p99values plotter.XYs
 	var p95values plotter.XYs
@@ -261,34 +268,43 @@ func plotLineLatencies(file string, benchStart time.Time, times []dnsbench.Datap
 	p.X.Label.Text = "Time of test (s)"
 	p.Y.Label.Text = "Latency (ms)"
 
-	plotLine(p, p99values, plotutil.DarkColors[0], plotutil.SoftColors[0], "p99")
-	plotLine(p, p95values, plotutil.DarkColors[1], plotutil.SoftColors[1], "p95")
-	plotLine(p, p90values, plotutil.DarkColors[2], plotutil.SoftColors[2], "p90")
-	plotLine(p, p50values, plotutil.DarkColors[3], plotutil.SoftColors[3], "p50")
+	if err := plotLine(p, p99values, plotutil.DarkColors[0], plotutil.SoftColors[0], "p99"); err != nil {
+		return err
+	}
+	if err := plotLine(p, p95values, plotutil.DarkColors[1], plotutil.SoftColors[1], "p95"); err != nil {
+		return err
+	}
+	if err := plotLine(p, p90values, plotutil.DarkColors[2], plotutil.SoftColors[2], "p90"); err != nil {
+		return err
+	}
+	if err := plotLine(p, p50values, plotutil.DarkColors[3], plotutil.SoftColors[3], "p50"); err != nil {
+		return err
+	}
 
 	p.Legend.Top = true
 
 	if err := p.Save(6*vg.Inch, 6*vg.Inch, file); err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to save plot.", err)
+		return fmt.Errorf("failed to save plot %q: %w", file, err)
 	}
+	return nil
 }
 
-func collectMeasurements(timings []float64, measurements map[int64]latencyMeasurements, offset int64) {
+func collectMeasurements(timings []float64, measurements map[int64]latencyMeasurements, offset int64) error {
 	p99, err := stats.Percentile(timings, 99)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	p95, err := stats.Percentile(timings, 95)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	p90, err := stats.Percentile(timings, 90)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	p50, err := stats.Percentile(timings, 50)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	measure := latencyMeasurements{}
 	measure.p99 = p99
@@ -296,12 +312,13 @@ func collectMeasurements(timings []float64, measurements map[int64]latencyMeasur
 	measure.p90 = p90
 	measure.p50 = p50
 	measurements[offset] = measure
+	return nil
 }
 
-func plotErrorRate(file string, benchStart time.Time, times []dnsbench.ErrorDatapoint) {
+func plotErrorRate(file string, benchStart time.Time, times []dnsbench.ErrorDatapoint) error {
 	if len(times) == 0 {
 		// nothing to plot
-		return
+		return nil
 	}
 	var values plotter.XYs
 	m := make(map[int64]int64)
@@ -331,7 +348,7 @@ func plotErrorRate(file string, benchStart time.Time, times []dnsbench.ErrorData
 
 	l, err := plotter.NewLine(values)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	l.Width = vg.Points(0.5)
 
@@ -339,7 +356,7 @@ func plotErrorRate(file string, benchStart time.Time, times []dnsbench.ErrorData
 
 	scatter, err := plotter.NewScatter(values)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	scatter.Color = color.RGBA{R: 238, G: 46, B: 47, A: 255}
 	scatter.Shape = draw.CircleGlyph{}
@@ -347,14 +364,15 @@ func plotErrorRate(file string, benchStart time.Time, times []dnsbench.ErrorData
 	p.Add(scatter)
 
 	if err := p.Save(6*vg.Inch, 6*vg.Inch, file); err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to save plot.", err)
+		return fmt.Errorf("failed to save plot %q: %w", file, err)
 	}
+	return nil
 }
 
-func plotLine(p *plot.Plot, values plotter.XYs, color color.Color, fill color.Color, name string) {
+func plotLine(p *plot.Plot, values plotter.XYs, color color.Color, fill color.Color, name string) error {
 	l, err := plotter.NewLine(values)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	l.Color = color
 	l.FillColor = fill
@@ -362,9 +380,10 @@ func plotLine(p *plot.Plot, values plotter.XYs, color color.Color, fill color.Co
 	p.Legend.Add(name, l)
 	scatter, err := plotter.NewScatter(values)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	scatter.Color = color
 	scatter.Shape = draw.CircleGlyph{}
 	p.Add(scatter)
+	return nil
 }

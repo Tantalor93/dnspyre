@@ -201,6 +201,8 @@ type Benchmark struct {
 
 	// Writer used for writing benchmark execution logs and results. Default is os.Stdout.
 	Writer io.Writer
+	// ErrWriter used for writing warnings and errors. Default is os.Stderr.
+	ErrWriter io.Writer
 
 	// RequestDelay configures delay between each DNS request. Either constant delay can be configured (e.g. 2s) or randomized delay can be configured (e.g. 1s-2s).
 	RequestDelay string
@@ -221,6 +223,9 @@ type queryFunc func(context.Context, *dns.Msg) (*dns.Msg, error)
 func (b *Benchmark) init() error {
 	if b.Writer == nil {
 		b.Writer = os.Stdout
+	}
+	if b.ErrWriter == nil {
+		b.ErrWriter = os.Stderr
 	}
 	if len(b.Server) == 0 {
 		b.Server = DefaultNameServer()
@@ -323,6 +328,8 @@ func (b *Benchmark) init() error {
 		return err
 	}
 
+	b.writeUnsupportedOptionWarnings()
+
 	return nil
 }
 
@@ -352,7 +359,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		defer server.Shutdown(ctx)
 		go func() {
 			if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-				printutils.ErrFprintf(b.Writer, "Failed to start Prometheus metrics server at %s: %v\n", b.PrometheusMetricsAddr, err)
+				printutils.ErrFprintf(b.ErrWriter, "Failed to start Prometheus metrics server at %s: %v\n", b.PrometheusMetricsAddr, err)
 			}
 		}()
 	}
@@ -403,7 +410,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	var bar *progressbar.ProgressBar
 	var incrementBar bool
 	if repetitions := b.Count * int64(b.Concurrency) * int64(len(b.Types)) * int64(len(questions)); !b.Silent && b.ProgressBar && repetitions >= 100 {
-		fmt.Fprintln(os.Stderr)
+		fmt.Fprintln(b.ErrWriter)
 		if b.Probability < 1.0 {
 			// show spinner when Benchmark.Probability is less than 1.0, because the actual number of repetitions is not known
 			repetitions = -1
@@ -412,7 +419,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		incrementBar = true
 	}
 	if !b.Silent && b.ProgressBar && b.Duration >= 10*time.Second {
-		fmt.Fprintln(os.Stderr)
+		fmt.Fprintln(b.ErrWriter)
 		bar = progressbar.Default(int64(b.Duration.Seconds()), "Progress:")
 		ticker := time.NewTicker(time.Second)
 		defer ticker.Stop()
@@ -819,6 +826,51 @@ func checkLimit(ctx context.Context, limiter ratelimit.Limiter) error {
 		return nil
 	case <-ctx.Done():
 		return ctx.Err()
+	}
+}
+
+func (b *Benchmark) unsupportedOptionWarnings() []string {
+	warnings := make([]string, 0)
+
+	if b.useDoH {
+		if b.TCP {
+			warnings = append(warnings, "--tcp is ignored when using DoH server")
+		}
+		if b.DOT {
+			warnings = append(warnings, "--dot is ignored when using DoH server")
+		}
+		if b.QperConn > 0 {
+			warnings = append(warnings, "--query-per-conn is ignored when using DoH server")
+		}
+	}
+
+	if b.useQuic {
+		if b.TCP {
+			warnings = append(warnings, "--tcp is ignored when using DoQ server")
+		}
+		if b.DOT {
+			warnings = append(warnings, "--dot is ignored when using DoQ server")
+		}
+		if b.QperConn > 0 {
+			warnings = append(warnings, "--query-per-conn is ignored when using DoQ server")
+		}
+	}
+
+	if !b.useDoH {
+		if b.DohMethod != "" {
+			warnings = append(warnings, "--doh-method is ignored unless DoH server is used")
+		}
+		if b.DohProtocol != "" {
+			warnings = append(warnings, "--doh-protocol is ignored unless DoH server is used")
+		}
+	}
+
+	return warnings
+}
+
+func (b *Benchmark) writeUnsupportedOptionWarnings() {
+	for _, warning := range b.unsupportedOptionWarnings() {
+		printutils.ErrFprintf(b.ErrWriter, "Warning: %s\n", warning)
 	}
 }
 

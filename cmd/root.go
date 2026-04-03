@@ -133,10 +133,10 @@ func init() {
 		Default(dnsbench.DefaultPlotFormat).EnumVar(&benchmark.PlotFormat, "svg", "png", "jpg")
 
 	pApp.Flag("doh-method", "HTTP method to use for DoH requests. Supported values: get, post.").
-		Default(dnsbench.PostHTTPMethod).EnumVar(&benchmark.DohMethod, dnsbench.GetHTTPMethod, dnsbench.PostHTTPMethod)
+		PlaceHolder(dnsbench.PostHTTPMethod).EnumVar(&benchmark.DohMethod, dnsbench.GetHTTPMethod, dnsbench.PostHTTPMethod)
 
 	pApp.Flag("doh-protocol", "HTTP protocol to use for DoH requests. Supported values: 1.1, 2 and 3.").
-		Default(dnsbench.HTTP1Proto).EnumVar(&benchmark.DohProtocol, dnsbench.HTTP1Proto, dnsbench.HTTP2Proto, dnsbench.HTTP3Proto)
+		PlaceHolder(dnsbench.HTTP1Proto).EnumVar(&benchmark.DohProtocol, dnsbench.HTTP1Proto, dnsbench.HTTP2Proto, dnsbench.HTTP3Proto)
 
 	pApp.Flag("insecure", "Disables server TLS certificate validation. Applicable for DoT, DoH and DoQ.").
 		BoolVar(&benchmark.Insecure)

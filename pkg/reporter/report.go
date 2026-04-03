@@ -69,12 +69,25 @@ func PrintReport(b *dnsbench.Benchmark, stats []*dnsbench.ResultStats, benchStar
 		if err := os.Mkdir(dir, os.ModePerm); err != nil {
 			return fmt.Errorf("unable to plot results: %w", err)
 		}
-		plotHistogramLatency(fileName(b, dir, "latency-histogram"), totals.Timings)
-		plotBoxPlotLatency(fileName(b, dir, "latency-boxplot"), b.Server, totals.Timings)
-		plotResponses(fileName(b, dir, "responses-barchart"), totals.Codes)
-		plotLineThroughput(fileName(b, dir, "throughput-lineplot"), benchStart, totals.Timings)
-		plotLineLatencies(fileName(b, dir, "latency-lineplot"), benchStart, totals.Timings)
-		plotErrorRate(fileName(b, dir, "errorrate-lineplot"), benchStart, totals.Errors)
+
+		if err := plotHistogramLatency(fileName(b, dir, "latency-histogram"), totals.Timings); err != nil {
+			fmt.Fprintln(b.ErrWriter, err)
+		}
+		if err := plotBoxPlotLatency(fileName(b, dir, "latency-boxplot"), b.Server, totals.Timings); err != nil {
+			fmt.Fprintln(b.ErrWriter, err)
+		}
+		if err := plotResponses(fileName(b, dir, "responses-barchart"), totals.Codes); err != nil {
+			fmt.Fprintln(b.ErrWriter, err)
+		}
+		if err := plotLineThroughput(fileName(b, dir, "throughput-lineplot"), benchStart, totals.Timings); err != nil {
+			fmt.Fprintln(b.ErrWriter, err)
+		}
+		if err := plotLineLatencies(fileName(b, dir, "latency-lineplot"), benchStart, totals.Timings); err != nil {
+			fmt.Fprintln(b.ErrWriter, err)
+		}
+		if err := plotErrorRate(fileName(b, dir, "errorrate-lineplot"), benchStart, totals.Errors); err != nil {
+			fmt.Fprintln(b.ErrWriter, err)
+		}
 	}
 
 	var csv *os.File
