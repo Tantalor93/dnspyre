@@ -12,7 +12,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
-	_ "net/http/pprof"
+	_ "net/http/pprof" // nolint:gosec // G108: pprof is intentionally exposed when --pprof flag is used
 	"net/url"
 	"os"
 	"regexp"
