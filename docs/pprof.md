@@ -5,7 +5,9 @@ parent: Examples
 ---
 
 # Profiling (pprof)
-*dnspyre* can be configured to expose Go profiling information via the standard `net/http/pprof` HTTP endpoint. This is useful for diagnosing
+v3.11.0
+{: .label .label-yellow }
+*dnspyre* can be configured to expose Go profiling information via HTTP endpoint. This is useful for diagnosing
 performance issues, memory usage, goroutine leaks, and other runtime behavior of *dnspyre* during benchmark execution.
 
 This is controlled by the `--pprof` flag. The flag accepts a `host:port` address, where the pprof HTTP server will be started. The profiling
@@ -30,10 +32,10 @@ dnspyre --server 8.8.8.8 -c 10 -t A --duration 5m --pprof ':6060' google.com
 While the benchmark is running, you can use `go tool pprof` to collect and analyze profiles:
 ```shell
 # Collect a 30-second CPU profile
-go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30
+go tool pprof -http=:9999 http://localhost:6060/debug/pprof/profile?seconds=30
 
 # Analyze heap memory usage
-go tool pprof http://localhost:6060/debug/pprof/heap
+go tool pprof -http=:9999 http://localhost:6060/debug/pprof/heap
 
 # View goroutine stacks
 curl http://localhost:6060/debug/pprof/goroutine?debug=1
