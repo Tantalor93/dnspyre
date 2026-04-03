@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	_ "net/http/pprof"
 	"net/url"
 	"os"
 	"regexp"
@@ -208,6 +209,11 @@ type Benchmark struct {
 	// PrometheusMetricsAddr configures address for Prometheus metrics endpoint.
 	PrometheusMetricsAddr string
 
+	// PprofAddr configures address for Go pprof HTTP endpoint. When set, an HTTP server exposing
+	// Go profiling information (heap, goroutine, CPU profiles, etc.) is started at the specified address.
+	// The profiles are available under /debug/pprof/ path.
+	PprofAddr string
+
 	// internal variable so we do not have to parse the address with each request.
 	useDoH            bool
 	useQuic           bool
@@ -353,6 +359,20 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 		go func() {
 			if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 				printutils.ErrFprintf(b.Writer, "Failed to start Prometheus metrics server at %s: %v\n", b.PrometheusMetricsAddr, err)
+			}
+		}()
+	}
+
+	if len(b.PprofAddr) != 0 {
+		// nolint:gosec
+		pprofServer := http.Server{
+			Addr:    b.PprofAddr,
+			Handler: http.DefaultServeMux,
+		}
+		defer pprofServer.Shutdown(ctx)
+		go func() {
+			if err := pprofServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+				printutils.ErrFprintf(b.Writer, "Failed to start pprof server at %s: %v\n", b.PprofAddr, err)
 			}
 		}()
 	}

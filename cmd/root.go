@@ -174,6 +174,10 @@ func init() {
 	pApp.Flag("prometheus", "Enables Prometheus metrics endpoint on the specified address. For example :8080 or localhost:8080. The endpoint is available at /metrics path.").
 		PlaceHolder("ADDRESS").StringVar(&benchmark.PrometheusMetricsAddr)
 
+	pApp.Flag("pprof", "Enables Go pprof profiling HTTP endpoint on the specified address. For example :6060 or localhost:6060. "+
+		"The profiling information (heap, goroutine, CPU profiles, etc.) is available at /debug/pprof/ path.").
+		PlaceHolder("ADDRESS").StringVar(&benchmark.PprofAddr)
+
 	pApp.Arg("queries", "Queries to issue. It can be a local file referenced using @<file-path>, for example @data/2-domains. "+
 		"It can also be resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that "+
 		"case, the file will be downloaded and saved in-memory. "+

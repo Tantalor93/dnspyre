@@ -158,6 +158,11 @@ Flags:
                              specified address. For example :8080 or
                              localhost:8080. The endpoint is available at
                              /metrics path.
+      --pprof=ADDRESS        Enables Go pprof profiling HTTP endpoint on the
+                             specified address. For example :6060 or
+                             localhost:6060. The profiling information (heap,
+                             goroutine, CPU profiles, etc.) is available at
+                             /debug/pprof/ path.
       --[no-]version         Show application version.
 
 Args:
