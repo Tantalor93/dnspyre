@@ -508,7 +508,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 							}
 						}
 
-						req := b.createReqMsg(q, qt, cookieHex)
+						req := b.createReqMsg(q, qt, cookieHex, rando)
 
 						start := time.Now()
 
@@ -554,7 +554,7 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	return stats, nil
 }
 
-func (b *Benchmark) createReqMsg(domain string, qtype uint16, cookie string) dns.Msg {
+func (b *Benchmark) createReqMsg(domain string, qtype uint16, cookie string, rando *rand.Rand) dns.Msg {
 	req := dns.Msg{}
 	req.RecursionDesired = b.Recurse
 
@@ -566,7 +566,7 @@ func (b *Benchmark) createReqMsg(domain string, qtype uint16, cookie string) dns
 		req.Id = 0
 	} else {
 		// nolint:gosec
-		req.Id = uint16(rand.Intn(1 << 16))
+		req.Id = uint16(rando.Intn(1 << 16))
 	}
 
 	if b.Edns0 > 0 {
