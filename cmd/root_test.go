@@ -22,8 +22,9 @@ func TestParsing_Defaults(t *testing.T) {
 	b, fc, err := parseArgs([]string{"example.com"})
 	require.NoError(t, err)
 
-	// string/server defaults
-	assert.Equal(t, "", b.Server, "server should default to empty")
+	// string/server defaults — the empty string is the parsed default;
+	// runtime resolution to system resolver or 127.0.0.1 happens in benchmark.init()
+	assert.Equal(t, "", b.Server, "server should default to empty (resolved at runtime)")
 
 	// query types default
 	assert.Equal(t, []string{dnsbench.DefaultQueryType}, b.Types)
@@ -343,6 +344,24 @@ func TestParsing_EcsFlag(t *testing.T) {
 	b, _, err := parseArgs([]string{"--ecs", "192.0.2.0/24", "example.com"})
 	require.NoError(t, err)
 	assert.Equal(t, "192.0.2.0/24", b.Ecs)
+}
+
+func TestParsing_RequestDelayFormats(t *testing.T) {
+	tests := []struct {
+		name  string
+		value string
+	}{
+		{name: "constant delay", value: "500ms"},
+		{name: "randomized delay interval", value: "1s-2s"},
+		{name: "zero delay", value: "0s"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b, _, err := parseArgs([]string{"--request-delay", tt.value, "example.com"})
+			require.NoError(t, err)
+			assert.Equal(t, tt.value, b.RequestDelay)
+		})
+	}
 }
 
 func TestParsing_FreshBenchmarkPerParse(t *testing.T) {
