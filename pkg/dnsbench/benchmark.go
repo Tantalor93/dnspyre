@@ -12,7 +12,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
-	_ "net/http/pprof"
+	"net/http/pprof"
 	"net/url"
 	"os"
 	"regexp"
@@ -371,10 +371,16 @@ func (b *Benchmark) Run(ctx context.Context) ([]*ResultStats, error) {
 	}
 
 	if len(b.PprofAddr) != 0 {
+		pprofMux := http.NewServeMux()
+		pprofMux.HandleFunc("/debug/pprof/", pprof.Index)
+		pprofMux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+		pprofMux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+		pprofMux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+		pprofMux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 		// nolint:gosec
 		pprofServer := http.Server{
 			Addr:    b.PprofAddr,
-			Handler: http.DefaultServeMux,
+			Handler: pprofMux,
 		}
 		defer pprofServer.Shutdown(ctx)
 		go func() {
