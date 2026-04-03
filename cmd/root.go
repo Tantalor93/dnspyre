@@ -25,10 +25,8 @@ var (
 )
 
 var (
-	pApp = kingpin.New("dnspyre", "A high QPS DNS benchmark.").Author(author)
-
-	benchmark = dnsbench.Benchmark{}
-
+	pApp           *kingpin.Application
+	benchmark      dnsbench.Benchmark
 	failConditions []string
 )
 
@@ -40,155 +38,164 @@ const (
 )
 
 func init() {
-	pApp.Flag("server", "Server represents (plain DNS, DoT, DoH or DoQ) server, which will be benchmarked. "+
-		"Format depends on the DNS protocol, that should be used for DNS benchmark. "+
-		"For plain DNS (either over UDP or TCP) the format is <IP/host>[:port], if port is not provided then port 53 is used. "+
-		"For DoT the format is <IP/host>[:port], if port is not provided then port 853 is used. "+
-		"For DoH the format is https://<IP/host>[:port][/path] or http://<IP/host>[:port][/path], if port is not provided then either 443 or 80 port is used. If no path is provided, then /dns-query is used. "+
-		"For DoQ the format is quic://<IP/host>[:port], if port is not provided then port 853 is used. "+
-		"If no server is provided, then system resolver is used or 127.0.0.1").Short('s').StringVar(&benchmark.Server)
-
-	pApp.Flag("type", "Query type. Repeatable flag. If multiple query types are specified then each query will be duplicated for each type.").
-		Short('t').Default(dnsbench.DefaultQueryType).EnumsVar(&benchmark.Types, getSupportedDNSTypes()...)
-
-	pApp.Flag("number", "How many times the provided queries are repeated. Note that the total number of queries issued = types*number*concurrency*len(queries).").
-		Short('n').Int64Var(&benchmark.Count)
-
-	pApp.Flag("concurrency", "Number of concurrent queries to issue.").
-		Short('c').Default(fmt.Sprintf("%d", dnsbench.DefaultConcurrency)).Uint32Var(&benchmark.Concurrency)
-
-	pApp.Flag("rate-limit", "Apply a global questions / second rate limit.").
-		Short('l').Default("0").IntVar(&benchmark.Rate)
-
-	pApp.Flag("rate-limit-worker", "Apply a questions / second rate limit for each concurrent worker specified by --concurrency option.").
-		Default("0").IntVar(&benchmark.RateLimitWorker)
-
-	pApp.Flag("query-per-conn", "Queries on a connection before creating a new one. 0: unlimited. Applicable for plain DNS and DoT, this option is not considered for DoH or DoQ.").
-		Default("0").Int64Var(&benchmark.QperConn)
-
-	pApp.Flag("recurse", "Allow DNS recursion. Enabled by default.").
-		Short('r').Default("true").BoolVar(&benchmark.Recurse)
-
-	pApp.Flag("probability", "Each provided hostname will be used with provided probability. Value 1 and above means that each hostname will be used by each concurrent benchmark goroutine. Useful for randomizing queries across benchmark goroutines.").
-		Default(fmt.Sprintf("%.1f", dnsbench.DefaultProbability)).Float64Var(&benchmark.Probability)
-
-	pApp.Flag("ednsopt", "code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal string. code must be an arbitrary numeric value.").
-		StringVar(&benchmark.EdnsOpt)
-
-	pApp.Flag("ecs", "Specify EDNS Client Subnet option in CIDR notation (e.g., '192.0.2.0/24' or '2001:db8::/32'). This is a more user-friendly alternative to --ednsopt for specifying ECS.").
-		StringVar(&benchmark.Ecs)
-
-	pApp.Flag("cookie", "Enable DNS cookies (RFC 7873). When enabled, an 8-byte client cookie is automatically added to each DNS request together with server cookie if available.").
-		BoolVar(&benchmark.Cookie)
-
-	pApp.Flag("dnssec", "Allow DNSSEC (sets DO bit for all DNS requests to 1)").BoolVar(&benchmark.DNSSEC)
-
-	pApp.Flag("edns0", "Configures EDNS0 usage in DNS requests send by benchmark and configures EDNS0 buffer size to the specified value. When 0 is configured, then EDNS0 is not used.").
-		Default("0").Uint16Var(&benchmark.Edns0)
-
-	pApp.Flag("tcp", "Use TCP for DNS requests.").BoolVar(&benchmark.TCP)
-
-	pApp.Flag("dot", "Use DoT (DNS over TLS) for DNS requests.").BoolVar(&benchmark.DOT)
-
-	pApp.Flag("write", "write timeout.").Default(dnsbench.DefaultWriteTimeout.String()).
-		DurationVar(&benchmark.WriteTimeout)
-
-	pApp.Flag("read", "read timeout.").Default(dnsbench.DefaultReadTimeout.String()).
-		DurationVar(&benchmark.ReadTimeout)
-
-	pApp.Flag("connect", "connect timeout.").Default(dnsbench.DefaultConnectTimeout.String()).
-		DurationVar(&benchmark.ConnectTimeout)
-
-	pApp.Flag("request", "request timeout.").Default(dnsbench.DefaultRequestTimeout.String()).
-		DurationVar(&benchmark.RequestTimeout)
-
-	pApp.Flag("codes", "Enable counting DNS return codes. Enabled by default.").
-		Default("true").BoolVar(&benchmark.Rcodes)
-
-	pApp.Flag("min", "Minimum value for timing histogram.").PlaceHolder("0ms").DurationVar(&benchmark.HistMin)
-
-	pApp.Flag("max", "Maximum value for timing histogram.").PlaceHolder(dnsbench.DefaultRequestTimeout.String()).
-		DurationVar(&benchmark.HistMax)
-
-	pApp.Flag("precision", "Significant figure for histogram precision.").
-		Default(fmt.Sprintf("%d", dnsbench.DefaultHistPrecision)).IntVar(&benchmark.HistPre)
-
-	pApp.Flag("distribution", "Display distribution histogram of timings to stdout. Enabled by default.").
-		Default("true").BoolVar(&benchmark.HistDisplay)
-
-	pApp.Flag("csv", "Export distribution to CSV.").
-		PlaceHolder("PATH_TO_FILE").StringVar(&benchmark.Csv)
-
-	pApp.Flag("json", "Report benchmark results as JSON.").BoolVar(&benchmark.JSON)
-
-	pApp.Flag("silent", "Disable stdout.").BoolVar(&benchmark.Silent)
-
-	pApp.Flag("color", "ANSI Color output. Enabled by default.").
-		Default("true").BoolVar(&benchmark.Color)
-
-	pApp.Flag("plot", "Plot benchmark results and export them to the directory.").
-		PlaceHolder("PATH_TO_FOLDER").StringVar(&benchmark.PlotDir)
-
-	pApp.Flag("plotf", "Format of graphs. Supported formats: svg, png and jpg.").
-		Default(dnsbench.DefaultPlotFormat).EnumVar(&benchmark.PlotFormat, "svg", "png", "jpg")
-
-	pApp.Flag("doh-method", "HTTP method to use for DoH requests. Supported values: get, post.").
-		PlaceHolder(dnsbench.PostHTTPMethod).EnumVar(&benchmark.DohMethod, dnsbench.GetHTTPMethod, dnsbench.PostHTTPMethod)
-
-	pApp.Flag("doh-protocol", "HTTP protocol to use for DoH requests. Supported values: 1.1, 2 and 3.").
-		PlaceHolder(dnsbench.HTTP1Proto).EnumVar(&benchmark.DohProtocol, dnsbench.HTTP1Proto, dnsbench.HTTP2Proto, dnsbench.HTTP3Proto)
-
-	pApp.Flag("insecure", "Disables server TLS certificate validation. Applicable for DoT, DoH and DoQ.").
-		BoolVar(&benchmark.Insecure)
-
-	pApp.Flag("duration", "Specifies for how long the benchmark should be executing, the benchmark will run for the specified time "+
-		"while sending DNS requests in an infinite loop based on the data source. After running for the specified duration, the benchmark is canceled. "+
-		"This option is exclusive with --number option. The duration is specified in GO duration format e.g. 10s, 15m, 1h.").
-		Short('d').DurationVar(&benchmark.Duration)
-
-	pApp.Flag("progress", "Controls whether the progress bar is shown. Enabled by default.").
-		Default("true").BoolVar(&benchmark.ProgressBar)
-
-	pApp.Flag("fail", "Controls conditions upon which the dnspyre will exit with a non-zero exit code. Repeatable flag. "+
-		"Supported options are 'ioerror' (fail if there is at least 1 IO error), 'negative' (fail if there is at least 1 negative DNS answer), "+
-		"'error' (fail if there is at least 1 error DNS response), 'idmismatch' (fail there is at least 1 ID mismatch between DNS request and response).").
-		PlaceHolder("CONDITION").
-		EnumsVar(&failConditions, ioerrorFailCondition, negativeFailCondition, errorFailCondition, idmismatchFailCondition)
-
-	pApp.Flag("log-requests", "Controls whether the Benchmark requests are logged. Requests are logged into the file specified by --log-requests-path flag. Disabled by default.").
-		BoolVar(&benchmark.RequestLogEnabled)
-
-	pApp.Flag("log-requests-path", "Specifies path to the file, where the request logs will be logged. If the file exists, the logs will be appended to the file. "+
-		"If the file does not exist, the file will be created.").
-		Default(dnsbench.DefaultRequestLogPath).StringVar(&benchmark.RequestLogPath)
-
-	pApp.Flag("separate-worker-connections", "Controls whether the concurrent workers will try to share connections to the server or not. When enabled "+
-		"the workers will use separate connections. Disabled by default.").
-		BoolVar(&benchmark.SeparateWorkerConnections)
-
-	pApp.Flag("request-delay", "Configures delay to be added before each request done by worker. Delay can be either constant or randomized. "+
-		"Constant delay is configured as single duration <GO duration> (e.g. 500ms, 2s, etc.). Randomized delay is configured as interval of "+
-		"two durations <GO duration>-<GO duration> (e.g. 1s-2s, 500ms-2s, etc.), where the actual delay is random value from the interval that "+
-		"is randomized after each request.").Default("0s").StringVar(&benchmark.RequestDelay)
-
-	pApp.Flag("prometheus", "Enables Prometheus metrics endpoint on the specified address. For example :8080 or localhost:8080. The endpoint is available at /metrics path.").
-		PlaceHolder("ADDRESS").StringVar(&benchmark.PrometheusMetricsAddr)
-
-	pApp.Flag("pprof", "Enables Go pprof profiling HTTP endpoint on the specified address. For example :6060 or localhost:6060. "+
-		"The profiling information (heap, goroutine, CPU profiles, etc.) is available at /debug/pprof/ path.").
-		PlaceHolder("ADDRESS").StringVar(&benchmark.PprofAddr)
-
-	pApp.Arg("queries", "Queries to issue. It can be a local file referenced using @<file-path>, for example @data/2-domains. "+
-		"It can also be resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that "+
-		"case, the file will be downloaded and saved in-memory. "+
-		"These data sources can be combined, for example \"google.com @data/2-domains https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/2-domains\". "+
-		"If not provided, default list of domains will be used.").
-		StringsVar(&benchmark.Queries)
+	pApp = newApp(&benchmark, &failConditions)
 
 	info, ok := debug.ReadBuildInfo()
 	if ok && len(Version) == 0 {
 		Version = info.Main.Version
 	}
+}
+
+// newApp creates a fresh kingpin Application with all flags wired to the provided Benchmark and fail conditions.
+func newApp(b *dnsbench.Benchmark, fc *[]string) *kingpin.Application {
+	app := kingpin.New("dnspyre", "A high QPS DNS benchmark.").Author(author)
+
+	app.Flag("server", "Server represents (plain DNS, DoT, DoH or DoQ) server, which will be benchmarked. "+
+		"Format depends on the DNS protocol, that should be used for DNS benchmark. "+
+		"For plain DNS (either over UDP or TCP) the format is <IP/host>[:port], if port is not provided then port 53 is used. "+
+		"For DoT the format is <IP/host>[:port], if port is not provided then port 853 is used. "+
+		"For DoH the format is https://<IP/host>[:port][/path] or http://<IP/host>[:port][/path], if port is not provided then either 443 or 80 port is used. If no path is provided, then /dns-query is used. "+
+		"For DoQ the format is quic://<IP/host>[:port], if port is not provided then port 853 is used. "+
+		"If no server is provided, then system resolver is used or 127.0.0.1").Short('s').StringVar(&b.Server)
+
+	app.Flag("type", "Query type. Repeatable flag. If multiple query types are specified then each query will be duplicated for each type.").
+		Short('t').Default(dnsbench.DefaultQueryType).EnumsVar(&b.Types, getSupportedDNSTypes()...)
+
+	app.Flag("number", "How many times the provided queries are repeated. Note that the total number of queries issued = types*number*concurrency*len(queries).").
+		Short('n').Int64Var(&b.Count)
+
+	app.Flag("concurrency", "Number of concurrent queries to issue.").
+		Short('c').Default(fmt.Sprintf("%d", dnsbench.DefaultConcurrency)).Uint32Var(&b.Concurrency)
+
+	app.Flag("rate-limit", "Apply a global questions / second rate limit.").
+		Short('l').Default("0").IntVar(&b.Rate)
+
+	app.Flag("rate-limit-worker", "Apply a questions / second rate limit for each concurrent worker specified by --concurrency option.").
+		Default("0").IntVar(&b.RateLimitWorker)
+
+	app.Flag("query-per-conn", "Queries on a connection before creating a new one. 0: unlimited. Applicable for plain DNS and DoT, this option is not considered for DoH or DoQ.").
+		Default("0").Int64Var(&b.QperConn)
+
+	app.Flag("recurse", "Allow DNS recursion. Enabled by default.").
+		Short('r').Default("true").BoolVar(&b.Recurse)
+
+	app.Flag("probability", "Each provided hostname will be used with provided probability. Value 1 and above means that each hostname will be used by each concurrent benchmark goroutine. Useful for randomizing queries across benchmark goroutines.").
+		Default(fmt.Sprintf("%.1f", dnsbench.DefaultProbability)).Float64Var(&b.Probability)
+
+	app.Flag("ednsopt", "code[:value], Specify EDNS option with code point code and optionally payload of value as a hexadecimal string. code must be an arbitrary numeric value.").
+		StringVar(&b.EdnsOpt)
+
+	app.Flag("ecs", "Specify EDNS Client Subnet option in CIDR notation (e.g., '192.0.2.0/24' or '2001:db8::/32'). This is a more user-friendly alternative to --ednsopt for specifying ECS.").
+		StringVar(&b.Ecs)
+
+	app.Flag("cookie", "Enable DNS cookies (RFC 7873). When enabled, an 8-byte client cookie is automatically added to each DNS request together with server cookie if available.").
+		BoolVar(&b.Cookie)
+
+	app.Flag("dnssec", "Allow DNSSEC (sets DO bit for all DNS requests to 1)").BoolVar(&b.DNSSEC)
+
+	app.Flag("edns0", "Configures EDNS0 usage in DNS requests send by benchmark and configures EDNS0 buffer size to the specified value. When 0 is configured, then EDNS0 is not used.").
+		Default("0").Uint16Var(&b.Edns0)
+
+	app.Flag("tcp", "Use TCP for DNS requests.").BoolVar(&b.TCP)
+
+	app.Flag("dot", "Use DoT (DNS over TLS) for DNS requests.").BoolVar(&b.DOT)
+
+	app.Flag("write", "write timeout.").Default(dnsbench.DefaultWriteTimeout.String()).
+		DurationVar(&b.WriteTimeout)
+
+	app.Flag("read", "read timeout.").Default(dnsbench.DefaultReadTimeout.String()).
+		DurationVar(&b.ReadTimeout)
+
+	app.Flag("connect", "connect timeout.").Default(dnsbench.DefaultConnectTimeout.String()).
+		DurationVar(&b.ConnectTimeout)
+
+	app.Flag("request", "request timeout.").Default(dnsbench.DefaultRequestTimeout.String()).
+		DurationVar(&b.RequestTimeout)
+
+	app.Flag("codes", "Enable counting DNS return codes. Enabled by default.").
+		Default("true").BoolVar(&b.Rcodes)
+
+	app.Flag("min", "Minimum value for timing histogram.").PlaceHolder("0ms").DurationVar(&b.HistMin)
+
+	app.Flag("max", "Maximum value for timing histogram.").PlaceHolder(dnsbench.DefaultRequestTimeout.String()).
+		DurationVar(&b.HistMax)
+
+	app.Flag("precision", "Significant figure for histogram precision.").
+		Default(fmt.Sprintf("%d", dnsbench.DefaultHistPrecision)).IntVar(&b.HistPre)
+
+	app.Flag("distribution", "Display distribution histogram of timings to stdout. Enabled by default.").
+		Default("true").BoolVar(&b.HistDisplay)
+
+	app.Flag("csv", "Export distribution to CSV.").
+		PlaceHolder("PATH_TO_FILE").StringVar(&b.Csv)
+
+	app.Flag("json", "Report benchmark results as JSON.").BoolVar(&b.JSON)
+
+	app.Flag("silent", "Disable stdout.").BoolVar(&b.Silent)
+
+	app.Flag("color", "ANSI Color output. Enabled by default.").
+		Default("true").BoolVar(&b.Color)
+
+	app.Flag("plot", "Plot benchmark results and export them to the directory.").
+		PlaceHolder("PATH_TO_FOLDER").StringVar(&b.PlotDir)
+
+	app.Flag("plotf", "Format of graphs. Supported formats: svg, png and jpg.").
+		Default(dnsbench.DefaultPlotFormat).EnumVar(&b.PlotFormat, "svg", "png", "jpg")
+
+	app.Flag("doh-method", "HTTP method to use for DoH requests. Supported values: get, post.").
+		PlaceHolder(dnsbench.PostHTTPMethod).EnumVar(&b.DohMethod, dnsbench.GetHTTPMethod, dnsbench.PostHTTPMethod)
+
+	app.Flag("doh-protocol", "HTTP protocol to use for DoH requests. Supported values: 1.1, 2 and 3.").
+		PlaceHolder(dnsbench.HTTP1Proto).EnumVar(&b.DohProtocol, dnsbench.HTTP1Proto, dnsbench.HTTP2Proto, dnsbench.HTTP3Proto)
+
+	app.Flag("insecure", "Disables server TLS certificate validation. Applicable for DoT, DoH and DoQ.").
+		BoolVar(&b.Insecure)
+
+	app.Flag("duration", "Specifies for how long the benchmark should be executing, the benchmark will run for the specified time "+
+		"while sending DNS requests in an infinite loop based on the data source. After running for the specified duration, the benchmark is canceled. "+
+		"This option is exclusive with --number option. The duration is specified in GO duration format e.g. 10s, 15m, 1h.").
+		Short('d').DurationVar(&b.Duration)
+
+	app.Flag("progress", "Controls whether the progress bar is shown. Enabled by default.").
+		Default("true").BoolVar(&b.ProgressBar)
+
+	app.Flag("fail", "Controls conditions upon which the dnspyre will exit with a non-zero exit code. Repeatable flag. "+
+		"Supported options are 'ioerror' (fail if there is at least 1 IO error), 'negative' (fail if there is at least 1 negative DNS answer), "+
+		"'error' (fail if there is at least 1 error DNS response), 'idmismatch' (fail there is at least 1 ID mismatch between DNS request and response).").
+		PlaceHolder("CONDITION").
+		EnumsVar(fc, ioerrorFailCondition, negativeFailCondition, errorFailCondition, idmismatchFailCondition)
+
+	app.Flag("log-requests", "Controls whether the Benchmark requests are logged. Requests are logged into the file specified by --log-requests-path flag. Disabled by default.").
+		BoolVar(&b.RequestLogEnabled)
+
+	app.Flag("log-requests-path", "Specifies path to the file, where the request logs will be logged. If the file exists, the logs will be appended to the file. "+
+		"If the file does not exist, the file will be created.").
+		Default(dnsbench.DefaultRequestLogPath).StringVar(&b.RequestLogPath)
+
+	app.Flag("separate-worker-connections", "Controls whether the concurrent workers will try to share connections to the server or not. When enabled "+
+		"the workers will use separate connections. Disabled by default.").
+		BoolVar(&b.SeparateWorkerConnections)
+
+	app.Flag("request-delay", "Configures delay to be added before each request done by worker. Delay can be either constant or randomized. "+
+		"Constant delay is configured as single duration <GO duration> (e.g. 500ms, 2s, etc.). Randomized delay is configured as interval of "+
+		"two durations <GO duration>-<GO duration> (e.g. 1s-2s, 500ms-2s, etc.), where the actual delay is random value from the interval that "+
+		"is randomized after each request.").Default("0s").StringVar(&b.RequestDelay)
+
+	app.Flag("prometheus", "Enables Prometheus metrics endpoint on the specified address. For example :8080 or localhost:8080. The endpoint is available at /metrics path.").
+		PlaceHolder("ADDRESS").StringVar(&b.PrometheusMetricsAddr)
+
+	app.Flag("pprof", "Enables Go pprof profiling HTTP endpoint on the specified address. For example :6060 or localhost:6060. "+
+		"The profiling information (heap, goroutine, CPU profiles, etc.) is available at /debug/pprof/ path.").
+		PlaceHolder("ADDRESS").StringVar(&b.PprofAddr)
+
+	app.Arg("queries", "Queries to issue. It can be a local file referenced using @<file-path>, for example @data/2-domains. "+
+		"It can also be resource accessible using HTTP, like https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/1000-domains, in that "+
+		"case, the file will be downloaded and saved in-memory. "+
+		"These data sources can be combined, for example \"google.com @data/2-domains https://raw.githubusercontent.com/Tantalor93/dnspyre/master/data/2-domains\". "+
+		"If not provided, default list of domains will be used.").
+		StringsVar(&b.Queries)
+
+	return app
 }
 
 // Execute starts main logic of command.
