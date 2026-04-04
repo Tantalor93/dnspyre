@@ -12,6 +12,12 @@ You can install *dnspyre* using [Homebrew](https://brew.sh) package manager, see
 brew install dnspyre
 ```
 
+or using project's tap
+
+```
+brew install tantalor93/dnspyre/dnspyre
+```
+
 Also you can use standard [Go tooling](https://pkg.go.dev/cmd/go#hdr-Compile_and_install_packages_and_dependencies) to install *dnspyre*
 
 ```
