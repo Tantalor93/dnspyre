@@ -12,7 +12,7 @@ You can install *dnspyre* using [Homebrew](https://brew.sh) package manager, see
 brew install dnspyre
 ```
 
-or using project's tap
+or using project's [tap](https://github.com/Tantalor93/homebrew-dnspyre), which also correctly installs completions and manpages
 
 ```
 brew install tantalor93/dnspyre/dnspyre
