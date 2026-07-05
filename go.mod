@@ -15,19 +15,19 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/tantalor93/doh-go v0.6.0
 	github.com/tantalor93/doq-go v0.15.0
-	go-hep.org/x/hep v0.39.0
+	go-hep.org/x/hep v0.40.0
 	go.uber.org/ratelimit v0.3.1
 	golang.org/x/net v0.56.0
 	gonum.org/v1/gonum v0.17.0
-	gonum.org/v1/plot v0.16.0
+	gonum.org/v1/plot v0.17.0
 )
 
 require (
-	codeberg.org/go-fonts/liberation v0.5.0 // indirect
-	codeberg.org/go-latex/latex v0.2.0 // indirect
-	codeberg.org/go-pdf/fpdf v0.11.1 // indirect
-	codeberg.org/gonuts/binary v0.3.2 // indirect
-	git.sr.ht/~sbinet/gg v0.7.0 // indirect
+	codeberg.org/go-fonts/liberation v0.6.0 // indirect
+	codeberg.org/go-latex/latex v0.3.0 // indirect
+	codeberg.org/go-pdf/fpdf v0.12.0 // indirect
+	codeberg.org/gonuts/binary v0.4.0 // indirect
+	git.sr.ht/~sbinet/gg v0.8.0 // indirect
 	github.com/ajstarks/svgo v0.0.0-20211024235047-1546f124cd8b // indirect
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
@@ -54,7 +54,7 @@ require (
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	golang.org/x/crypto v0.53.0 // indirect
-	golang.org/x/image v0.36.0 // indirect
+	golang.org/x/image v0.40.0 // indirect
 	golang.org/x/mod v0.36.0 // indirect
 	golang.org/x/sync v0.21.0 // indirect
 	golang.org/x/sys v0.46.0 // indirect
