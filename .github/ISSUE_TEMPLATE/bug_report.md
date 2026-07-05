@@ -14,6 +14,13 @@ Please describe what happened
 Please describe what did you expect to happen
 
 **dnspyre command**
+Please share command for reproducing the issue
 ```
 dnspyre --server '8.8.8.8' google.com
+```
+
+**dnspyre version**
+please share dnspyre version, where you are having the issue
+```
+dnspyre --version
 ```
