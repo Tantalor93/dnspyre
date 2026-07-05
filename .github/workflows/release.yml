@@ -44,7 +44,8 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: snapshot-dist
-        path: dist/
+        path: |
+          dist/*.tar.gz
         retention-days: 7
     - name: Run GoReleaser
       if: github.event_name != 'workflow_dispatch'
