@@ -46,6 +46,8 @@ jobs:
         name: snapshot-dist
         path: |
           dist/*.tar.gz
+          dist/checksums.txt
+          dist/*.sig
         retention-days: 7
     - name: Run GoReleaser
       if: github.event_name != 'workflow_dispatch'
