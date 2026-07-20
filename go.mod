@@ -13,7 +13,7 @@ require (
 	github.com/quic-go/quic-go v0.59.1
 	github.com/schollz/progressbar/v3 v3.19.1
 	github.com/stretchr/testify v1.11.1
-	github.com/tantalor93/doh-go v0.6.0
+	github.com/tantalor93/doh-go v0.7.0
 	github.com/tantalor93/doq-go v0.15.0
 	go-hep.org/x/hep v0.40.0
 	go.uber.org/ratelimit v0.3.1
