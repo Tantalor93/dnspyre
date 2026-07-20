@@ -27,7 +27,7 @@ jobs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.RELEASE_TOKEN }}
-    - uses: sigstore/cosign-installer@v3.7.0
+    - uses: sigstore/cosign-installer@v4.1.2
     - name: Run GoReleaser (snapshot)
       if: github.event_name == 'workflow_dispatch'
       uses: goreleaser/goreleaser-action@v7
