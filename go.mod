@@ -10,11 +10,11 @@ require (
 	github.com/montanaflynn/stats v0.7.1
 	github.com/olekukonko/tablewriter v1.1.4
 	github.com/prometheus/client_golang v1.23.2
-	github.com/quic-go/quic-go v0.59.1
+	github.com/quic-go/quic-go v0.60.0
 	github.com/schollz/progressbar/v3 v3.19.1
 	github.com/stretchr/testify v1.11.1
 	github.com/tantalor93/doh-go v0.6.0
-	github.com/tantalor93/doq-go v0.15.0
+	github.com/tantalor93/doq-go v0.16.0
 	go-hep.org/x/hep v0.40.0
 	go.uber.org/ratelimit v0.3.1
 	golang.org/x/net v0.57.0
