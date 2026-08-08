@@ -94,6 +94,35 @@ func Test_PrintReport_json_doh(t *testing.T) {
 	assert.Equal(t, readResource("jsonDohReport"), buffer.String())
 }
 
+func Test_PrintReport_ede(t *testing.T) {
+	buffer := bytes.Buffer{}
+	b, rs := testReportData(&buffer)
+	rs.EDECodes = map[uint16]int64{
+		dns.ExtendedErrorCodeStaleAnswer: 2,
+		dns.ExtendedErrorCodeBlocked:     1,
+	}
+
+	err := reporter.PrintReport(&b, []*dnsbench.ResultStats{&rs}, time.Now(), time.Second)
+	require.NoError(t, err)
+	assert.Equal(t, readResource("edeReport"), buffer.String())
+}
+
+func Test_PrintReport_json_ede(t *testing.T) {
+	buffer := bytes.Buffer{}
+	b, rs := testReportData(&buffer)
+	b.JSON = true
+	b.Rcodes = true
+	b.HistDisplay = true
+	rs.EDECodes = map[uint16]int64{
+		dns.ExtendedErrorCodeStaleAnswer: 2,
+		dns.ExtendedErrorCodeBlocked:     1,
+	}
+
+	err := reporter.PrintReport(&b, []*dnsbench.ResultStats{&rs}, time.Now(), time.Second)
+	require.NoError(t, err)
+	assert.Equal(t, readResource("jsonEdeReport"), buffer.String())
+}
+
 func Test_PrintReport_errors(t *testing.T) {
 	buffer := bytes.Buffer{}
 	b, rs := testReportDataWithServerDNSErrors(&buffer)

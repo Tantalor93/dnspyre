@@ -43,6 +43,7 @@ type jsonResult struct {
 	LatencyDistribution        []histogramPoint `json:"latencyDistribution,omitempty"`
 	TotalDNSSECSecuredDomains  *int             `json:"totalDNSSECSecuredDomains,omitempty"`
 	DohHTTPResponseStatusCodes map[int]int64    `json:"dohHTTPResponseStatusCodes,omitempty"`
+	ExtendedDNSErrors          map[uint16]int64 `json:"extendedDNSErrors,omitempty"`
 }
 
 func (s *jsonReporter) print(params reportParameters) error {
@@ -107,6 +108,7 @@ func (s *jsonReporter) print(params reportParameters) error {
 		},
 		LatencyDistribution:        res,
 		DohHTTPResponseStatusCodes: params.dohResponseStatusesTotals,
+		ExtendedDNSErrors:          params.edeCodes,
 	}
 	if params.benchmark.DNSSEC {
 		totalDNSSECSecuredDomains := len(params.authenticatedDomains)

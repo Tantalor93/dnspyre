@@ -1,6 +1,7 @@
 package reporter
 
 import (
+	"fmt"
 	"io"
 	"sort"
 	"strconv"
@@ -50,6 +51,25 @@ func (s *standardReporter) print(params reportParameters) error {
 			} else {
 				printutils.ErrFprintf(params.outputWriter, "\t%d:\t%d\n", st, params.dohResponseStatusesTotals[st])
 			}
+		}
+	}
+
+	if len(params.edeCodes) > 0 {
+		printutils.NeutralFprintf(params.outputWriter, "\nExtended DNS Errors:\n")
+		edeCodesSorted := make([]uint16, 0, len(params.edeCodes))
+		for code := range params.edeCodes {
+			edeCodesSorted = append(edeCodesSorted, code)
+		}
+		sort.Slice(edeCodesSorted, func(i, j int) bool { return edeCodesSorted[i] < edeCodesSorted[j] })
+		for _, code := range edeCodesSorted {
+			count := params.edeCodes[code]
+			var name string
+			if s, ok := dns.ExtendedErrorCodeToString[code]; ok {
+				name = s
+			} else {
+				name = fmt.Sprintf("Unknown(%d)", code)
+			}
+			printutils.ErrFprintf(params.outputWriter, "\t%s:\t%d\n", name, count)
 		}
 	}
 

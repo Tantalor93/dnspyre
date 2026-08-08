@@ -63,6 +63,7 @@ func TestResultStats_record(t *testing.T) {
 					Total:   1,
 					Success: 1,
 				},
+				EDECodes: map[uint16]int64{},
 			},
 		},
 		{
@@ -101,6 +102,7 @@ func TestResultStats_record(t *testing.T) {
 					Total:    1,
 					Negative: 1,
 				},
+				EDECodes: map[uint16]int64{},
 			},
 		},
 		{
@@ -139,6 +141,7 @@ func TestResultStats_record(t *testing.T) {
 					Total:    1,
 					Negative: 1,
 				},
+				EDECodes: map[uint16]int64{},
 			},
 		},
 		{
@@ -177,6 +180,7 @@ func TestResultStats_record(t *testing.T) {
 					Total: 1,
 					Error: 1,
 				},
+				EDECodes: map[uint16]int64{},
 			},
 		},
 		{
@@ -211,6 +215,7 @@ func TestResultStats_record(t *testing.T) {
 					Total:   1,
 					IOError: 1,
 				},
+				EDECodes: map[uint16]int64{},
 			},
 		},
 		{
@@ -251,6 +256,7 @@ func TestResultStats_record(t *testing.T) {
 					Truncated: 1,
 					Success:   1,
 				},
+				EDECodes: map[uint16]int64{},
 			},
 		},
 		{
@@ -282,6 +288,7 @@ func TestResultStats_record(t *testing.T) {
 					Total:      1,
 					IDmismatch: 1,
 				},
+				EDECodes: map[uint16]int64{},
 			},
 		},
 		{
@@ -325,6 +332,7 @@ func TestResultStats_record(t *testing.T) {
 				DoHStatusCodes: map[int]int64{
 					200: 1,
 				},
+				EDECodes: map[uint16]int64{},
 			},
 		},
 		{
@@ -366,6 +374,63 @@ func TestResultStats_record(t *testing.T) {
 				},
 				AuthenticatedDomains: map[string]struct{}{
 					"example.org.": {},
+				},
+				EDECodes: map[uint16]int64{},
+			},
+		},
+		{
+			name: "record EDE",
+			args: args{
+				req: &dns.Msg{
+					MsgHdr: dns.MsgHdr{Id: 1},
+					Question: []dns.Question{
+						{
+							Name:   "example.org.",
+							Qclass: dns.ClassINET,
+							Qtype:  dns.TypeA,
+						},
+					},
+				},
+				resp: &dns.Msg{
+					MsgHdr: dns.MsgHdr{Id: 1, Rcode: dns.RcodeSuccess, Response: true},
+					Answer: []dns.RR{&dns.A{A: net.ParseIP("127.0.0.1")}},
+					Extra: []dns.RR{
+						&dns.OPT{
+							Hdr: dns.RR_Header{
+								Name:   ".",
+								Rrtype: dns.TypeOPT,
+							},
+							Option: []dns.EDNS0{
+								&dns.EDNS0_EDE{
+									InfoCode:  17,
+									ExtraText: "Filtered",
+								},
+							},
+						},
+					},
+				},
+				time:     time.Now(),
+				duration: time.Millisecond,
+			},
+			want: &ResultStats{
+				Codes: map[int]int64{
+					dns.RcodeSuccess: 1,
+				},
+				Qtypes: map[string]int64{
+					"A": 1,
+				},
+				Timings: []Datapoint{
+					{
+						Duration: time.Millisecond,
+						Start:    now,
+					},
+				},
+				Counters: &Counters{
+					Total:   1,
+					Success: 1,
+				},
+				EDECodes: map[uint16]int64{
+					17: 1,
 				},
 			},
 		},

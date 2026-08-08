@@ -27,6 +27,7 @@ type reportParameters struct {
 	authenticatedDomains      map[string]struct{}
 	benchmarkDuration         time.Duration
 	dohResponseStatusesTotals map[int]int64
+	edeCodes                  map[uint16]int64
 }
 
 type reportPrinter interface {
@@ -125,6 +126,7 @@ func PrintReport(b *dnsbench.Benchmark, stats []*dnsbench.ResultStats, benchStar
 		authenticatedDomains:      totals.AuthenticatedDomains,
 		benchmarkDuration:         benchDuration,
 		dohResponseStatusesTotals: totals.DoHStatusCodes,
+		edeCodes:                  totals.EDECodes,
 	}
 	return printer(b).print(params)
 }
