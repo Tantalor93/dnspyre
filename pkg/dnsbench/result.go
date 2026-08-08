@@ -49,6 +49,8 @@ type ResultStats struct {
 	Errors               []ErrorDatapoint
 	AuthenticatedDomains map[string]struct{}
 	DoHStatusCodes       map[int]int64
+	// EDECodes counts Extended DNS Error (RFC 8914) info codes received in responses.
+	EDECodes map[uint16]int64
 }
 
 func newResultStats(b *Benchmark) *ResultStats {
@@ -60,6 +62,7 @@ func newResultStats(b *Benchmark) *ResultStats {
 	if b.useDoH {
 		st.DoHStatusCodes = make(map[int]int64)
 	}
+	st.EDECodes = make(map[uint16]int64)
 	st.Counters = &Counters{}
 	return st
 }
@@ -124,6 +127,17 @@ func (rs *ResultStats) record(req *dns.Msg, resp *dns.Msg, err error, time time.
 			rs.AuthenticatedDomains = make(map[string]struct{})
 		}
 		rs.AuthenticatedDomains[req.Question[0].Name] = struct{}{}
+	}
+
+	// EDE options are carried inside the EDNS0 OPT record (RFC 8914). Per RFC 6891 §7,
+	// a server MUST NOT include an OPT record in responses to requests that had no OPT record,
+	// so EDE codes will only be present when the request was sent with EDNS0 (--edns0 or --dnssec).
+	if opt := resp.IsEdns0(); opt != nil {
+		for _, option := range opt.Option {
+			if ede, ok := option.(*dns.EDNS0_EDE); ok {
+				rs.EDECodes[ede.InfoCode]++
+			}
+		}
 	}
 
 	rs.Hist.RecordValue(duration.Nanoseconds())

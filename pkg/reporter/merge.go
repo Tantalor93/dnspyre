@@ -20,6 +20,8 @@ type BenchmarkResultStats struct {
 	GroupedErrors        map[string]int
 	AuthenticatedDomains map[string]struct{}
 	DoHStatusCodes       map[int]int64
+	// EDECodes counts Extended DNS Error (RFC 8914) info codes received in responses.
+	EDECodes map[uint16]int64
 }
 
 // Merge takes results of the executed dnsbench.Benchmark and merges them.
@@ -31,6 +33,7 @@ func Merge(b *dnsbench.Benchmark, stats []*dnsbench.ResultStats) BenchmarkResult
 		GroupedErrors:        make(map[string]int),
 		AuthenticatedDomains: make(map[string]struct{}),
 		DoHStatusCodes:       make(map[int]int64),
+		EDECodes:             make(map[uint16]int64),
 	}
 
 	for _, s := range stats {
@@ -61,6 +64,9 @@ func Merge(b *dnsbench.Benchmark, stats []*dnsbench.ResultStats) BenchmarkResult
 			for k, v := range s.DoHStatusCodes {
 				totals.DoHStatusCodes[k] += v
 			}
+		}
+		for k, v := range s.EDECodes {
+			totals.EDECodes[k] += v
 		}
 		if s.Counters != nil {
 			totals.Counters = dnsbench.Counters{

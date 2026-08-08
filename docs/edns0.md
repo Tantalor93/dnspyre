@@ -19,6 +19,15 @@ advertisement for support of larger DNS response size (UDP message size) using `
 dnspyre  --server '1.1.1.1' google.com --edns0=1024
 ```
 
+v3.12.0
+{: .label .label-yellow }
+
+specifying no value will use size `1232`, which is a value suggested by https://www.dnsflagday.net/2020/
+
+```
+dnspyre  --server '1.1.1.1' google.com --edns0
+```
+
 ## DNSSEC
 [DNSSEC](https://datatracker.ietf.org/doc/html/rfc9364) security extension using `--dnssec` flag, by using this flag the *dnspyre* will also
 count the **number of domains that were successfully validated by DNS resolver**

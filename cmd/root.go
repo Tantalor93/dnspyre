@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime/debug"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -83,8 +84,11 @@ func init() {
 
 	pApp.Flag("dnssec", "Allow DNSSEC (sets DO bit for all DNS requests to 1)").BoolVar(&benchmark.DNSSEC)
 
-	pApp.Flag("edns0", "Configures EDNS0 usage in DNS requests send by benchmark and configures EDNS0 buffer size to the specified value. When 0 is configured, then EDNS0 is not used.").
-		Default("0").Uint16Var(&benchmark.Edns0)
+	pApp.Flag("edns0", "Configures EDNS0 usage in DNS requests send by benchmark and configures EDNS0 buffer size to the specified value. "+
+		fmt.Sprintf("When no value is provided with the flag, %d is used (per DNS Flag Day 2020). ", dnsbench.DefaultEdns0BufferSize)+
+		"By default EDNS0 is disabled. Specifying 0 disables EDNS0.").
+		Default("0").
+		Uint16Var(&benchmark.Edns0)
 
 	pApp.Flag("tcp", "Use TCP for DNS requests.").BoolVar(&benchmark.TCP)
 
@@ -194,7 +198,7 @@ func init() {
 // Execute starts main logic of command.
 func Execute() {
 	pApp.Version(Version)
-	kingpin.MustParse(pApp.Parse(os.Args[1:]))
+	kingpin.MustParse(pApp.Parse(preprocessArgs(os.Args[1:])))
 
 	sigsInt := make(chan os.Signal, 8)
 	signal.Notify(sigsInt, syscall.SIGINT)
@@ -264,4 +268,28 @@ func getSupportedDNSTypes() []string {
 		keys = append(keys, k)
 	}
 	return keys
+}
+
+// preprocessArgs transforms bare --edns0 (no value) into --edns0=<DefaultEdns0BufferSize>
+// so that kingpin's Uint16Var does not require an explicit value. When the token
+// immediately following --edns0 looks like a uint16, it is left alone and kingpin
+// consumes it as the flag value in the normal way.
+func preprocessArgs(args []string) []string {
+	result := make([]string, 0, len(args))
+	for i, arg := range args {
+		if arg == "--edns0" {
+			nextIsValue := i+1 < len(args) && len(args[i+1]) > 0 && args[i+1][0] != '-' && isUint16(args[i+1])
+			if !nextIsValue {
+				result = append(result, fmt.Sprintf("--edns0=%d", dnsbench.DefaultEdns0BufferSize))
+				continue
+			}
+		}
+		result = append(result, arg)
+	}
+	return result
+}
+
+func isUint16(s string) bool {
+	_, err := strconv.ParseUint(s, 10, 16)
+	return err == nil
 }

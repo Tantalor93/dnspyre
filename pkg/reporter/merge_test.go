@@ -181,6 +181,7 @@ func TestMerge(t *testing.T) {
 			500: 1,
 			503: 1,
 		},
+		EDECodes: map[uint16]int64{},
 	}
 
 	res := reporter.Merge(&dnsbench.Benchmark{DNSSEC: true, HistMin: 0, HistMax: 5 * time.Second, HistPre: 1}, stats)
