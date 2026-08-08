@@ -149,6 +149,34 @@ Documentation is in `docs/` and built with MkDocs (deployed to GitHub Pages). Ea
 
 ---
 
+## Commit Conventions
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/). The commit message format is:
+
+```
+<type>(<optional scope>): <description>
+```
+
+Common types used in this repository:
+
+| Type | When to use |
+|---|---|
+| `feat` | A new feature |
+| `fix` | A bug fix |
+| `chore` | Dependency bumps, build/tooling updates, routine maintenance (no production code change) |
+| `docs` | Documentation-only changes |
+| `refactor` | Code change that neither fixes a bug nor adds a feature |
+| `test` | Adding or updating tests |
+| `ci` | CI/CD configuration changes |
+
+**Dependency bumps** (e.g., `go get`, `go mod tidy`, updating `go.sum`) use the **`chore`** type:
+
+```
+chore: bump github.com/miekg/dns from 1.1.60 to 1.1.61
+```
+
+---
+
 ## Release Process
 
 Releases are cut by pushing a Git tag (e.g., `v3.x.y`). GoReleaser builds binaries for all platforms, publishes a GitHub release with checksums and cosign signatures, and pushes a Docker image. The public key for verifying release signatures is `cosign.pub`.
