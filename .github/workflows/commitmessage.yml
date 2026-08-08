@@ -1,0 +1,100 @@
+name: Commit message check
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Install commitlint
+        run: npm install -D @commitlint/cli @commitlint/config-conventional
+
+      - name: Validate all commits in PR
+        id: commitlint
+        run: |
+          MERGE_BASE=$(git merge-base ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+          npx commitlint --default-config --from "$MERGE_BASE" --to ${{ github.event.pull_request.head.sha }} --verbose
+
+      - name: Comment on PR if commitlint failed
+        if: failure() && steps.commitlint.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- commitlint-comment -->';
+            const body = `${marker}
+            ⚠️ **Commit message check failed**
+
+            One or more commits in this PR don't follow [Conventional Commits](https://www.conventionalcommits.org/) format.
+
+            Each commit message should look like:
+            \`\`\`
+            type(optional-scope): subject
+            \`\`\`
+
+            Allowed types: \`build\`, \`chore\`, \`ci\`, \`docs\`, \`feat\`, \`fix\`, \`perf\`, \`refactor\`, \`revert\`, \`style\`, \`test\`
+
+            Example: \`fix(auth): correct token expiry check\` or \`fix: correct token expiry check\`
+
+            See the failed job logs for the specific commit(s) and rule(s) that failed.`;
+
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.data.find(c => c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Resolve PR comment if commitlint passed
+        if: success() && steps.commitlint.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- commitlint-comment -->';
+
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.data.find(c => c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: `${marker}\n✅ **Commit message check passed** — all commits now follow Conventional Commits format.`,
+              });
+            }
