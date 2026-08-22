@@ -6,7 +6,7 @@ require (
 	github.com/HdrHistogram/hdrhistogram-go v1.3.0
 	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/fatih/color v1.19.0
-	github.com/miekg/dns v1.1.72
+	github.com/miekg/dns v1.1.73
 	github.com/montanaflynn/stats v0.12.4
 	github.com/olekukonko/tablewriter v1.1.4
 	github.com/prometheus/client_golang v1.24.1
@@ -54,12 +54,10 @@ require (
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	golang.org/x/crypto v0.55.0 // indirect
 	golang.org/x/image v0.40.0 // indirect
-	golang.org/x/mod v0.38.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/term v0.45.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
-	golang.org/x/tools v0.48.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
