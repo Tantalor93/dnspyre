@@ -8,7 +8,7 @@ require (
 	github.com/fatih/color v1.19.0
 	github.com/miekg/dns v1.1.73
 	github.com/montanaflynn/stats v0.12.6
-	github.com/olekukonko/tablewriter v1.1.4
+	github.com/olekukonko/tablewriter v1.1.5
 	github.com/prometheus/client_golang v1.24.1
 	github.com/quic-go/quic-go v0.61.0
 	github.com/schollz/progressbar/v3 v3.19.1
