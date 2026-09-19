@@ -1,6 +1,6 @@
 module github.com/tantalor93/dnspyre/v3
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.3.0
@@ -10,7 +10,7 @@ require (
 	github.com/montanaflynn/stats v0.12.6
 	github.com/olekukonko/tablewriter v1.1.5
 	github.com/prometheus/client_golang v1.24.1
-	github.com/quic-go/quic-go v0.61.0
+	github.com/quic-go/quic-go v0.62.0
 	github.com/schollz/progressbar/v3 v3.19.1
 	github.com/stretchr/testify v1.12.1
 	github.com/tantalor93/doh-go v0.7.0
