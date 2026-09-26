@@ -1,6 +1,6 @@
 module github.com/tantalor93/dnspyre/v3
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.3.0
@@ -17,7 +17,7 @@ require (
 	github.com/tantalor93/doq-go v0.17.0
 	go-hep.org/x/hep v0.40.0
 	go.uber.org/ratelimit v0.3.1
-	golang.org/x/net v0.58.0
+	golang.org/x/net v0.59.0
 	gonum.org/v1/gonum v0.17.0
 	gonum.org/v1/plot v0.17.0
 )
@@ -51,12 +51,12 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/crypto v0.55.0 // indirect
+	golang.org/x/crypto v0.57.0 // indirect
 	golang.org/x/image v0.40.0 // indirect
-	golang.org/x/sync v0.22.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/term v0.45.0 // indirect
-	golang.org/x/text v0.41.0 // indirect
+	golang.org/x/sync v0.23.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/term v0.46.0 // indirect
+	golang.org/x/text v0.42.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
