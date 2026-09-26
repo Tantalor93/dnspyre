@@ -4,7 +4,7 @@ GEM
     addressable (2.9.0)
       public_suffix (>= 2.0.2, < 8.0)
     base64 (0.3.0)
-    bigdecimal (4.1.2)
+    bigdecimal (4.1.3)
     colorator (1.1.0)
     concurrent-ruby (1.3.8)
     csv (3.3.6)
@@ -24,31 +24,31 @@ GEM
     ffi (1.17.4-x86_64-linux-gnu)
     ffi (1.17.4-x86_64-linux-musl)
     forwardable-extended (2.6.0)
-    google-protobuf (4.35.1)
+    google-protobuf (4.36.2)
       bigdecimal
       rake (~> 13.3)
-    google-protobuf (4.35.1-aarch64-linux-gnu)
+    google-protobuf (4.36.2-aarch64-linux-gnu)
       bigdecimal
       rake (~> 13.3)
-    google-protobuf (4.35.1-aarch64-linux-musl)
+    google-protobuf (4.36.2-aarch64-linux-musl)
       bigdecimal
       rake (~> 13.3)
-    google-protobuf (4.35.1-arm64-darwin)
+    google-protobuf (4.36.2-arm64-darwin)
       bigdecimal
       rake (~> 13.3)
-    google-protobuf (4.35.1-x86-linux-gnu)
+    google-protobuf (4.36.2-x86-linux-gnu)
       bigdecimal
       rake (~> 13.3)
-    google-protobuf (4.35.1-x86-linux-musl)
+    google-protobuf (4.36.2-x86-linux-musl)
       bigdecimal
       rake (~> 13.3)
-    google-protobuf (4.35.1-x86_64-darwin)
+    google-protobuf (4.36.2-x86_64-darwin)
       bigdecimal
       rake (~> 13.3)
-    google-protobuf (4.35.1-x86_64-linux-gnu)
+    google-protobuf (4.36.2-x86_64-linux-gnu)
       bigdecimal
       rake (~> 13.3)
-    google-protobuf (4.35.1-x86_64-linux-musl)
+    google-protobuf (4.36.2-x86_64-linux-musl)
       bigdecimal
       rake (~> 13.3)
     http_parser.rb (0.8.1)
@@ -179,7 +179,7 @@ DEPENDENCIES
 CHECKSUMS
   addressable (2.9.0) sha256=7fdf6ac3660f7f4e867a0838be3f6cf722ace541dd97767fa42bc6cfa980c7af
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
-  bigdecimal (4.1.2) sha256=53d217666027eab4280346fba98e7d5b66baaae1b9c3c1c0ffe89d48188a3fbd
+  bigdecimal (4.1.3) sha256=61ebe1e5e559bdc3cc6f2c0ee7f427321fc838f59611c294356eb04d6e21cf66
   colorator (1.1.0) sha256=e2f85daf57af47d740db2a32191d1bdfb0f6503a0dfbc8327d0c9154d5ddfc38
   concurrent-ruby (1.3.8) sha256=b2f1be836e968ccc78ccfce277ea79c72a88633f22306782c16ff23fb415d1e1
   csv (3.3.6) sha256=aba61e7e507a66f03d45cb1f3c4b6359861c3504038b422962875dce099e4456
@@ -197,15 +197,15 @@ CHECKSUMS
   ffi (1.17.4-x86_64-linux-gnu) sha256=9d3db14c2eae074b382fa9c083fe95aec6e0a1451da249eab096c34002bc752d
   ffi (1.17.4-x86_64-linux-musl) sha256=3fdf9888483de005f8ef8d1cf2d3b20d86626af206cbf780f6a6a12439a9c49e
   forwardable-extended (2.6.0) sha256=1bec948c469bbddfadeb3bd90eb8c85f6e627a412a3e852acfd7eaedbac3ec97
-  google-protobuf (4.35.1) sha256=a3a6471331d918f58dfa4d014a8f6286f0af2cf4840216bde52fcf2ea3fe3726
-  google-protobuf (4.35.1-aarch64-linux-gnu) sha256=50ca44d0eeff3f8475e630a1accdd974256f3510694d574e2c9d6119ea8bc9e1
-  google-protobuf (4.35.1-aarch64-linux-musl) sha256=d5c65cef6bd6498a9e5ed5f88cf6cf7e341c10b0a005e32137d5d1a2b6e8c18a
-  google-protobuf (4.35.1-arm64-darwin) sha256=d9c957df04fa89c749fa9a72a7b383eb4296efc9b2303dc6fd6fbe39c698ad6b
-  google-protobuf (4.35.1-x86-linux-gnu) sha256=cc7492566b27ad8b5dfa3a7b6f9b11e905050cc53c2fa8ff22de375a9e7a70fb
-  google-protobuf (4.35.1-x86-linux-musl) sha256=ab403790b59e4dc588ffbed1eaacf05d4ca2f0d12ac9c13d6c64e69380d8c99e
-  google-protobuf (4.35.1-x86_64-darwin) sha256=66b62b4df00931018a692806df66393efa960d6d2b7da69735187249f950d3ee
-  google-protobuf (4.35.1-x86_64-linux-gnu) sha256=c786439087512a3fbd199e9897d265b855f951d4027e218ea55e858d45969edd
-  google-protobuf (4.35.1-x86_64-linux-musl) sha256=91890eb0002934a339fdb7d77a147c46b7474b6799db27872b747b905837f744
+  google-protobuf (4.36.2) sha256=2f8daff50ae14aad36ab0ccdcf284065fa71d726c444efe114e6db82ffe62494
+  google-protobuf (4.36.2-aarch64-linux-gnu) sha256=c3279ec6eaa59f6ed6276eda2a33cffb4306471183ab79a332e698b8564f5169
+  google-protobuf (4.36.2-aarch64-linux-musl) sha256=0772c9dde1e6dce9a6b44d1d35c28c29adee99d9bd6aff5e21840daeb22161ce
+  google-protobuf (4.36.2-arm64-darwin) sha256=f70d810e6bbab9d8ad9c1d5fd685a21de4c10ad3ad32efb9455e17e5b1286917
+  google-protobuf (4.36.2-x86-linux-gnu) sha256=ffcd06d49bffca24afff18c900dd61a51ea3028d43c47d0d9621d00bf38a5866
+  google-protobuf (4.36.2-x86-linux-musl) sha256=e1afec03babd73c9117cc09d5fc2a98dfef37a414bfd8a4d0ceaac7bd66fc028
+  google-protobuf (4.36.2-x86_64-darwin) sha256=8d1bd2a344f7f589703b202ad2ee4cca8ef731b4ced45782ef92d385967384ba
+  google-protobuf (4.36.2-x86_64-linux-gnu) sha256=d25a820873e423f1d209ae8c672a4a28b019e2429debd0901d26670a0b4e14db
+  google-protobuf (4.36.2-x86_64-linux-musl) sha256=0fa17686c896da96a60a705e56ddc7d4ff56413f52787c655bd4c9fb33ffe14f
   http_parser.rb (0.8.1) sha256=9ae8df145b39aa5398b2f90090d651c67bd8e2ebfe4507c966579f641e11097a
   i18n (1.15.2) sha256=00f9eb62412fe593b2a65a97daa75300d37abb8f7202ec748e94b6d46a9dd1b5
   jekyll (4.4.1) sha256=4c1144d857a5b2b80d45b8cf5138289579a9f8136aadfa6dd684b31fe2bc18c1
